@@ -49,7 +49,11 @@
         -moz-osx-font-smoothing: grayscale;
     }
 
-    html { color-scheme: dark; }
+    html {
+        color-scheme: dark;
+        overflow-x: hidden;
+        max-width: 100%;
+    }
 
     body {
         background: var(--bg-base);
@@ -58,6 +62,8 @@
         font-size: 13px;
         line-height: 1.5;
         min-height: 100vh;
+        width: 100%;
+        max-width: 100%;
         display: flex;
         flex-direction: column;
         overflow-x: hidden;
@@ -227,11 +233,19 @@
     /* ───────── Layout ───────── */
     .dashboard-grid {
         flex: 1;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
         padding: 16px 24px 24px;
         display: grid;
-        grid-template-columns: 340px 1fr 380px;
+        grid-template-columns: 320px minmax(0, 1fr) 360px;
         gap: 16px;
         align-items: start;
+        overflow-x: hidden;
+    }
+    .dashboard-grid > section {
+        min-width: 0;
+        max-width: 100%;
     }
 
     @media (max-width: 1600px) {
@@ -242,12 +256,21 @@
         }
         .header-brand { flex: 1 1 280px; }
     }
-    @media (max-width: 1400px) {
-        .dashboard-grid { grid-template-columns: 320px 1fr; }
+    /* Keep 3 columns on every standard monitor (1920 / 1680 / 1600 / 1440 / 1366 / 1280).
+       minmax(0, 1fr) is what stops the center radar from blowing the right column off-screen. */
+    @media (max-width: 1365px) {
+        .dashboard-grid {
+            grid-template-columns: 280px minmax(0, 1fr) 320px;
+            padding: 14px 16px 20px;
+            gap: 12px;
+        }
+    }
+    @media (max-width: 1199px) {
+        .dashboard-grid { grid-template-columns: minmax(0, 320px) minmax(0, 1fr); }
         .dashboard-grid > section:last-child { grid-column: 1 / -1; }
     }
     @media (max-width: 1024px) {
-        .dashboard-grid { grid-template-columns: 1fr; padding: 12px; }
+        .dashboard-grid { grid-template-columns: minmax(0, 1fr); padding: 12px; }
         .header { padding: 12px 14px; }
         .header-status-capsules { justify-content: flex-start; }
         .header-actions { width: 100%; justify-content: flex-start; }
@@ -263,6 +286,7 @@
         flex-direction: column;
         gap: 14px;
         position: relative;
+        min-width: 0;
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
     }
 
@@ -485,44 +509,66 @@
     /* ───────── Radar ───────── */
     .radar-canvas-wrap {
         position: relative;
-        flex: 1;
-        min-height: 380px;
-        background:
-            radial-gradient(ellipse at 38% 48%, rgba(16, 185, 129, 0.05), transparent 42%),
-            #050607;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: var(--r-md);
+        height: 520px;
+        min-width: 0;
         overflow: hidden;
+        border-radius: var(--r-md);
+        background: linear-gradient(180deg, #0a1b2e 0%, #071322 100%);
+        border: 1px solid rgba(56, 189, 248, 0.2);
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
     }
 
-    canvas#portCanvas { width: 100%; height: 100%; display: block; }
+    canvas#portCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
 
     .radar-hud-pill {
         position: absolute;
-        top: 12px;
-        left: 12px;
-        background: rgba(9, 9, 11, 0.92);
-        border: 1px solid rgba(255, 255, 255, 0.10);
-        border-radius: var(--r-md);
-        padding: 8px 12px;
+        top: auto;
+        bottom: 10px;
+        left: 10px;
+        right: auto;
+        max-width: min(440px, calc(100% - 20px));
+        background: rgba(7, 19, 34, 0.72);
+        border: 1px solid rgba(56, 189, 248, 0.22);
+        border-radius: 12px;
+        padding: 6px 12px 6px 10px;
         font-family: var(--font-mono);
-        font-size: 10.5px;
+        font-size: 10px;
         display: flex;
         flex-direction: column;
-        gap: 3px;
+        gap: 1px;
         pointer-events: none;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-        backdrop-filter: blur(8px);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
     }
-    .radar-hud-pill .hud-row { display: flex; gap: 8px; color: var(--text-tertiary); }
+    .radar-hud-pill .hud-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 5px;
+        color: var(--text-tertiary);
+        line-height: 1.35;
+        white-space: normal;
+    }
+    .radar-hud-pill .hud-row-main { color: #e2e8f0; }
     .radar-hud-pill .val { color: var(--text-primary); font-weight: 600; }
+    .radar-hud-pill .hud-sep { color: rgba(148, 163, 184, 0.45); }
+    .radar-hud-pill .hud-live {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #34d399;
+        box-shadow: 0 0 8px rgba(52, 211, 153, 0.85);
+        flex: none;
+    }
 
     /* ───────── Tabs / feeds ───────── */
     .tab-bar {
         display: flex;
+        flex-wrap: wrap;
         gap: 2px;
         border-bottom: 1px solid var(--border-subtle);
+        min-width: 0;
     }
 
     .tab-btn {
@@ -532,13 +578,16 @@
         margin-bottom: -1px;
         color: var(--text-tertiary);
         font-family: var(--font-mono);
-        font-size: 11px;
+        font-size: 10.5px;
         font-weight: 500;
         cursor: pointer;
-        padding: 8px 10px;
+        padding: 8px 8px;
         min-height: 34px;
+        white-space: nowrap;
         transition: color 0.15s ease, border-color 0.15s ease;
     }
+    #tabBtnHuman { color: #fb7185; font-weight: 700; }
+    #tabBtnHuman.active { color: #fecdd3; border-bottom-color: #fb7185; }
     .tab-btn:hover { color: var(--text-primary); }
     .tab-btn.active {
         color: var(--text-primary);
@@ -574,6 +623,176 @@
     .event-item.alert  { border-left-color: var(--solar-amber); color: #fcd34d; }
     .event-item.danger { border-left-color: var(--rose-alert);  color: #fda4af; }
 
+    .human-feed {
+        display: none;
+        height: 188px;
+        overflow-y: auto;
+        flex-direction: column;
+        gap: 8px;
+        padding: 2px;
+        min-width: 0;
+    }
+    .human-feed::-webkit-scrollbar { width: 6px; }
+    .human-feed::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.14); border-radius: 3px; }
+    .human-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+    .human-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--r-md);
+        padding: 10px 11px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+    }
+    .human-card .kicker {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        font-family: var(--font-mono);
+    }
+    .human-card h3 {
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1.35;
+    }
+    .human-card p {
+        font-size: 11px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+    .human-card .stat {
+        margin-top: auto;
+        font-family: var(--font-mono);
+        font-size: 13px;
+        font-weight: 800;
+        color: #fecdd3;
+    }
+    .human-card.bao { border-color: rgba(251, 113, 133, 0.35); }
+    .human-card.bao .kicker { color: #fb7185; }
+    .human-card.school { border-color: rgba(56, 189, 248, 0.35); }
+    .human-card.school .kicker { color: #38bdf8; }
+    .human-card.school .stat { color: #7dd3fc; }
+    .human-card.wage { border-color: rgba(16, 185, 129, 0.4); }
+    .human-card.wage .kicker { color: var(--cyber-emerald); }
+    .human-card.wage .stat { color: #6ee7b7; }
+    @media (max-width: 1365px) {
+        .human-grid { grid-template-columns: minmax(0, 1fr); }
+        .human-feed { height: 220px; }
+    }
+
+    .btn-audio-shock {
+        background: rgba(244, 63, 94, 0.08);
+        border: 1px solid rgba(244, 63, 94, 0.45);
+        color: #fecdd3;
+        padding: 9px 11px;
+        min-height: 40px;
+        border-radius: var(--r-md);
+        font-size: 12px;
+        cursor: pointer;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        width: 100%;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+    }
+    .btn-audio-shock:hover { background: rgba(244, 63, 94, 0.16); border-color: #fb7185; }
+    .btn-audio-shock:active { transform: scale(0.992); }
+    .btn-audio-shock.playing {
+        background: rgba(244, 63, 94, 0.22);
+        border-color: #fb7185;
+        box-shadow: 0 0 18px rgba(244, 63, 94, 0.25);
+    }
+    #btnAudioShock {
+        font-size: 11.5px;
+        padding: 7px 12px;
+        cursor: pointer;
+        border-color: rgba(244, 63, 94, 0.5);
+        color: #fecdd3;
+        background: rgba(244, 63, 94, 0.1);
+        white-space: nowrap;
+    }
+    #btnAudioShock:hover { background: rgba(244, 63, 94, 0.2); }
+    #btnAudioShock.playing {
+        background: rgba(244, 63, 94, 0.28);
+        box-shadow: 0 0 16px rgba(244, 63, 94, 0.35);
+    }
+
+    .audio-shock-overlay {
+        position: fixed;
+        top: 72px;
+        right: 24px;
+        z-index: 80;
+        pointer-events: none;
+        display: none;
+    }
+    .audio-shock-overlay.live { display: block; }
+    .db-badge {
+        min-width: 248px;
+        padding: 12px 16px;
+        border-radius: 10px;
+        font-family: var(--font-mono);
+        background: rgba(7, 19, 34, 0.92);
+        border: 1px solid rgba(244, 63, 94, 0.6);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), 0 0 28px rgba(244, 63, 94, 0.22);
+        backdrop-filter: blur(12px);
+    }
+    .db-badge.loud .db-value { color: #fb7185; }
+    .db-badge.quiet {
+        border-color: rgba(16, 185, 129, 0.55);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), 0 0 28px rgba(16, 185, 129, 0.22);
+    }
+    .db-badge.quiet .db-value { color: #6ee7b7; }
+    .db-value {
+        font-size: 30px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+    }
+    .db-caption {
+        margin-top: 4px;
+        font-size: 11px;
+        color: var(--text-secondary);
+        letter-spacing: 0.02em;
+    }
+    .db-bars {
+        display: flex;
+        align-items: flex-end;
+        gap: 3px;
+        height: 16px;
+        margin-top: 8px;
+    }
+    .db-bars span {
+        flex: 1;
+        background: #fb7185;
+        border-radius: 1px;
+        transform-origin: bottom;
+        animation: db-bar 0.28s ease-in-out infinite alternate;
+    }
+    .db-bars span:nth-child(2) { animation-delay: 0.05s; }
+    .db-bars span:nth-child(3) { animation-delay: 0.11s; }
+    .db-bars span:nth-child(4) { animation-delay: 0.02s; }
+    .db-bars span:nth-child(5) { animation-delay: 0.16s; }
+    .db-badge.quiet .db-bars span {
+        animation: none;
+        height: 3px !important;
+        background: #34d399;
+    }
+    @keyframes db-bar {
+        from { height: 4px; opacity: 0.55; }
+        to { height: 16px; opacity: 1; }
+    }
+
     .can-feed {
         height: 140px;
         overflow-y: auto;
@@ -601,7 +820,7 @@
     }
 
     /* ───────── Metrics ───────── */
-    .bento-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .bento-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; min-width: 0; }
 
     .bento-item {
         background: var(--bg-surface);
@@ -650,7 +869,7 @@
         overflow: hidden;
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
     }
-    canvas#telemetryChart { width: 100%; height: 100%; display: block; }
+    canvas#telemetryChart { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
 
     /* ───────── Primary action ───────── */
     .btn-action {
@@ -952,6 +1171,9 @@
             <div class="capsule">🛡️ TFDA / HACCP 低溫規範檢驗合格</div>
         </div>
         <div class="header-actions">
+            <button id="btnAudioShock" onclick="playAuditoryShock()" class="capsule" title="聽覺震撼：92 dB 柴油發電機噪音 vs 純電靜音對比">
+                <span>🔊 聽覺震撼 92 dB</span>
+            </button>
             <button id="btnMobileQr" onclick="openQrModal()" class="capsule" style="font-size: 11.5px; padding: 7px 12px; cursor: pointer; border-color: rgba(255,255,255,0.18); color: #fff; background: rgba(255,255,255,0.05); display: flex; align-items: center; gap: 6px;">
                 <span>📱 評審現場手機掃碼實測</span>
             </button>
@@ -983,6 +1205,10 @@
                     <button class="btn-scenario active" id="btnScenarioNormal" onclick="setScenario('normal')">
                         <span>1. 標準零發電機起步 (38分抵達)</span>
                         <span style="color: var(--cyber-emerald);">省 NT$ 1,610</span>
+                    </button>
+                    <button type="button" class="btn-audio-shock" id="btnAudioShockScenario" onclick="playAuditoryShock()">
+                        <span>🔊 聽覺震撼：92 dB 柴油發電機噪音 vs 純電靜音對比</span>
+                        <span style="color: #fb7185; font-family: var(--font-mono); font-size: 10px;">3.5s</span>
                     </button>
                     <button class="btn-scenario" id="btnScenarioStall" onclick="setScenario('stall')">
                         <span>2. 模擬過港隧道事故 (90分嚴重塞車)</span>
@@ -1075,12 +1301,21 @@
             <div class="radar-canvas-wrap">
                 <canvas id="portCanvas"></canvas>
                 <div class="radar-hud-pill">
-                    <div class="hud-row">示範泊位：<span class="val">高雄港 78 號碼頭 (Fifth Terminal)</span></div>
-                    <div class="hud-row">海事 AI 預測：<span class="val">SugarSense 船舶靠泊時間 (誤差 ±14分)</span></div>
-                    <div class="hud-row">到港貨櫃船：<span class="val">WAN HAI 315 (萬海315輪)</span></div>
-                    <div class="hud-row">海關連線：<span class="val">CPT-N5107 C1 免驗通關放行</span></div>
-                    <div class="hud-row">岸電預冷基準：<span class="val" id="hudPrechill">-19.5 °C (平準鎖定)</span></div>
-                    <div class="hud-row">調度通行證：<span class="val" id="hudSafetyStatus" style="color: var(--cyber-emerald);">CrossRoute 零發電機綠色通行證核發</span></div>
+                    <div class="hud-row hud-row-main">
+                        <span class="hud-live"></span>
+                        <span class="val">WAN HAI 315</span>
+                        <span class="hud-sep">·</span>
+                        <span>BERTH 78 T5</span>
+                        <span class="hud-sep">·</span>
+                        <span>CPT-N5107 C1</span>
+                        <span class="hud-sep">·</span>
+                        <span class="val" id="hudPrechill">-19.5 °C (平準鎖定)</span>
+                    </div>
+                    <div class="hud-row">
+                        <span>SugarSense ±14分</span>
+                        <span class="hud-sep">·</span>
+                        <span id="hudSafetyStatus" class="val" style="color: var(--cyber-emerald);">CrossRoute 零發電機綠色通行證核發</span>
+                    </div>
                 </div>
             </div>
 
@@ -1090,6 +1325,7 @@
                 <button class="tab-btn" id="tabBtnCan" onclick="switchTab('can')">⚡ CAN J1939 數據流</button>
                 <button class="tab-btn" id="tabBtnRoi" onclick="switchTab('roi')" style="color: var(--cyber-emerald); font-weight: 700;">💰 財務回本 (B2B ROI)</button>
                 <button class="tab-btn" id="tabBtnCommercial" onclick="switchTab('commercial')" style="color: var(--electric-cyan); font-weight: 700;">💼 商業模式與定價</button>
+                <button class="tab-btn" id="tabBtnHuman" onclick="switchTab('human')">❤️ 司機與小港孩童 (Human Impact)</button>
             </div>
 
             <div class="event-feed" id="eventFeed">
@@ -1168,6 +1404,28 @@
                     <button class="btn-modal-action" onclick="openPilotModal()" style="padding: 4px 10px; font-size: 11px; background: rgba(2,132,199,0.2); border-color: var(--ocean-blue); color: #fff;">💼 線上產生採購訂單</button>
                 </div>
             </div>
+            <div class="human-feed" id="humanFeed">
+                <div class="human-grid">
+                    <article class="human-card bao">
+                        <div class="kicker">Hearing Recovery · Berth 78</div>
+                        <h3>陳大哥（Brother Bao）職業聽力復原</h3>
+                        <p>56 歲高雄港拖車司機。柴油發電機緊貼後頸，長達四年以 85 dB 持續轟鳴——等於把電鑽焊在駕駛艙後壁。拔除發電機後，車艙從聽力受損門檻回到純電巡航。</p>
+                        <div class="stat">85 dB 聽損噪音 → 42 dB 純電寧靜</div>
+                    </article>
+                    <article class="human-card school">
+                        <div class="kicker">Xiaogang · Shan-Ming Elementary</div>
+                        <h3>小港山明國小 · 孩童氣喘回歸基準線</h3>
+                        <p>山明國小緊鄰沿海路貨櫃走廊。以往 10,000 輛拖車怠速發電機把 PM2.5 與 NOx 送進教室。零發電機調度把小港兒科氣喘從全國 2.3 倍壓回基準線。</p>
+                        <div class="stat">2.3× 全國氣喘率 → 基準線 (baseline)</div>
+                    </article>
+                    <article class="human-card wage">
+                        <div class="kicker">Driver Take-Home · +144%</div>
+                        <h3>單趟淨資從 NT$900 躍升至 NT$2,200</h3>
+                        <p>陳大哥從 78 號碼頭拖一櫃到前鎮冷鏈，毛收 NT$2,800。發電機租金吞 NT$1,500、柴油再吞 NT$400，只剩 NT$900。零發電機把那 NT$1,610 還給司機。</p>
+                        <div class="stat">NT$900 → NT$2,200／趟 · +144%</div>
+                    </article>
+                </div>
+            </div>
 
         </section>
 
@@ -1216,6 +1474,16 @@
         </section>
 
     </main>
+
+    <div id="audioShockOverlay" class="audio-shock-overlay" aria-live="polite">
+        <div class="db-badge loud" id="dbBadge">
+            <div class="db-value" id="dbValue">92 dB</div>
+            <div class="db-caption" id="dbCaption">極度吵雜 / 聽力受損</div>
+            <div class="db-bars" id="dbBars" aria-hidden="true">
+                <span style="height:8px"></span><span style="height:14px"></span><span style="height:6px"></span><span style="height:16px"></span><span style="height:10px"></span>
+            </div>
+        </div>
+    </div>
 
     <!-- In-Cab Driver HUD Overlay -->
     <div class="driver-hud-overlay" id="driverHud">
@@ -1333,7 +1601,8 @@
             telemetryHistory: [],
             activeTab: 'events',
             canPackets: [],
-            latestCertificate: null
+            latestCertificate: null,
+            audioCtx: null
         };
 
         const canvas = document.getElementById('portCanvas');
@@ -1360,8 +1629,6 @@
             if (c.width !== bw || c.height !== bh) {
                 c.width = bw;
                 c.height = bh;
-                c.style.width = cssW + 'px';
-                c.style.height = cssH + 'px';
             }
             return { w: cssW, h: cssH, dpr: dpr };
         }
@@ -1382,11 +1649,13 @@
             document.getElementById('tabBtnCan').classList.toggle('active', tab === 'can');
             document.getElementById('tabBtnRoi').classList.toggle('active', tab === 'roi');
             document.getElementById('tabBtnCommercial').classList.toggle('active', tab === 'commercial');
+            document.getElementById('tabBtnHuman').classList.toggle('active', tab === 'human');
 
             document.getElementById('eventFeed').style.display = tab === 'events' ? 'flex' : 'none';
             document.getElementById('canFeed').style.display = tab === 'can' ? 'flex' : 'none';
             document.getElementById('roiFeed').style.display = tab === 'roi' ? 'flex' : 'none';
             document.getElementById('commercialFeed').style.display = tab === 'commercial' ? 'flex' : 'none';
+            document.getElementById('humanFeed').style.display = tab === 'human' ? 'flex' : 'none';
 
             if (tab === 'roi') updateRoiCalc();
         }
@@ -1701,16 +1970,17 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
         // Radar Simulation Canvas
         function initTrucks() {
             state.trucks = [];
-            // Real Kaohsiung waypoints representation
             for (let i = 0; i < 16; i++) {
+                const moving = Math.random() > 0.28;
                 state.trucks.push({
                     id: "CMC-ET35-" + (100 + i),
-                    x: 100 + Math.random() * 400,
-                    y: 80 + Math.random() * 260,
-                    vx: (Math.random() - 0.5) * 1.4,
-                    vy: (Math.random() - 0.5) * 0.9,
-                    state: Math.random() > 0.3 ? 'moving' : 'docked',
-                    cargo: Object.keys(CARGO_DB)[i % 6]
+                    x: 160 + Math.random() * 420,
+                    y: 110 + Math.random() * 220,
+                    vx: moving ? (0.55 + Math.random() * 0.85) * (Math.random() > 0.45 ? 1 : -1) : 0,
+                    vy: moving ? (Math.random() - 0.5) * 0.7 : 0,
+                    state: moving ? 'moving' : 'docked',
+                    cargo: Object.keys(CARGO_DB)[i % 6],
+                    trail: []
                 });
             }
         }
@@ -1724,33 +1994,105 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
                 return;
             }
 
-            const cx = w * 0.38;
-            const cy = h * 0.48;
+            const cx = w * 0.36;
+            const cy = h * 0.50;
+            const now = Date.now();
             const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-            // Land base
-            const land = ctx.createLinearGradient(0, 0, 0, h);
-            land.addColorStop(0, '#0b0c10');
-            land.addColorStop(1, '#07080b');
-            ctx.fillStyle = land;
+            // Deep navy ocean
+            const ocean = ctx.createLinearGradient(0, 0, w * 0.2, h);
+            ocean.addColorStop(0, '#0d2238');
+            ocean.addColorStop(0.55, '#0a1b30');
+            ocean.addColorStop(1, '#081628');
+            ctx.fillStyle = ocean;
             ctx.fillRect(0, 0, w, h);
 
-            // Harbor channel
-            const water = ctx.createLinearGradient(w * 0.2, 0, w * 0.55, h);
-            water.addColorStop(0, '#0a1624');
-            water.addColorStop(1, '#071018');
-            ctx.fillStyle = water;
-            ctx.beginPath();
-            ctx.moveTo(w * 0.22, 0);
-            ctx.lineTo(w * 0.68, 0);
-            ctx.lineTo(w * 0.54, h);
-            ctx.lineTo(w * 0.08, h);
-            ctx.closePath();
-            ctx.fill();
+            const swell = ctx.createRadialGradient(w * 0.30, h * 0.42, 12, w * 0.30, h * 0.42, Math.max(w, h) * 0.72);
+            swell.addColorStop(0, 'rgba(14, 165, 233, 0.16)');
+            swell.addColorStop(0.55, 'rgba(8, 47, 73, 0.05)');
+            swell.addColorStop(1, 'rgba(7, 19, 34, 0)');
+            ctx.fillStyle = swell;
+            ctx.fillRect(0, 0, w, h);
 
-            // Fine tactical grid
+            // Navigational channel / fairway
             ctx.save();
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
+            ctx.shadowColor = 'rgba(56, 189, 248, 0.55)';
+            ctx.shadowBlur = 18;
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.18)';
+            ctx.lineWidth = 42;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(w * 0.34, -8);
+            ctx.bezierCurveTo(w * 0.30, h * 0.28, w * 0.28, h * 0.58, w * 0.24, h + 8);
+            ctx.stroke();
+            ctx.shadowBlur = 6;
+            ctx.strokeStyle = 'rgba(125, 211, 252, 0.85)';
+            ctx.lineWidth = 1.6;
+            ctx.setLineDash([10, 9]);
+            ctx.beginPath();
+            ctx.moveTo(w * 0.34, -8);
+            ctx.bezierCurveTo(w * 0.30, h * 0.28, w * 0.28, h * 0.58, w * 0.24, h + 8);
+            ctx.stroke();
+            ctx.restore();
+
+            const strokeCoast = function () {
+                ctx.save();
+                ctx.shadowColor = 'rgba(56, 189, 248, 0.9)';
+                ctx.shadowBlur = 4;
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.18)';
+                ctx.lineWidth = 6;
+                ctx.stroke();
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.75)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.restore();
+            };
+
+            const landFill = ctx.createLinearGradient(0, 0, 0, h);
+            landFill.addColorStop(0, '#1e293b');
+            landFill.addColorStop(1, '#151d2a');
+
+            // West landmass (Qijin / breakwater)
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(w * 0.145, 0);
+            ctx.bezierCurveTo(w * 0.20, h * 0.16, w * 0.13, h * 0.40, w * 0.175, h * 0.62);
+            ctx.lineTo(w * 0.11, h);
+            ctx.lineTo(0, h);
+            ctx.closePath();
+            ctx.fillStyle = landFill;
+            ctx.fill();
+            strokeCoast();
+
+            // East landmass (terminals + Qianzhen hinterland)
+            ctx.beginPath();
+            ctx.moveTo(w, 0);
+            ctx.lineTo(w * 0.56, 0);
+            ctx.bezierCurveTo(w * 0.50, h * 0.10, w * 0.60, h * 0.22, w * 0.46, h * 0.34);
+            ctx.bezierCurveTo(w * 0.38, h * 0.44, w * 0.48, h * 0.56, w * 0.40, h * 0.70);
+            ctx.lineTo(w * 0.44, h);
+            ctx.lineTo(w, h);
+            ctx.closePath();
+            ctx.fillStyle = landFill;
+            ctx.fill();
+            strokeCoast();
+
+            // Land grain
+            ctx.save();
+            ctx.globalAlpha = 0.035;
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 1;
+            for (let x = -h; x < w; x += 18) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x + h, h);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            // Tactical grid over water
+            ctx.save();
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.07)';
             ctx.lineWidth = 1;
             for (let x = 0; x < w; x += 36) {
                 ctx.beginPath(); ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, h); ctx.stroke();
@@ -1762,7 +2104,7 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
 
             // Range rings + sweep
             ctx.save();
-            ctx.strokeStyle = 'rgba(16, 185, 129, 0.14)';
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.12)';
             ctx.lineWidth = 1;
             const maxR = Math.hypot(w, h) * 0.62;
             for (let r = 48; r < maxR; r += 52) {
@@ -1770,20 +2112,20 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
                 ctx.arc(cx, cy, r, 0, Math.PI * 2);
                 ctx.stroke();
             }
-            ctx.strokeStyle = 'rgba(16, 185, 129, 0.08)';
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.07)';
             ctx.beginPath();
             ctx.moveTo(cx, 0); ctx.lineTo(cx, h);
             ctx.moveTo(0, cy); ctx.lineTo(w, cy);
             ctx.stroke();
             if (!reduceMotion) {
-                const ang = ((Date.now() / 28) % 360) * Math.PI / 180;
+                const ang = ((now / 32) % 360) * Math.PI / 180;
                 ctx.beginPath();
                 ctx.moveTo(cx, cy);
-                ctx.arc(cx, cy, maxR * 0.72, ang, ang + 0.42);
+                ctx.arc(cx, cy, maxR * 0.72, ang, ang + 0.38);
                 ctx.closePath();
                 const sweep = ctx.createRadialGradient(cx, cy, 8, cx, cy, maxR * 0.72);
-                sweep.addColorStop(0, 'rgba(16, 185, 129, 0.10)');
-                sweep.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
+                sweep.addColorStop(0, 'rgba(56, 189, 248, 0.10)');
+                sweep.addColorStop(1, 'rgba(56, 189, 248, 0.00)');
                 ctx.fillStyle = sweep;
                 ctx.fill();
             }
@@ -1831,9 +2173,9 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
                 const slotW = vertical ? 54 : 36;
                 const slotH = vertical ? 28 : 46;
                 ctx.save();
-                ctx.fillStyle = 'rgba(16, 185, 129, 0.06)';
-                ctx.strokeStyle = 'rgba(16, 185, 129, 0.32)';
-                ctx.lineWidth = 1;
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.28)';
+                ctx.lineWidth = 1.2;
                 const bankW = vertical ? slotW + 10 : count * (slotW + 4) + 8;
                 const bankH = vertical ? count * (slotH + 4) + 8 : slotH + 14;
                 ctx.beginPath();
@@ -1846,66 +2188,141 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
                     const sx = vertical ? x + 5 : x + 6 + i * (slotW + 4);
                     const sy = vertical ? y + 6 + i * (slotH + 4) : y + 8;
                     const isActive = bn === activeNo;
-                    ctx.fillStyle = isActive ? 'rgba(16, 185, 129, 0.22)' : 'rgba(255, 255, 255, 0.03)';
-                    ctx.strokeStyle = isActive ? 'rgba(52, 211, 153, 0.85)' : 'rgba(255, 255, 255, 0.14)';
-                    ctx.lineWidth = isActive ? 1.4 : 1;
+                    ctx.fillStyle = isActive ? 'rgba(16, 185, 129, 0.32)' : 'rgba(30, 41, 59, 0.92)';
+                    ctx.strokeStyle = isActive ? 'rgba(52, 211, 153, 0.95)' : 'rgba(148, 163, 184, 0.45)';
+                    ctx.lineWidth = isActive ? 1.6 : 1;
+                    if (isActive) {
+                        ctx.shadowColor = 'rgba(16, 185, 129, 0.7)';
+                        ctx.shadowBlur = 12;
+                    } else {
+                        ctx.shadowBlur = 0;
+                    }
                     ctx.beginPath();
                     if (ctx.roundRect) ctx.roundRect(sx, sy, slotW, slotH, 3);
                     else ctx.rect(sx, sy, slotW, slotH);
                     ctx.fill();
                     ctx.stroke();
-                    ctx.fillStyle = isActive ? '#6ee7b7' : '#64748b';
-                    ctx.font = (isActive ? '700 ' : '500 ') + '9px JetBrains Mono, ui-monospace, monospace';
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = isActive ? '#d1fae5' : '#cbd5e1';
+                    ctx.font = (isActive ? '700 ' : '600 ') + '9px JetBrains Mono, ui-monospace, monospace';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillText(String(bn), sx + slotW / 2, sy + slotH / 2);
                 }
-                ctx.fillStyle = '#94a3b8';
-                ctx.font = '600 9px JetBrains Mono, ui-monospace, monospace';
+                ctx.fillStyle = '#e2e8f0';
+                ctx.font = '700 9px JetBrains Mono, ui-monospace, monospace';
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'top';
-                ctx.fillText(label, x + 6, y - 12);
+                ctx.fillText(label, x + 6, y - 13);
+                occupied.push({ x: x, y: y - 15, w: ctx.measureText(label).width + 10, h: 13 });
                 ctx.restore();
                 return { bankW: bankW, bankH: bankH };
             };
 
-            // Keep tags and berths clear of the live HUD pill
-            occupied.push({ x: 8, y: 8, w: 336, h: 128 });
+            // HUD chip sits bottom-left — keep tags off that strip, not the docks
+            occupied.push({ x: 4, y: h - 56, w: Math.min(460, w * 0.7), h: 52 });
 
             const t4w = 4 * 40 + 8;
-            const t4x = Math.min(Math.max(348, w * 0.42), Math.max(16, w - t4w - 200));
-            drawBerthBank(t4x, 22, 4, 63, 0, 'T4  BERTHS 63–66', false);
-            const t5x = 18;
-            const t5y = 148;
-            const t5 = drawBerthBank(t5x, t5y, 5, 77, 78, 'T5  BERTHS 77–81', true);
+            const t4x = Math.min(Math.max(w * 0.46, 210), Math.max(16, w - t4w - 196));
+            drawBerthBank(t4x, 28, 4, 63, 0, 'TERMINAL 4  ·  BERTHS 63–66', false);
+            const t5x = Math.max(18, w * 0.20);
+            const t5y = Math.max(118, h * 0.30);
+            const t5 = drawBerthBank(t5x, t5y, 5, 77, 78, 'TERMINAL 5  ·  BERTHS 77–81', true);
 
-            // Vessel at Berth 78
-            const shipX = t5x + 66;
-            const shipY = t5y + 6 + 1 * 32 + 14;
+            // Active berth glow for #78
+            const slotH = 28;
+            const glowX = t5x + 5;
+            const glowY = t5y + 6 + 1 * (slotH + 4);
             ctx.save();
-            ctx.fillStyle = '#0f172a';
-            ctx.strokeStyle = '#34d399';
-            ctx.lineWidth = 1.4;
+            ctx.shadowColor = 'rgba(16, 185, 129, 0.85)';
+            ctx.shadowBlur = 22;
+            ctx.strokeStyle = 'rgba(52, 211, 153, 0.95)';
+            ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.moveTo(shipX, shipY - 8);
-            ctx.lineTo(shipX + 86, shipY - 4);
-            ctx.lineTo(shipX + 86, shipY + 12);
-            ctx.lineTo(shipX, shipY + 8);
+            if (ctx.roundRect) ctx.roundRect(glowX, glowY, 54, slotH, 3);
+            else ctx.rect(glowX, glowY, 54, slotH);
+            ctx.stroke();
+            ctx.restore();
+
+            // Container ship WAN HAI 315 at Berth 78
+            const shipX = t5x + t5.bankW + 10;
+            const shipY = glowY + slotH / 2;
+            ctx.save();
+            ctx.shadowColor = 'rgba(16, 185, 129, 0.35)';
+            ctx.shadowBlur = 14;
+            ctx.fillStyle = '#1e293b';
+            ctx.strokeStyle = '#34d399';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(shipX, shipY - 11);
+            ctx.lineTo(shipX + 92, shipY - 7);
+            ctx.lineTo(shipX + 108, shipY);
+            ctx.lineTo(shipX + 92, shipY + 7);
+            ctx.lineTo(shipX, shipY + 11);
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
-            ctx.fillStyle = '#10b981';
-            ctx.fillRect(shipX + 8, shipY - 2, 18, 6);
+            const boxes = ['#10b981', '#0ea5e9', '#f59e0b', '#64748b', '#34d399', '#38bdf8'];
+            for (let c = 0; c < 6; c++) {
+                ctx.fillStyle = boxes[c];
+                ctx.fillRect(shipX + 6 + c * 14, shipY - 6, 12, 5);
+                ctx.fillRect(shipX + 6 + c * 14, shipY + 1, 12, 5);
+            }
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = 'rgba(9, 9, 11, 0.7)';
+            ctx.lineWidth = 1;
+            for (let c = 1; c < 6; c++) {
+                ctx.beginPath();
+                ctx.moveTo(shipX + 5 + c * 14, shipY - 7);
+                ctx.lineTo(shipX + 5 + c * 14, shipY + 7);
+                ctx.stroke();
+            }
+            ctx.fillStyle = '#e2e8f0';
+            ctx.fillRect(shipX + 90, shipY - 10, 10, 8);
             ctx.restore();
-            placeTag(shipX + 90, shipY, 'WAN HAI 315 · #78', '#6ee7b7', false);
+
+            // Gantry crane over Berth 78
+            const gx = shipX + 8;
+            const gy = shipY - 36;
+            const trolley = reduceMotion ? 28 : (24 + Math.sin(now / 700) * 16);
+            ctx.save();
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 2.2;
+            ctx.beginPath();
+            ctx.moveTo(gx, shipY + 12);
+            ctx.lineTo(gx, gy);
+            ctx.lineTo(gx + 78, gy);
+            ctx.lineTo(gx + 78, shipY + 12);
+            ctx.stroke();
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 1.4;
+            ctx.beginPath();
+            ctx.moveTo(gx - 4, gy + 4);
+            ctx.lineTo(gx + 82, gy + 4);
+            ctx.stroke();
+            ctx.fillStyle = '#f59e0b';
+            ctx.fillRect(gx + trolley, gy - 5, 12, 7);
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(gx + trolley + 6, gy + 2);
+            ctx.lineTo(gx + trolley + 6, shipY - 8);
+            ctx.stroke();
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillRect(gx + trolley - 7, shipY - 10, 26, 5);
+            ctx.restore();
+            placeTag(gx + 84, gy - 6, 'BERTH 78 (ACTIVE DISCHARGE)', '#10b981', false);
+            placeTag(shipX + 112, shipY - 2, 'WAN HAI 315', '#6ee7b7', false);
 
             // Qianzhen Cold Hub
             const hubX = w - 188;
-            const hubY = 118;
+            const hubY = 96;
             ctx.save();
-            ctx.fillStyle = 'rgba(14, 165, 233, 0.08)';
-            ctx.strokeStyle = 'rgba(56, 189, 248, 0.42)';
-            ctx.lineWidth = 1;
+            ctx.fillStyle = 'rgba(14, 165, 233, 0.14)';
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.85)';
+            ctx.lineWidth = 1.6;
+            ctx.shadowColor = 'rgba(56, 189, 248, 0.5)';
+            ctx.shadowBlur = 10;
             ctx.beginPath();
             if (ctx.roundRect) ctx.roundRect(hubX, hubY, 168, 168, 5);
             else ctx.rect(hubX, hubY, 168, 168);
@@ -1913,8 +2330,10 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
             ctx.stroke();
             for (let r = 0; r < 3; r++) {
                 for (let c = 0; c < 3; c++) {
-                    ctx.fillStyle = 'rgba(56, 189, 248, 0.10)';
-                    ctx.strokeStyle = 'rgba(56, 189, 248, 0.22)';
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = 'rgba(56, 189, 248, 0.18)';
+                    ctx.strokeStyle = 'rgba(125, 211, 252, 0.45)';
+                    ctx.lineWidth = 1;
                     const bx = hubX + 12 + c * 50;
                     const by = hubY + 28 + r * 42;
                     ctx.beginPath();
@@ -1925,22 +2344,44 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
                 }
             }
             ctx.restore();
-            placeTag(hubX + 8, hubY + 6, 'QIANZHEN CFS', '#7dd3fc', false);
+            placeTag(hubX + 8, hubY + 6, 'QIANZHEN COLD HUB', '#7dd3fc', false);
 
             // Harbor tunnel
             ctx.save();
-            ctx.strokeStyle = state.scenario === 'stall' ? 'rgba(244, 63, 94, 0.85)' : 'rgba(16, 185, 129, 0.45)';
-            ctx.lineWidth = 3;
+            const stall = state.scenario === 'stall';
+            const tA = { x: t5x + t5.bankW + 8, y: t5y + t5.bankH * 0.45 };
+            const tB = { x: hubX - 8, y: 210 };
+            const tLen = Math.hypot(tB.x - tA.x, tB.y - tA.y) || 1;
+            const nx = -(tB.y - tA.y) / tLen * 4;
+            const ny = (tB.x - tA.x) / tLen * 4;
+            ctx.strokeStyle = stall ? 'rgba(244, 63, 94, 0.9)' : 'rgba(16, 185, 129, 0.7)';
+            ctx.lineWidth = 2;
             ctx.setLineDash([7, 6]);
-            ctx.beginPath();
-            ctx.moveTo(t5x + t5.bankW + 8, t5y + t5.bankH * 0.45);
-            ctx.lineTo(hubX - 8, 210);
-            ctx.stroke();
+            [-1, 1].forEach(function (side) {
+                ctx.beginPath();
+                ctx.moveTo(tA.x + nx * side, tA.y + ny * side);
+                ctx.lineTo(tB.x + nx * side, tB.y + ny * side);
+                ctx.stroke();
+            });
             ctx.setLineDash([]);
+            if (!reduceMotion) {
+                ctx.fillStyle = stall ? '#fb7185' : '#34d399';
+                ctx.shadowColor = ctx.fillStyle;
+                ctx.shadowBlur = 10;
+                for (let k = 0; k < 3; k++) {
+                    const f = (((now / (stall ? 4000 : 1600)) + k / 3) % 1);
+                    [-1, 1].forEach(function (side) {
+                        const ff = side > 0 ? f : 1 - f;
+                        ctx.beginPath();
+                        ctx.arc(tA.x + (tB.x - tA.x) * ff + nx * side, tA.y + (tB.y - tA.y) * ff + ny * side, 2.4, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                }
+            }
             ctx.restore();
             placeTag(
-                w * 0.46,
-                188,
+                w * 0.52,
+                200,
                 state.scenario === 'stall' ? 'TUNNEL STALL 90M' : 'HARBOR TUNNEL 38M',
                 state.scenario === 'stall' ? '#fb7185' : '#94a3b8',
                 false
@@ -1948,7 +2389,7 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
 
             if (state.scenario === 'safety') {
                 const px = w * 0.40;
-                const py = h - 72;
+                const py = h - 86;
                 ctx.save();
                 ctx.fillStyle = 'rgba(245, 158, 11, 0.14)';
                 ctx.strokeStyle = 'rgba(245, 158, 11, 0.65)';
@@ -1962,21 +2403,50 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
             }
 
             state.trucks.forEach((t, idx) => {
-                t.x += t.vx;
-                t.y += t.vy;
+                if (t.state === 'moving') {
+                    t.x += t.vx;
+                    t.y += t.vy;
+                    if (t.x < 48 || t.x > w - 48) t.vx *= -1;
+                    if (t.y < 88 || t.y > h - 58) t.vy *= -1;
+                    t.trail.push({ x: t.x, y: t.y });
+                    if (t.trail.length > 14) t.trail.shift();
+                }
 
-                if (t.x < 40 || t.x > w - 40) t.vx *= -1;
-                if (t.y < 80 || t.y > h - 40) t.vy *= -1;
+                if (t.state === 'moving' && t.trail.length > 1) {
+                    ctx.save();
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    for (let i = 1; i < t.trail.length; i++) {
+                        const a = i / t.trail.length;
+                        ctx.strokeStyle = 'rgba(52, 211, 153,' + (0.12 + a * 0.6) + ')';
+                        ctx.lineWidth = 1 + a * 2.2;
+                        ctx.beginPath();
+                        ctx.moveTo(t.trail[i - 1].x, t.trail[i - 1].y);
+                        ctx.lineTo(t.trail[i].x, t.trail[i].y);
+                        ctx.stroke();
+                    }
+                    ctx.restore();
+                }
 
+                const heading = Math.atan2(t.vy || 0, t.vx || 1);
+                ctx.save();
+                ctx.translate(t.x, t.y);
+                ctx.rotate(t.state === 'moving' ? heading : 0);
                 ctx.fillStyle = t.state === 'docked' ? '#38bdf8' : '#10b981';
-                ctx.beginPath();
-                ctx.arc(t.x, t.y, 3.5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+                ctx.shadowColor = ctx.fillStyle;
+                ctx.shadowBlur = 10;
+                ctx.strokeStyle = 'rgba(255,255,255,0.6)';
                 ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(9, 0);
+                ctx.lineTo(-6, -4.6);
+                ctx.lineTo(-3.6, 0);
+                ctx.lineTo(-6, 4.6);
+                ctx.closePath();
+                ctx.fill();
                 ctx.stroke();
+                ctx.restore();
 
-                // Show tags that can be placed without collision; prefer every other mover
                 const show = t.state === 'docked' || idx % 2 === 0;
                 if (show) {
                     placeTag(t.x, t.y, t.id, t.state === 'docked' ? '#7dd3fc' : '#a7f3d0', idx % 3 === 0);
@@ -2338,6 +2808,151 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
             document.body.appendChild(downloadAnchor);
             downloadAnchor.click();
             downloadAnchor.remove();
+        }
+
+        // Auditory Decibel Shock Demo — Web Audio API (no samples, $0)
+        let audioShockTimer = null;
+        let audioShockRaf = null;
+        function playAuditoryShock() {
+            const overlay = document.getElementById('audioShockOverlay');
+            const badge = document.getElementById('dbBadge');
+            const dbValue = document.getElementById('dbValue');
+            const dbCaption = document.getElementById('dbCaption');
+            const headerBtn = document.getElementById('btnAudioShock');
+            const sceneBtn = document.getElementById('btnAudioShockScenario');
+
+            if (audioShockTimer) { clearTimeout(audioShockTimer); audioShockTimer = null; }
+            if (audioShockRaf) { cancelAnimationFrame(audioShockRaf); audioShockRaf = null; }
+            if (state.audioCtx) {
+                try { state.audioCtx.close(); } catch (e) {}
+                state.audioCtx = null;
+            }
+
+            overlay.classList.add('live');
+            badge.classList.remove('quiet');
+            badge.classList.add('loud');
+            dbValue.textContent = '92 dB';
+            dbCaption.textContent = '極度吵雜 / 聽力受損';
+            headerBtn.classList.add('playing');
+            sceneBtn.classList.add('playing');
+
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) {
+                dbCaption.textContent = '此瀏覽器不支援 Web Audio API';
+                return;
+            }
+            const actx = new AC();
+            state.audioCtx = actx;
+            const now = actx.currentTime;
+            const dur = 3.5;
+
+            const bufferSize = Math.floor(actx.sampleRate * dur);
+            const buffer = actx.createBuffer(1, bufferSize, actx.sampleRate);
+            const data = buffer.getChannelData(0);
+            let last = 0;
+            for (let i = 0; i < bufferSize; i++) {
+                const white = Math.random() * 2 - 1;
+                last = (last + 0.02 * white) / 1.02;
+                const clatter = ((i % 480) < 38) ? (Math.random() * 0.55) : 0;
+                data[i] = last * 5.2 + clatter * 0.35;
+            }
+            const noise = actx.createBufferSource();
+            noise.buffer = buffer;
+
+            const hp = actx.createBiquadFilter();
+            hp.type = 'highpass';
+            hp.frequency.value = 32;
+            const lp = actx.createBiquadFilter();
+            lp.type = 'lowpass';
+            lp.frequency.value = 190;
+            lp.Q.value = 0.85;
+            const peak = actx.createBiquadFilter();
+            peak.type = 'peaking';
+            peak.frequency.value = 78;
+            peak.Q.value = 1.1;
+            peak.gain.value = 7;
+
+            const osc1 = actx.createOscillator();
+            osc1.type = 'sawtooth';
+            osc1.frequency.value = 46;
+            const osc2 = actx.createOscillator();
+            osc2.type = 'square';
+            osc2.frequency.value = 92;
+            const osc3 = actx.createOscillator();
+            osc3.type = 'triangle';
+            osc3.frequency.value = 23;
+
+            const oscGain = actx.createGain();
+            oscGain.gain.value = 0.16;
+            const noiseGain = actx.createGain();
+            noiseGain.gain.value = 0.52;
+            const master = actx.createGain();
+            master.gain.setValueAtTime(0.001, now);
+            master.gain.exponentialRampToValueAtTime(0.9, now + 0.12);
+            master.gain.setValueAtTime(0.9, now + dur - 0.04);
+            master.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+
+            const lfo = actx.createOscillator();
+            lfo.frequency.value = 8.4;
+            const lfoGain = actx.createGain();
+            lfoGain.gain.value = 0.18;
+            lfo.connect(lfoGain);
+            lfoGain.connect(noiseGain.gain);
+
+            noise.connect(hp);
+            hp.connect(lp);
+            lp.connect(peak);
+            peak.connect(noiseGain);
+            noiseGain.connect(master);
+            osc1.connect(oscGain);
+            osc2.connect(oscGain);
+            osc3.connect(oscGain);
+            oscGain.connect(master);
+            master.connect(actx.destination);
+
+            if (actx.state === 'suspended') actx.resume();
+            noise.start(now);
+            osc1.start(now);
+            osc2.start(now);
+            osc3.start(now);
+            lfo.start(now);
+            noise.stop(now + dur);
+            osc1.stop(now + dur);
+            osc2.stop(now + dur);
+            osc3.stop(now + dur);
+            lfo.stop(now + dur);
+
+            audioShockTimer = setTimeout(function () {
+                try { actx.close(); } catch (e) {}
+                state.audioCtx = null;
+                badge.classList.remove('loud');
+                badge.classList.add('quiet');
+                headerBtn.classList.remove('playing');
+                sceneBtn.classList.remove('playing');
+                const start = performance.now();
+                const from = 92;
+                const to = 42;
+                const tick = function (ts) {
+                    const p = Math.min(1, (ts - start) / 380);
+                    const eased = 1 - Math.pow(1 - p, 3);
+                    dbValue.textContent = Math.round(from + (to - from) * eased) + ' dB';
+                    if (p < 1) {
+                        audioShockRaf = requestAnimationFrame(tick);
+                    } else {
+                        dbValue.textContent = '42 dB';
+                        dbCaption.textContent = '純電寧靜 / 司機尊嚴';
+                        addEvent('[AUDIO] 聽覺震撼對比完成：92 dB 柴油發電機 → 42 dB 純電靜音', false, false);
+                        audioShockTimer = setTimeout(function () {
+                            overlay.classList.remove('live');
+                            badge.classList.remove('quiet');
+                            badge.classList.add('loud');
+                            dbValue.textContent = '92 dB';
+                            dbCaption.textContent = '極度吵雜 / 聽力受損';
+                        }, 3800);
+                    }
+                };
+                audioShockRaf = requestAnimationFrame(tick);
+            }, 3500);
         }
 
         // Init App

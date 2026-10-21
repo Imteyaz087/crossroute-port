@@ -921,10 +921,11 @@
                 </div>
             </div>
 
-            <!-- Feed Tabs: Events vs CAN-bus Stream -->
+            <!-- Feed Tabs: Events vs CAN-bus Stream vs ROI Calculator -->
             <div class="tab-bar">
-                <button class="tab-btn active" id="tabBtnEvents" onclick="switchTab('events')">📡 即時事件串流 (CPT & TDX)</button>
-                <button class="tab-btn" id="tabBtnCan" onclick="switchTab('can')">⚡ 車載 CAN-bus J1939 原始封包 (Live Telemetry)</button>
+                <button class="tab-btn active" id="tabBtnEvents" onclick="switchTab('events')">📡 即時事件串流 (CPT/TDX)</button>
+                <button class="tab-btn" id="tabBtnCan" onclick="switchTab('can')">⚡ 車載 CAN-bus J1939 數據流</button>
+                <button class="tab-btn" id="tabBtnRoi" onclick="switchTab('roi')" style="color: var(--cyber-emerald); font-weight: 700;">💰 車隊投資報酬試算 (B2B ROI)</button>
             </div>
 
             <div class="event-feed" id="eventFeed">
@@ -933,6 +934,49 @@
 
             <div class="can-feed" id="canFeed" style="display: none;">
                 <!-- Injected via JS -->
+            </div>
+
+            <div class="roi-feed" id="roiFeed" style="display: none; flex-direction: column; gap: 14px; background: rgba(0,0,0,0.3); padding: 14px; border-radius: 8px; border: 1px solid var(--border-subtle);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 13px; font-weight: 700; color: #ffffff;">車隊規模與財務回本試算 (Commercial Payback Engine)</span>
+                    <span style="font-size: 10px; color: var(--cyber-emerald); font-family: var(--font-mono);">PAID PILOT READY</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
+                            <span style="color: var(--text-secondary);">營運車隊規模 (輛):</span>
+                            <span id="roiTrucksVal" style="font-family: var(--font-mono); color: var(--cyber-emerald); font-weight: 700;">20 輛</span>
+                        </div>
+                        <input type="range" id="roiTrucks" min="5" max="100" step="5" value="20" oninput="updateRoiCalc()" style="width: 100%;">
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
+                            <span style="color: var(--text-secondary);">每車每日趟次:</span>
+                            <span id="roiTripsVal" style="font-family: var(--font-mono); color: var(--cyber-emerald); font-weight: 700;">3 趟/日</span>
+                        </div>
+                        <input type="range" id="roiTrips" min="1" max="6" step="1" value="3" oninput="updateRoiCalc()" style="width: 100%;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 6px;">
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); padding: 10px; border-radius: 6px; text-align: center;">
+                        <div style="font-size: 10px; color: var(--text-secondary);">每月省下發電機與柴油</div>
+                        <div id="roiGrossSavings" style="font-size: 16px; font-weight: 800; font-family: var(--font-mono); color: #ffffff; margin-top: 4px;">NT$ 2,415,000</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); padding: 10px; border-radius: 6px; text-align: center;">
+                        <div style="font-size: 10px; color: var(--text-secondary);">CrossRoute 平台費用</div>
+                        <div id="roiPlatformCost" style="font-size: 16px; font-weight: 800; font-family: var(--font-mono); color: var(--text-secondary); margin-top: 4px;">NT$ 36,000</div>
+                    </div>
+                    <div style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.4); padding: 10px; border-radius: 6px; text-align: center;">
+                        <div style="font-size: 10px; color: var(--cyber-emerald); font-weight: 700;">車隊實質淨增利潤</div>
+                        <div id="roiNetProfit" style="font-size: 17px; font-weight: 900; font-family: var(--font-mono); color: var(--cyber-emerald); margin-top: 4px;">+NT$ 2,379,000/月</div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(6,182,212,0.06); border: 1px dashed rgba(6,182,212,0.3); padding: 8px 12px; border-radius: 6px;">
+                    <span style="font-size: 11px; color: var(--electric-cyan);">硬體無損快裝回本期 (BOM Payback): <strong id="roiPaybackDays" style="font-family: var(--font-mono);">1.8 天</strong></span>
+                    <a href="CrossRoute_90Day_Commercial_Pilot_Agreement.pdf" target="_blank" style="font-size: 11px; color: var(--cyber-emerald); text-decoration: underline; font-weight: 700;">📄 檢視 90天企業先導驗證合約 (PDF)</a>
+                </div>
             </div>
         </section>
 
@@ -1131,8 +1175,39 @@
             state.activeTab = tab;
             document.getElementById('tabBtnEvents').classList.toggle('active', tab === 'events');
             document.getElementById('tabBtnCan').classList.toggle('active', tab === 'can');
+            document.getElementById('tabBtnRoi').classList.toggle('active', tab === 'roi');
+
             document.getElementById('eventFeed').style.display = tab === 'events' ? 'flex' : 'none';
             document.getElementById('canFeed').style.display = tab === 'can' ? 'flex' : 'none';
+            document.getElementById('roiFeed').style.display = tab === 'roi' ? 'flex' : 'none';
+
+            if (tab === 'roi') updateRoiCalc();
+        }
+
+        function updateRoiCalc() {
+            const trucks = parseInt(document.getElementById('roiTrucks').value);
+            const trips = parseInt(document.getElementById('roiTrips').value);
+
+            document.getElementById('roiTrucksVal').innerText = trucks + " 輛";
+            document.getElementById('roiTripsVal').innerText = trips + " 趟/日";
+
+            const workDaysPerMonth = 25;
+            const savingsPerTrip = 1610; // NT$ 1,610 saved per zero-genset trip
+            const platformFeePerTruck = 1800; // NT$ 1,800/truck/mo
+            const hardwareBOMPerTruck = 4800; // NT$ 4,800 per plug-and-play kit
+
+            const totalMonthlyTrips = trucks * trips * workDaysPerMonth;
+            const monthlyGrossSavings = totalMonthlyTrips * savingsPerTrip;
+            const monthlyPlatformFee = trucks * platformFeePerTruck;
+            const monthlyNetProfit = monthlyGrossSavings - monthlyPlatformFee;
+
+            const dailyNetProfit = monthlyNetProfit / workDaysPerMonth;
+            const paybackDays = (trucks * hardwareBOMPerTruck) / Math.max(1, dailyNetProfit);
+
+            document.getElementById('roiGrossSavings').innerText = "NT$ " + monthlyGrossSavings.toLocaleString();
+            document.getElementById('roiPlatformCost').innerText = "NT$ " + monthlyPlatformFee.toLocaleString();
+            document.getElementById('roiNetProfit').innerText = "+NT$ " + monthlyNetProfit.toLocaleString() + "/月";
+            document.getElementById('roiPaybackDays').innerText = paybackDays.toFixed(1) + " 天";
         }
 
         // Live Open-Meteo Weather Fetching

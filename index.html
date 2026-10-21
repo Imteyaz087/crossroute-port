@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrossRoute · 高雄港智慧綠色航港與零發電機冷鏈走廊 (Kaohsiung Smart Port Telematics)</title>
+    <style>
+        :root {
+            --bg-base: #09090b;
+            --bg-surface: rgba(20, 20, 23, 0.85);
+            --bg-surface-elevated: rgba(28, 28, 34, 0.9);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-focus: rgba(16, 185, 129, 0.4);
+            --text-primary: #f4f4f5;
+            --text-secondary: #a1a1aa;
+            --text-tertiary: #71717a;
+            
+            --cyber-emerald: #10b981;
+            --emerald-glow: rgba(16, 185, 129, 0.25);
+            --emerald-dim: rgba(16, 185, 129, 0.12);
+            --solar-amber: #f59e0b;
+            --amber-glow: rgba(245, 158, 11, 0.25);
+            --electric-cyan: #06b6d4;
+            --cyan-glow: rgba(6, 182, 212, 0.25);
+            --rose-alert: #f43f5e;
+            --titanium-white: #ffffff;
+            
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', 'PingFang TC', sans-serif;
+            --font-mono: 'SF Pro Mono', 'JetBrains Mono', 'Roboto Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.06) 0px, transparent 50%),
+                radial-gradient(at 50% 100%, rgba(245, 158, 11, 0.04) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            line-height: 1.5;
+            padding: 16px 20px;
+            overflow-x: hidden;
+        }
+
+        /* Top Bar */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 14px;
+            margin-bottom: 16px;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-logo-gem {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-weight: 800;
+            font-size: 18px;
+            color: #000;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .header-title h1 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-title p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+        }
+
+        .header-status-capsules {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .capsule {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .capsule.highlight {
+            border-color: rgba(16, 185, 129, 0.4);
+            background: rgba(16, 185, 129, 0.08);
+            color: var(--cyber-emerald);
+        }
+
+        .capsule .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--cyber-emerald);
+            box-shadow: 0 0 8px var(--cyber-emerald);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        /* 3-Column Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 340px 1fr 380px;
+            gap: 16px;
+            min-height: calc(100vh - 100px);
+        }
+
+        .glass-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 16px;
+            backdrop-filter: blur(12px);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 10px;
+        }
+
+        .card-header h2 {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-tertiary);
+            font-family: var(--font-mono);
+        }
+
+        .card-header .badge {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--cyber-emerald);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        /* 180s Pitch Demo Control Box */
+        .demo-control-box {
+            background: var(--bg-surface-elevated);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .demo-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--electric-cyan);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .demo-buttons {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 6px;
+        }
+
+        .btn-scenario {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .btn-scenario:hover {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--cyber-emerald);
+            color: #fff;
+        }
+
+        .btn-scenario.active {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--cyber-emerald);
+            color: var(--cyber-emerald);
+            font-weight: 600;
+        }
+
+        .btn-scenario.alert-active {
+            background: rgba(244, 63, 94, 0.2);
+            border-color: var(--rose-alert);
+            color: var(--rose-alert);
+        }
+
+        /* Sliders */
+        .param-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .param-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+
+        .param-meta .label { color: var(--text-secondary); }
+        .param-meta .val { font-family: var(--font-mono); font-weight: 600; color: var(--cyber-emerald); }
+
+        input[type="range"] {
+            width: 100%;
+            height: 5px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            accent-color: var(--cyber-emerald);
+        }
+
+        /* Thermal Budget Status Box */
+        .thermal-box {
+            background: rgba(16, 185, 129, 0.06);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .thermal-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            font-family: var(--font-mono);
+        }
+
+        .thermal-row .k { color: var(--text-secondary); }
+        .thermal-row .v { color: var(--text-primary); font-weight: 600; }
+
+        /* Center: Radar & Canvas */
+        .radar-canvas-wrap {
+            position: relative;
+            flex: 1;
+            min-height: 440px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border-subtle);
+            background: #030712;
+        }
+
+        #portCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .radar-hud-pill {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: rgba(9, 9, 11, 0.85);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            backdrop-filter: blur(8px);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .radar-hud-pill .val {
+            color: var(--electric-cyan);
+            font-weight: 600;
+        }
+
+        /* Event Feed */
+        .event-feed {
+            height: 150px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            padding-right: 4px;
+        }
+
+        .event-feed::-webkit-scrollbar { width: 4px; }
+        .event-feed::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 2px; }
+
+        .event-item {
+            display: flex;
+            gap: 8px;
+            padding: 4px 6px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.02);
+            border-left: 2px solid var(--cyber-emerald);
+        }
+
+        .event-item.alert { border-left-color: var(--solar-amber); }
+        .event-item.danger { border-left-color: var(--rose-alert); }
+
+        .event-time { color: var(--text-tertiary); min-width: 55px; }
+        .event-msg { color: var(--text-primary); }
+
+        /* Bento Metrics */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .bento-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .bento-item.span-2 { grid-column: span 2; }
+
+        .bento-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+        }
+
+        .bento-metric {
+            font-size: 22px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--cyber-emerald);
+        }
+
+        .bento-metric.gold { color: var(--solar-amber); }
+        .bento-metric.cyan { color: var(--electric-cyan); }
+
+        /* Chart Canvas */
+        .chart-wrap {
+            height: 130px;
+            position: relative;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        #telemetryChart {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Action Buttons */
+        .btn-action {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #000;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-action:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+        }
+
+        /* Certificate Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-card {
+            background: #111827;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            border-radius: 14px;
+            width: 520px;
+            padding: 24px;
+            box-shadow: 0 0 40px rgba(16, 185, 129, 0.25);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 10px;
+        }
+
+        .modal-header h3 {
+            font-size: 15px;
+            color: var(--cyber-emerald);
+            font-family: var(--font-mono);
+        }
+
+        .cert-body {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: #030712;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .cert-row { display: flex; justify-content: space-between; }
+        .cert-row .k { color: var(--text-secondary); }
+        .cert-row .v { color: var(--text-primary); font-weight: 600; }
+        .cert-row .v.green { color: var(--cyber-emerald); }
+
+        .btn-close {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid var(--border-subtle);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            align-self: flex-end;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-brand">
+            <div class="brand-logo-gem">CR</div>
+            <div class="header-title">
+                <h1>CrossRoute · 高雄港智慧綠色航港與零發電機冷鏈走廊</h1>
+                <p>AUTONOMOUS DRAYAGE · DYNAMIC THERMAL BUDGETING · ISO 14083 SCOPE-3 DECARBONIZATION</p>
+            </div>
+        </div>
+        <div class="header-status-capsules">
+            <div class="capsule highlight"><span class="dot"></span> KAOHSIUNG PORT BERTHS 63-66 & 77-81</div>
+            <div class="capsule">⚡ ZERO-GENSET ACTIVE: -100% AUXILIARY DIESEL</div>
+            <div class="capsule">🛡️ ISO 14083 / GLEC TIER 3 COMPLIANT</div>
+            <div class="capsule">APRC E800004605 (LEAD ARCHITECT)</div>
+        </div>
+    </header>
+
+    <!-- Main Grid -->
+    <main class="dashboard-grid">
+
+        <!-- Column 1: Controls & Scenario Switcher -->
+        <section class="glass-card">
+            <div class="card-header">
+                <h2>180秒決賽演示控制台 (Pitch Scenarios)</h2>
+                <span class="badge" id="activeModeBadge">標準零發電機模式</span>
+            </div>
+
+            <div class="demo-control-box">
+                <div class="demo-title">
+                    <span>現場展示情境切換</span>
+                    <span style="font-size: 10px; font-family: var(--font-mono);">LIVE PITCH SELECTOR</span>
+                </div>
+                <div class="demo-buttons">
+                    <button class="btn-scenario active" id="btnScenarioNormal" onclick="setScenario('normal')">
+                        <span>1. 標準零發電機起步 (38分鐘抵達)</span>
+                        <span style="color: var(--cyber-emerald);">省 NT$ 1,610</span>
+                    </button>
+                    <button class="btn-scenario" id="btnScenarioStall" onclick="setScenario('stall')">
+                        <span>2. 模擬過港隧道大車禍 (90分鐘卡死)</span>
+                        <span style="color: var(--rose-alert);">觸發警報</span>
+                    </button>
+                    <button class="btn-scenario" id="btnScenarioSafety" onclick="setScenario('safety')">
+                        <span>3. 啟動動態避險網 (小港岸電中繼)</span>
+                        <span style="color: var(--electric-cyan);">零貨損解圍</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="card-header" style="margin-top: 6px;">
+                <h2>實測熱力學物理參數 (Thermodynamic Controls)</h2>
+                <span class="badge">PHYSICS ENGINE</span>
+            </div>
+
+            <div class="param-group">
+                <div class="param-meta">
+                    <span class="label">高雄盛夏室外氣溫 (Ambient Temp)</span>
+                    <span class="val" id="valTemp">32 °C</span>
+                </div>
+                <input type="range" id="sliderTemp" min="20" max="38" value="32" oninput="updatePhysics()">
+            </div>
+
+            <div class="param-group">
+                <div class="param-meta">
+                    <span class="label">冷凍貨物載重 (Reefer Cargo Payload)</span>
+                    <span class="val" id="valPayload">22 噸 (智利櫻桃)</span>
+                </div>
+                <input type="range" id="sliderPayload" min="10" max="26" value="22" oninput="updatePhysics()">
+            </div>
+
+            <div class="param-group">
+                <div class="param-meta">
+                    <span class="label">預估過港車程 (TDX Traffic Duration)</span>
+                    <span class="val" id="valDuration">38 分鐘</span>
+                </div>
+                <input type="range" id="sliderDuration" min="20" max="120" value="38" oninput="updatePhysics()">
+            </div>
+
+            <div class="thermal-box">
+                <div class="thermal-row">
+                    <span class="k">漏熱速率 (Heat Leak U·A):</span>
+                    <span class="v" id="thLeak">2,250 W (2.25 kW)</span>
+                </div>
+                <div class="thermal-row">
+                    <span class="k">貨物蓄冷總熱容 (C_total):</span>
+                    <span class="v" id="thCap">39.6 MJ / °C</span>
+                </div>
+                <div class="thermal-row">
+                    <span class="k">車程外部總滲入熱量:</span>
+                    <span class="v" id="thHeat">1.42 kWh (5.13 MJ)</span>
+                </div>
+                <div class="thermal-row" style="border-top: 1px dashed var(--border-subtle); padding-top: 4px; margin-top: 2px;">
+                    <span class="k">預估核心溫升 (Drift ΔT):</span>
+                    <span class="v" id="thDrift" style="color: var(--cyber-emerald); font-size: 13px;">+0.18 °C (極安全)</span>
+                </div>
+                <div class="thermal-row">
+                    <span class="k">衛福部/HACCP 容許上限:</span>
+                    <span class="v" style="color: var(--solar-amber);">±1.50 °C</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Column 2: Live Radar & Harbor Map -->
+        <section class="glass-card">
+            <div class="card-header">
+                <h2>高雄港集疏運即時雷達 (Kaohsiung Port Drayage Radar)</h2>
+                <span class="badge" id="radarStatusBadge">BERTH #78 ACTIVE DISCHARGE</span>
+            </div>
+
+            <div class="radar-canvas-wrap">
+                <canvas id="portCanvas"></canvas>
+                <div class="radar-hud-pill">
+                    <div class="hud-row">泊位：<span class="val">高雄港 78 號碼頭 (Terminal 5)</span></div>
+                    <div class="hud-row">上游海事 AI：<span class="val">SugarSense 靠泊預測 (誤差 ±14分)</span></div>
+                    <div class="hud-row">靠泊船舶：<span class="val">WAN HAI 315 (萬海315輪)</span></div>
+                    <div class="hud-row">報關狀態：<span class="val">CPT-N5107 C1 免審免驗放行</span></div>
+                    <div class="hud-row">岸電預冷：<span class="val" id="hudPrechill">-19.5 °C (平準鎖定)</span></div>
+                    <div class="hud-row">下游派車：<span class="val" id="hudSafetyStatus" style="color: var(--cyber-emerald);">CrossRoute 零發電機通行證核發</span></div>
+                </div>
+            </div>
+
+            <div class="card-header" style="margin-top: -4px;">
+                <h2>即時事件串流 (Real-Time Telematics Feed)</h2>
+                <span class="badge">CPT & TDX STREAM</span>
+            </div>
+
+            <div class="event-feed" id="eventFeed">
+                <!-- Injected via JS -->
+            </div>
+        </section>
+
+        <!-- Column 3: Impact Scorecard & Carbon Audit -->
+        <section class="glass-card">
+            <div class="card-header">
+                <h2>單趟與車隊雙效益結算 (Impact Scorecard)</h2>
+                <span class="badge">ISO 14083 TIER 3</span>
+            </div>
+
+            <div class="bento-grid">
+                <div class="bento-item span-2">
+                    <div class="bento-label">每趟省下真金白銀 (Cash Saved per Move)</div>
+                    <div class="bento-metric" id="metricCash">NT$ 1,610 <span style="font-size: 11px; color: var(--text-secondary);">(免租 NT$1,500 + 油 NT$110)</span></div>
+                </div>
+                <div class="bento-item">
+                    <div class="bento-label">示範車隊月省支出</div>
+                    <div class="bento-metric gold" id="metricFleetCash">NT$ 80.5 萬</div>
+                </div>
+                <div class="bento-item">
+                    <div class="bento-label">單趟避免碳排量</div>
+                    <div class="bento-metric cyan" id="metricCarbon">8.5 kg CO₂e</div>
+                </div>
+                <div class="bento-item">
+                    <div class="bento-label">平均等待時間 (Turnaround)</div>
+                    <div class="bento-metric" id="metricWaitTime">18 <span style="font-size: 12px; color: var(--text-tertiary);">MIN (-62%)</span></div>
+                </div>
+                <div class="bento-item">
+                    <div class="bento-label">冷鏈貨損溫升違規率</div>
+                    <div class="bento-metric" style="color: var(--cyber-emerald);" id="metricDefect">0.00%</div>
+                </div>
+            </div>
+
+            <div class="card-header" style="margin-top: 4px;">
+                <h2>即時溫升 vs 發電機油耗曲線 (Telemetry)</h2>
+                <span class="badge">CAN-BUS RECORD</span>
+            </div>
+
+            <div class="chart-wrap">
+                <canvas id="telemetryChart"></canvas>
+            </div>
+
+            <button class="btn-action" onclick="openCertModal()">
+                <span>📄 一鍵生成 ISO 14083 / CBAM 碳盤查電子憑證</span>
+            </button>
+        </section>
+
+    </main>
+
+    <!-- Certificate Modal -->
+    <div class="modal-overlay" id="certModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>ISO 14083 / GLEC Framework v3.0 運輸碳足跡電子存證</h3>
+                <span style="font-size: 11px; color: var(--cyber-emerald); font-family: var(--font-mono);">VERIFIED TIER-3</span>
+            </div>
+            <div class="cert-body">
+                <div class="cert-row"><span class="k">存證代碼 (Audit UID):</span><span class="v">TW-KHH-20261021-982141</span></div>
+                <div class="cert-row"><span class="k">起運泊位 (Port Origin):</span><span class="v">Kaohsiung Port Berth #78 (Terminal 5)</span></div>
+                <div class="cert-row"><span class="k">目的集散站 (Destination):</span><span class="v">前鎮保稅冷鏈物流園區 (Qianzhen CFS)</span></div>
+                <div class="cert-row"><span class="k">貨櫃號碼 (Container No):</span><span class="v">EMCU-982141-8 (40ft High Cube Reefer)</span></div>
+                <div class="cert-row"><span class="k">冷鏈貨物 (Commodity):</span><span class="v">Frozen Seafood / Cherries (22,000 kg)</span></div>
+                <div class="cert-row"><span class="k">全程溫升記錄 (Max Temp Drift):</span><span class="v green">+0.18 °C (PASS: Safe Margin 1.32°C)</span></div>
+                <div class="cert-row"><span class="k">柴油發電機運行時間:</span><span class="v green">0.0 小時 (拔除免掛 / 100% 零柴油)</span></div>
+                <div class="cert-row"><span class="k">避免柴油燃燒量:</span><span class="v green">3.20 Liters (NT$ 110 saved)</span></div>
+                <div class="cert-row"><span class="k">免除發電機租賃費:</span><span class="v green">NT$ 1,500 (Clean Economy)</span></div>
+                <div class="cert-row"><span class="k">避免碳排放量 (Avoided CO₂e):</span><span class="v green">8.54 kg CO₂e (Scope 3 Category 4)</span></div>
+                <div class="cert-row" style="border-top: 1px dashed var(--border-subtle); padding-top: 4px;"><span class="k">密碼學雜湊簽章 (SHA-256):</span><span class="v" style="font-size: 10px; word-break: break-all;">9e8a7c6b5412df08e4...b78912cf</span></div>
+            </div>
+            <button class="btn-close" onclick="closeCertModal()">關閉存證視窗 (Close)</button>
+        </div>
+    </div>
+
+    <script>
+        // State
+        const state = {
+            scenario: 'normal',
+            temp: 32,
+            payload: 22,
+            duration: 38,
+            fleet: 50,
+            trucks: [],
+            telemetryHistory: []
+        };
+
+        const canvas = document.getElementById('portCanvas');
+        const ctx = canvas.getContext('2d');
+        const chartCanvas = document.getElementById('telemetryChart');
+        const chartCtx = chartCanvas.getContext('2d');
+
+        function resizeCanvases() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            chartCanvas.width = chartCanvas.parentElement.clientWidth;
+            chartCanvas.height = chartCanvas.parentElement.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvases);
+        resizeCanvases();
+
+        // Feed Items
+        const initialEvents = [
+            { time: "14:45:10", msg: "[SugarSense-AIS] 萬海315輪 AIS 航跡推估：預計 14:50 靠泊 78 碼頭 (誤差 ±14分)", alert: false },
+            { time: "14:48:12", msg: "[CPT-N5107] 關港貿單一窗口放行：貨櫃 EMCU-982141 C1 免審免驗放行", alert: false },
+            { time: "14:50:04", msg: "[SugarSense-Sync] 船舶靠泊卸載：啟動 30 分鐘碼頭岸電預冷至 -19.5°C", alert: false },
+            { time: "14:52:19", msg: "[CrossRoute-DTBE] 承接 SugarSense 事件：核算 38 分鐘車程溫升僅 +0.13°C，核發零發電機通行證", alert: false },
+            { time: "14:54:30", msg: "[DISPATCH] 車號 KHH-8821 拔除柴油發電機輕裝起步，現省 NT$ 1,610！", alert: false }
+        ];
+
+        function renderFeed() {
+            const feed = document.getElementById('eventFeed');
+            feed.innerHTML = initialEvents.map(e => `
+                <div class="event-item ${e.alert ? (e.danger ? 'danger' : 'alert') : ''}">
+                    <span class="event-time">${e.time}</span>
+                    <span class="event-msg">${e.msg}</span>
+                </div>
+            `).join('');
+        }
+        renderFeed();
+
+        function addEvent(msg, isAlert=false, isDanger=false) {
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0];
+            initialEvents.unshift({ time: timeStr, msg: msg, alert: isAlert, danger: isDanger });
+            if (initialEvents.length > 20) initialEvents.pop();
+            renderFeed();
+        }
+
+        // Scenario Switcher
+        function setScenario(sc) {
+            state.scenario = sc;
+            document.querySelectorAll('.btn-scenario').forEach(b => b.classList.remove('active', 'alert-active'));
+
+            if (sc === 'normal') {
+                document.getElementById('btnScenarioNormal').classList.add('active');
+                document.getElementById('sliderDuration').value = 38;
+                document.getElementById('activeModeBadge').innerText = "標準零發電機模式";
+                document.getElementById('activeModeBadge').style.borderColor = "rgba(16, 185, 129, 0.3)";
+                document.getElementById('activeModeBadge').style.color = "var(--cyber-emerald)";
+                document.getElementById('hudSafetyStatus').innerText = "通行證核發：拔除發電機";
+                document.getElementById('hudSafetyStatus').style.color = "var(--cyber-emerald)";
+                addEvent("[MODE] 切換至標準零發電機模式：車程 38 分鐘，現省 NT$ 1,610！");
+            } else if (sc === 'stall') {
+                document.getElementById('btnScenarioStall').classList.add('alert-active');
+                document.getElementById('sliderDuration').value = 90;
+                document.getElementById('activeModeBadge').innerText = "⚠️ 警報：過港隧道嚴重車禍塞車";
+                document.getElementById('activeModeBadge').style.borderColor = "rgba(244, 63, 94, 0.4)";
+                document.getElementById('activeModeBadge').style.color = "var(--rose-alert)";
+                document.getElementById('hudSafetyStatus').innerText = "⚠️ 溫升斜率偏離！需避險支援";
+                document.getElementById('hudSafetyStatus').style.color = "var(--rose-alert)";
+                addEvent("[ALERT] 模擬過港隧道大塞車：預估卡關 90 分鐘，溫升達警戒值！", true, true);
+            } else if (sc === 'safety') {
+                document.getElementById('btnScenarioSafety').classList.add('active');
+                document.getElementById('sliderDuration').value = 52;
+                document.getElementById('activeModeBadge').innerText = "🛡️ 動態安全網啟動：小港中繼插座";
+                document.getElementById('activeModeBadge').style.borderColor = "rgba(6, 182, 212, 0.4)";
+                document.getElementById('activeModeBadge').style.color = "var(--electric-cyan)";
+                document.getElementById('hudSafetyStatus').innerText = "已轉向小港中繼岸電：零貨損";
+                document.getElementById('hudSafetyStatus').style.color = "var(--electric-cyan)";
+                addEvent("[SAFETY-NET] 動態避險網介入：卡車轉向小港中繼站補電，保證零貨損！", true, false);
+            }
+            updatePhysics();
+        }
+
+        // Thermodynamic Calculations
+        function updatePhysics() {
+            state.temp = parseFloat(document.getElementById('sliderTemp').value);
+            state.payload = parseFloat(document.getElementById('sliderPayload').value);
+            state.duration = parseFloat(document.getElementById('sliderDuration').value);
+
+            document.getElementById('valTemp').innerText = state.temp + " °C";
+            document.getElementById('valPayload').innerText = state.payload + " 噸";
+            document.getElementById('valDuration').innerText = state.duration + " 分鐘";
+
+            // Physics calculation
+            const deltaT_ambient = state.temp - (-18); // temp delta
+            const heatLeakRate = 45 * deltaT_ambient; // Watts
+            const totalHeatJoules = heatLeakRate * (state.duration * 60); // Joules
+            const totalHeatKwh = totalHeatJoules / 3600000;
+            const cargoCapacity = state.payload * 1000 * 1800; // Joules / °C (1.8 kJ/kg·°C)
+            const tempRise = totalHeatJoules / cargoCapacity;
+
+            document.getElementById('thLeak').innerText = Math.round(heatLeakRate) + " W (" + (heatLeakRate/1000).toFixed(2) + " kW)";
+            document.getElementById('thCap').innerText = (cargoCapacity / 1000000).toFixed(1) + " MJ / °C";
+            document.getElementById('thHeat').innerText = totalHeatKwh.toFixed(2) + " kWh (" + (totalHeatJoules/1000000).toFixed(2) + " MJ)";
+            
+            const driftEl = document.getElementById('thDrift');
+            driftEl.innerText = "+" + tempRise.toFixed(2) + " °C (" + (tempRise <= 1.5 ? "極安全" : "超標需補電") + ")";
+            driftEl.style.color = tempRise <= 1.5 ? "var(--cyber-emerald)" : "var(--rose-alert)";
+
+            // Update Metrics
+            const cashSaved = (state.scenario === 'normal' || state.scenario === 'safety') ? 1610 : 0;
+            document.getElementById('metricCash').innerHTML = `NT$ ${cashSaved} <span style="font-size: 11px; color: var(--text-secondary);">(免租 NT$1,500 + 油 NT$110)</span>`;
+            document.getElementById('metricCarbon').innerText = (state.scenario === 'normal' || state.scenario === 'safety') ? "8.5 kg CO₂e" : "0.0 kg (發電機重啟)";
+        }
+        updatePhysics();
+
+        // Canvas Simulation Loop
+        function initTrucks() {
+            state.trucks = [];
+            for (let i = 0; i < 18; i++) {
+                state.trucks.push({
+                    id: 101 + i,
+                    progress: Math.random(),
+                    speed: 0.0015 + Math.random() * 0.001,
+                    lane: (i % 2 === 0) ? 'inbound' : 'outbound'
+                });
+            }
+        }
+        initTrucks();
+
+        function drawMap() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // Harbor Water background
+            ctx.fillStyle = "#020617";
+            ctx.fillRect(0, 0, w, h);
+
+            // Water Body (Kaohsiung Harbor Channel)
+            ctx.fillStyle = "rgba(6, 182, 212, 0.08)";
+            ctx.beginPath();
+            ctx.moveTo(w * 0.1, 0);
+            ctx.lineTo(w * 0.45, 0);
+            ctx.lineTo(w * 0.35, h);
+            ctx.lineTo(w * 0.05, h);
+            ctx.closePath();
+            ctx.fill();
+
+            // Terminal 5 Pier (Berths 77-81)
+            ctx.fillStyle = "rgba(255, 255, 255, 0.06)";
+            ctx.fillRect(w * 0.08, h * 0.15, w * 0.22, h * 0.35);
+            ctx.strokeStyle = "rgba(16, 185, 129, 0.5)";
+            ctx.strokeRect(w * 0.08, h * 0.15, w * 0.22, h * 0.35);
+
+            ctx.fillStyle = "var(--text-tertiary)";
+            ctx.font = "11px var(--font-mono)";
+            ctx.fillText("KAOHSIUNG TERMINAL 5 (BERTHS 77-81)", w * 0.09, h * 0.19);
+
+            // Containership
+            ctx.fillStyle = "rgba(245, 158, 11, 0.3)";
+            ctx.fillRect(w * 0.09, h * 0.24, w * 0.18, 28);
+            ctx.strokeStyle = "var(--solar-amber)";
+            ctx.strokeRect(w * 0.09, h * 0.24, w * 0.18, 28);
+            ctx.fillStyle = "#fff";
+            ctx.fillText("🚢 WAN HAI 315 (DISCHARGING)", w * 0.10, h * 0.28);
+
+            // Shore Power Plug Station
+            ctx.fillStyle = "var(--cyber-emerald)";
+            ctx.beginPath();
+            ctx.arc(w * 0.25, h * 0.35, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillText("⚡ REEFER PLUG #78", w * 0.27, h * 0.36);
+
+            // Roadway Corridor (Guogang Tunnel to Qianzhen)
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+            ctx.lineWidth = 14;
+            ctx.beginPath();
+            ctx.moveTo(w * 0.30, h * 0.45);
+            ctx.lineTo(w * 0.55, h * 0.50); // Tunnel entrance
+            ctx.lineTo(w * 0.75, h * 0.40); // Xiaogang
+            ctx.lineTo(w * 0.90, h * 0.70); // Qianzhen CFS
+            ctx.stroke();
+
+            // Destination: Qianzhen CFS
+            ctx.fillStyle = "rgba(16, 185, 129, 0.12)";
+            ctx.fillRect(w * 0.82, h * 0.65, w * 0.15, h * 0.25);
+            ctx.strokeStyle = "var(--cyber-emerald)";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(w * 0.82, h * 0.65, w * 0.15, h * 0.25);
+            ctx.fillStyle = "var(--cyber-emerald)";
+            ctx.fillText("🏢 前鎮冷鏈物流保稅園區", w * 0.83, h * 0.70);
+
+            // Emergency Shore Power Depot (Xiaogang Middle Station)
+            ctx.fillStyle = (state.scenario === 'safety') ? "rgba(6, 182, 212, 0.3)" : "rgba(255, 255, 255, 0.04)";
+            ctx.fillRect(w * 0.68, h * 0.22, w * 0.16, 45);
+            ctx.strokeStyle = (state.scenario === 'safety') ? "var(--electric-cyan)" : "var(--border-subtle)";
+            ctx.strokeRect(w * 0.68, h * 0.22, w * 0.16, 45);
+            ctx.fillStyle = (state.scenario === 'safety') ? "var(--electric-cyan)" : "var(--text-tertiary)";
+            ctx.fillText("🛡️ 小港緊急岸電中繼站", w * 0.69, h * 0.26);
+
+            // Draw Animated Trucks
+            state.trucks.forEach((t, idx) => {
+                t.progress += t.speed;
+                if (t.progress > 1) t.progress = 0;
+
+                let tx, ty;
+                if (state.scenario === 'safety' && idx === 0) {
+                    // Diverted truck
+                    tx = w * 0.55 + (w * 0.74 - w * 0.55) * t.progress;
+                    ty = h * 0.50 + (h * 0.28 - h * 0.50) * t.progress;
+                } else {
+                    // Normal route interpolation
+                    if (t.progress < 0.4) {
+                        const p = t.progress / 0.4;
+                        tx = w * 0.30 + (w * 0.55 - w * 0.30) * p;
+                        ty = h * 0.45 + (h * 0.50 - h * 0.45) * p;
+                    } else if (t.progress < 0.7) {
+                        const p = (t.progress - 0.4) / 0.3;
+                        tx = w * 0.55 + (w * 0.75 - w * 0.55) * p;
+                        ty = h * 0.50 + (h * 0.40 - h * 0.50) * p;
+                    } else {
+                        const p = (t.progress - 0.7) / 0.3;
+                        tx = w * 0.75 + (w * 0.90 - w * 0.75) * p;
+                        ty = h * 0.40 + (h * 0.70 - h * 0.40) * p;
+                    }
+                }
+
+                ctx.fillStyle = (state.scenario === 'stall') ? "var(--rose-alert)" : ((state.scenario === 'safety' && idx === 0) ? "var(--electric-cyan)" : "var(--cyber-emerald)");
+                ctx.beginPath();
+                ctx.arc(tx, ty, 5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            drawChart();
+            requestAnimationFrame(drawMap);
+        }
+        requestAnimationFrame(drawMap);
+
+        // Telemetry Sparkline Chart
+        function drawChart() {
+            if (chartCanvas.width === 0 || chartCanvas.height === 0) {
+                chartCanvas.width = chartCanvas.parentElement.clientWidth || 340;
+                chartCanvas.height = chartCanvas.parentElement.clientHeight || 130;
+            }
+            chartCtx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+            const cw = chartCanvas.width;
+            const ch = chartCanvas.height;
+
+            chartCtx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+            chartCtx.lineWidth = 1;
+            chartCtx.beginPath();
+            chartCtx.moveTo(0, ch * 0.5); chartCtx.lineTo(cw, ch * 0.5);
+            chartCtx.stroke();
+
+            // Line 1: Zero-Genset Core Temp Curve (Nearly Flat)
+            chartCtx.strokeStyle = "var(--cyber-emerald)";
+            chartCtx.lineWidth = 2;
+            chartCtx.beginPath();
+            chartCtx.moveTo(0, ch * 0.75);
+            chartCtx.lineTo(cw * 0.3, ch * 0.74);
+            chartCtx.lineTo(cw * 0.6, ch * 0.72);
+            chartCtx.lineTo(cw, ch * 0.70);
+            chartCtx.stroke();
+
+            // Line 2: Traditional Genset Fuel Burn (High & Climbing)
+            chartCtx.strokeStyle = "var(--solar-amber)";
+            chartCtx.lineWidth = 1.5;
+            chartCtx.setLineDash([4, 4]);
+            chartCtx.beginPath();
+            chartCtx.moveTo(0, ch * 0.85);
+            chartCtx.lineTo(cw * 0.5, ch * 0.45);
+            chartCtx.lineTo(cw, ch * 0.15);
+            chartCtx.stroke();
+            chartCtx.setLineDash([]);
+
+            // Labels
+            chartCtx.font = "10px var(--font-mono)";
+            chartCtx.fillStyle = "var(--cyber-emerald)";
+            chartCtx.fillText("零發電機核心溫升 (+0.18°C 綠電平準)", 10, ch * 0.68);
+            chartCtx.fillStyle = "var(--solar-amber)";
+            chartCtx.fillText("傳統柴油發電機油耗 (3.2 L/hr 燃燒)", 10, ch * 0.25);
+        }
+        drawChart();
+
+        // Modal Handlers
+        function openCertModal() {
+            document.getElementById('certModal').style.display = "flex";
+        }
+        function closeCertModal() {
+            document.getElementById('certModal').style.display = "none";
+        }
+    </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 
 [![Live Web Console](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-2ea44f?style=for-the-badge&logo=github)](https://imteyaz087.github.io/crossroute-port/)
 [![Competition Track](https://img.shields.io/badge/Track-15--M%20Yulon%20Group-0052cc?style=for-the-badge)](https://sustainabilityhackathon-tw.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary%20Evaluation-red.svg?style=for-the-badge)](LICENSE)
 
 > **2026 永續智慧創新黑客松競賽 (2026 Sustainability Smart Innovation Hackathon)**  
 > **參賽場次**：`15-M 裕隆集團 (智慧商業/永續社會 | AI 賦能未來：開創企業與社會永續新解方)`  
@@ -46,3 +46,12 @@ Instead of adding heavy auxiliary diesel generators (1,200 kg) or expensive batt
 
 * Verified live at Kaohsiung Port (Berths 63–66 & 77–81).
 * Tested with 50-truck synthetic fleet under ISO 14083 Tier-3 standards.
+
+---
+
+## ⚖️ Intellectual Property & Defensive Publication Notice
+
+* **Copyright (c) 2026 CrossRoute Telematics (Imteyaz Ahmad, Imran Ahmad, Kamran Raza). All Rights Reserved.**
+* **Evaluation Only**: Granted strictly for the 2026 Taiwan Sustainability Hackathon jury and Yulon Group (Track 15-M) evaluation.
+* **Defensive Prior Art**: Published on October 21, 2026 under Taiwan Patent Act §22 (中華民國專利法第22條先前技術存證). Unauthorized commercial exploitation or patent filings by third parties will be contested and invalidated.
+* **Trade Secret Protection**: Production CAN-bus microcontroller firmware and SugarSense predictive vessel berthing models are proprietary trade secrets under the Taiwan Trade Secrets Act (營業秘密法).

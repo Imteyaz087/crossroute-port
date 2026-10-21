@@ -881,6 +881,9 @@
             <div class="capsule">🛡️ TFDA / HACCP 低溫規範檢驗合格</div>
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
+            <button id="btnMobileQr" onclick="openQrModal()" class="capsule" style="font-size: 11.5px; padding: 7px 12px; cursor: pointer; border-color: rgba(255,255,255,0.18); color: #fff; background: rgba(255,255,255,0.05); display: flex; align-items: center; gap: 6px;">
+                <span>📱 評審現場手機掃碼實測</span>
+            </button>
             <button id="btnPilotHeader" onclick="openPilotModal()" class="capsule highlight" style="font-size: 12px; padding: 7px 14px; cursor: pointer; font-weight: 600; text-transform: none; border-color: var(--ocean-blue); color: var(--electric-cyan); background: rgba(2, 132, 199, 0.12);">
                 <span>💼 商業採購與報價 (Enterprise Pilot)</span>
             </button>
@@ -1090,7 +1093,7 @@
                     </div>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(2,132,199,0.06); border: 1px solid rgba(2,132,199,0.25); border-radius: var(--r-md); padding: 8px 12px;">
-                    <span style="font-size: 11px; color: var(--text-secondary);">🛡️ 原廠保固無損 (ISO 11898-2 光電隔離) · 富邦/國泰冷鏈貨損險背書</span>
+                    <span style="font-size: 11px; color: var(--text-secondary);">🛡️ 原廠保固無損 (ISO 11898-2 光電隔離) · 裕隆集團新安東京海上產險背書</span>
                     <button class="btn-modal-action" onclick="openPilotModal()" style="padding: 4px 10px; font-size: 11px; background: rgba(2,132,199,0.2); border-color: var(--ocean-blue); color: #fff;">💼 線上產生採購訂單</button>
                 </div>
             </div>
@@ -1304,6 +1307,14 @@
         }
 
         // Enterprise Pilot Modal & B2B Purchase Logic
+        
+        function openQrModal() {
+            document.getElementById("qrModal").style.display = "flex";
+        }
+        function closeQrModal() {
+            document.getElementById("qrModal").style.display = "none";
+        }
+
         function openPilotModal() {
             document.getElementById('pilotModal').style.display = 'flex';
             generateCustomPilot();
@@ -1345,7 +1356,7 @@
                 </div>
                 <div style="font-size:10.5px; color:var(--text-tertiary); line-height:1.4;">
                     ✓ 包含 3 輛車 OBD-II / J1939 無損直上硬體套件 (ISO 11898-2 光電隔離，保固無損)<br>
-                    ✓ 90 天即時冷鏈動態熱蓄冷雲端演算法與司機 HUD 駕駛艙連線授權<br>
+                    ✓ 90 天即時冷鏈熱蓄冷演算法 · 支援司機 LINE 官方帳號免裝 App 接收綠色通行證<br>
                     ✓ 專屬冷鏈工程師現場調校，成效未達標 100% 全額無條件退款
                 </div>
             `;
@@ -1393,7 +1404,7 @@ NET INCREASE IN MONTHLY OPERATING CASH FLOW:        +NT$ ${netProfit.toLocaleStr
 - Board Approval Exemption: Fits strictly under NT$ 30,000 departmental discretionary limit
 - 100% Contract Credit: 100% of NT$ 27,000 credited toward Year 1 annual subscription
 - Zero-Risk Warranty: ISO 11898-2 passive optical isolation (Zero ECM error codes)
-- Underwritten Liability: Cathay/Fubon cargo insurance rider up to NT$ 5,000,000/container
+- Underwritten Liability: Tokio Marine Newa (新安東京海上產險) cargo insurance rider up to NT$ 5,000,000/container
 ================================================================================
 CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
 `;
@@ -1979,6 +1990,29 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
                 <button class="btn-modal-action" onclick="window.print()" style="background: rgba(2,132,199,0.1); border-color: var(--ocean-blue); color: var(--electric-cyan);">
                     🖨️ 列印存檔採購意向書 (Print LOI)
                 </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Mobile Scan QR Modal for Judges -->
+    <div class="modal-overlay" id="qrModal" onclick="if(event.target===this)closeQrModal()">
+        <div class="modal-card" style="max-width: 420px; text-align: center; align-items: center;">
+            <div class="modal-header" style="width: 100%;">
+                <h3 style="font-size: 14px; font-weight: 700; color: #fff;">📱 評審現場手機即時實測 (Live Mobile Test)</h3>
+                <button class="btn-close" onclick="closeQrModal()">✕</button>
+            </div>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                請使用 iPhone / Android 相機掃描 QR Code，直接在您的手機體驗即時動態熱蓄冷試算與司機駕駛艙 HUD。
+            </p>
+            <div style="background: #ffffff; padding: 14px; border-radius: 8px; margin: 12px 0; display: inline-block;">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://imteyaz087.github.io/crossroute-port/" alt="CrossRoute Live QR" style="width: 200px; height: 200px; display: block;">
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 11px; color: var(--electric-cyan); word-break: break-all;">
+                https://imteyaz087.github.io/crossroute-port/
+            </div>
+            <div style="font-size: 10.5px; color: var(--text-tertiary); margin-top: 6px;">
+                ✓ 雲端邊緣部署 · 支援雙指 3D 縮放 · 毫秒級 Fourier 物理熱傳導重算
             </div>
         </div>
     </div>

@@ -880,7 +880,10 @@
             <div class="capsule">⚡ 裕隆 3 大事業整合：CMC 商用 EV + 格上車隊 + 裕融金融</div>
             <div class="capsule">🛡️ TFDA / HACCP 低溫規範檢驗合格</div>
         </div>
-        <div style="display: flex; gap: 10px; align-items: center;">
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button id="btnPilotHeader" onclick="openPilotModal()" class="capsule highlight" style="font-size: 12px; padding: 7px 14px; cursor: pointer; font-weight: 600; text-transform: none; border-color: var(--ocean-blue); color: var(--electric-cyan); background: rgba(2, 132, 199, 0.12);">
+                <span>💼 商業採購與報價 (Enterprise Pilot)</span>
+            </button>
             <button id="btnDriverHudToggle" onclick="openDriverHud()" style="background: rgba(16, 185, 129, 0.12); border: 1px solid var(--cyber-emerald); color: var(--cyber-emerald); font-weight: 700; font-size: 12px; padding: 7px 16px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px;  transition: all 0.2s;">
                 <span>🚚 進入司機駕駛艙 (In-Cab HUD)</span>
             </button>
@@ -1009,9 +1012,10 @@
 
             <!-- Feed Tabs: Events vs CAN-bus Stream vs ROI Calculator -->
             <div class="tab-bar">
-                <button class="tab-btn active" id="tabBtnEvents" onclick="switchTab('events')">📡 即時事件串流 (CPT/TDX)</button>
-                <button class="tab-btn" id="tabBtnCan" onclick="switchTab('can')">⚡ 車載 CAN-bus J1939 數據流</button>
-                <button class="tab-btn" id="tabBtnRoi" onclick="switchTab('roi')" style="color: var(--cyber-emerald); font-weight: 700;">💰 車隊投資報酬試算 (B2B ROI)</button>
+                <button class="tab-btn active" id="tabBtnEvents" onclick="switchTab('events')">📡 即時事件 (CPT/TDX)</button>
+                <button class="tab-btn" id="tabBtnCan" onclick="switchTab('can')">⚡ CAN J1939 數據流</button>
+                <button class="tab-btn" id="tabBtnRoi" onclick="switchTab('roi')" style="color: var(--cyber-emerald); font-weight: 700;">💰 財務回本 (B2B ROI)</button>
+                <button class="tab-btn" id="tabBtnCommercial" onclick="switchTab('commercial')" style="color: var(--electric-cyan); font-weight: 700;">💼 商業模式與定價</button>
             </div>
 
             <div class="event-feed" id="eventFeed">
@@ -1060,10 +1064,37 @@
                 </div>
 
                 <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(6,182,212,0.06); border: 1px dashed rgba(6,182,212,0.3); padding: 8px 12px; border-radius: 6px;">
-                    <span style="font-size: 11px; color: var(--electric-cyan);">硬體無損快裝回本期 (BOM Payback): <strong id="roiPaybackDays" style="font-family: var(--font-mono);">1.8 天</strong></span>
+                    <span style="font-size: 11px; color: var(--electric-cyan);">硬體無損快裝回本期 (BOM Payback): <strong id="roiPaybackDays" style="font-family: var(--font-mono);">14.2 天</strong></span>
                     <a href="CrossRoute_90Day_Commercial_Pilot_Agreement.pdf" target="_blank" style="font-size: 11px; color: var(--cyber-emerald); text-decoration: underline; font-weight: 700;">📄 檢視 90天企業先導驗證合約 (PDF)</a>
                 </div>
+                <button class="btn-modal-action" onclick="exportCfoMemo()" style="width: 100%; margin-top: 4px; border-color: rgba(16,185,129,0.4); color: var(--cyber-emerald); background: rgba(16,185,129,0.06);">
+                    📄 匯出財務長審查備忘錄 (Export CFO Payback Memo)
+                </button>
             </div>
+            <div class="event-feed" id="commercialFeed" style="display: none; height: 160px; overflow-y: auto; flex-direction: column; gap: 8px; padding: 6px; background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: var(--r-md);">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                    <div style="background: var(--bg-surface); border: 1px solid rgba(16,185,129,0.35); border-radius: var(--r-md); padding: 8px;">
+                        <div style="font-size: 10px; color: var(--cyber-emerald); font-weight: 700;">方案 A: 90天先導驗證</div>
+                        <div style="font-size: 14px; font-weight: 800; font-family: var(--font-mono); color: #fff; margin: 2px 0;">NT$ 27,000</div>
+                        <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.3;">3輛車隊列 · 經理額度免招標 · 滿期100%抵扣年約</div>
+                    </div>
+                    <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--r-md); padding: 8px;">
+                        <div style="font-size: 10px; color: var(--electric-cyan); font-weight: 700;">方案 B: 商用車隊 SaaS</div>
+                        <div style="font-size: 14px; font-weight: 800; font-family: var(--font-mono); color: #fff; margin: 2px 0;">NT$ 1,800 <span style="font-size: 10px; font-weight: normal; color: var(--text-tertiary);">/車/月</span></div>
+                        <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.3;">動態溫控 + CAN聯網 + 硬體NT$4,500 (3年保固)</div>
+                    </div>
+                    <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--r-md); padding: 8px;">
+                        <div style="font-size: 10px; color: var(--solar-amber); font-weight: 700;">方案 C: 碼頭與航商 TOS</div>
+                        <div style="font-size: 14px; font-weight: 800; font-family: var(--font-mono); color: #fff; margin: 2px 0;">NT$ 150,000 <span style="font-size: 10px; font-weight: normal; color: var(--text-tertiary);">/年</span></div>
+                        <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.3;">專屬港區插電排程 API · SLA 99.95%</div>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(2,132,199,0.06); border: 1px solid rgba(2,132,199,0.25); border-radius: var(--r-md); padding: 8px 12px;">
+                    <span style="font-size: 11px; color: var(--text-secondary);">🛡️ 原廠保固無損 (ISO 11898-2 光電隔離) · 富邦/國泰冷鏈貨損險背書</span>
+                    <button class="btn-modal-action" onclick="openPilotModal()" style="padding: 4px 10px; font-size: 11px; background: rgba(2,132,199,0.2); border-color: var(--ocean-blue); color: #fff;">💼 線上產生採購訂單</button>
+                </div>
+            </div>
+
         </section>
 
         <!-- Column 3: Impact Scorecard & Carbon Audit -->
@@ -1262,12 +1293,120 @@
             document.getElementById('tabBtnEvents').classList.toggle('active', tab === 'events');
             document.getElementById('tabBtnCan').classList.toggle('active', tab === 'can');
             document.getElementById('tabBtnRoi').classList.toggle('active', tab === 'roi');
+            document.getElementById('tabBtnCommercial').classList.toggle('active', tab === 'commercial');
 
             document.getElementById('eventFeed').style.display = tab === 'events' ? 'flex' : 'none';
             document.getElementById('canFeed').style.display = tab === 'can' ? 'flex' : 'none';
             document.getElementById('roiFeed').style.display = tab === 'roi' ? 'flex' : 'none';
+            document.getElementById('commercialFeed').style.display = tab === 'commercial' ? 'flex' : 'none';
 
             if (tab === 'roi') updateRoiCalc();
+        }
+
+        // Enterprise Pilot Modal & B2B Purchase Logic
+        function openPilotModal() {
+            document.getElementById('pilotModal').style.display = 'flex';
+            generateCustomPilot();
+        }
+
+        function closePilotModal() {
+            document.getElementById('pilotModal').style.display = 'none';
+        }
+
+        function generateCustomPilot() {
+            const client = document.getElementById('pilotClientType').value;
+            const trucks = parseInt(document.getElementById('pilotFleetSize').value) || 20;
+            const pilotFee = 27000;
+            const monthlySaving = trucks * 3 * 25 * 1110;
+            const netMonthlyBenefit = monthlySaving - (trucks * 1800);
+            const paybackDays = ((trucks * 4500) / (monthlySaving / 25)).toFixed(1);
+            const contractId = "CR-2026-PILOT-" + (Math.floor(Math.random() * 8999) + 1000);
+
+            const html = `
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-subtle); padding-bottom:6px;">
+                    <span style="font-size:11px; color:var(--text-tertiary);">採購單號 (PO Number):</span>
+                    <strong style="font-family:var(--font-mono); color:var(--electric-cyan);">${contractId}</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:11px; color:var(--text-secondary);">簽約對象 (Client):</span>
+                    <strong style="font-size:12px; color:#fff;">${client}</strong>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:4px 0;">
+                    <div style="background:var(--bg-base); padding:8px; border-radius:4px; border:1px solid var(--border-subtle);">
+                        <div style="font-size:10px; color:var(--text-secondary);">90天先導驗證專案總額</div>
+                        <div style="font-size:16px; font-weight:800; font-family:var(--font-mono); color:var(--cyber-emerald);">NT$ ${pilotFee.toLocaleString()}</div>
+                        <div style="font-size:9.5px; color:var(--cyber-emerald);">(滿期100%抵扣年約)</div>
+                    </div>
+                    <div style="background:var(--bg-base); padding:8px; border-radius:4px; border:1px solid var(--border-subtle);">
+                        <div style="font-size:10px; color:var(--text-secondary);">${trucks}輛車預期月增淨利</div>
+                        <div style="font-size:16px; font-weight:800; font-family:var(--font-mono); color:#38bdf8;">+NT$ ${netMonthlyBenefit.toLocaleString()}</div>
+                        <div style="font-size:9.5px; color:var(--electric-cyan);">(回本期 ${paybackDays} 天)</div>
+                    </div>
+                </div>
+                <div style="font-size:10.5px; color:var(--text-tertiary); line-height:1.4;">
+                    ✓ 包含 3 輛車 OBD-II / J1939 無損直上硬體套件 (ISO 11898-2 光電隔離，保固無損)<br>
+                    ✓ 90 天即時冷鏈動態熱蓄冷雲端演算法與司機 HUD 駕駛艙連線授權<br>
+                    ✓ 專屬冷鏈工程師現場調校，成效未達標 100% 全額無條件退款
+                </div>
+            `;
+            document.getElementById('pilotContractOutput').innerHTML = html;
+        }
+
+        function exportCfoMemo() {
+            const trucks = parseInt(document.getElementById('roiTrucks').value) || 20;
+            const trips = parseInt(document.getElementById('roiTrips').value) || 3;
+            const monthlySaving = trucks * trips * 25 * 1110;
+            const platformCost = trucks * 1800;
+            const netProfit = monthlySaving - platformCost;
+            const paybackDays = ((trucks * 4500) / (monthlySaving / 25)).toFixed(1);
+
+            const memo = `================================================================================
+CROSSROUTE B2B COMMERCIAL ROI & PAYBACK MEMO (FOR FLEET CFO & PROCUREMENT)
+================================================================================
+Generated: ${new Date().toISOString()}
+Target Entity: Kaohsiung Smart Port Drayage Fleet
+Fleet Configuration: ${trucks} Trucks | ${trips} Trips/Day/Truck | 25 Operational Days/Month
+
+[1] DIRECT P&L SAVINGS BREAKDOWN (PER TRIP)
+--------------------------------------------------------------------------------
+- Avoided Diesel Generator (Genset) Rental Fee:     NT$ 1,000 / trip
+- Avoided Diesel Fuel Idling (3.8L/hr @ NT$28.5/L):  NT$   110 / trip
+--------------------------------------------------------------------------------
+TOTAL GUARANTEED CASH SAVED PER ZERO-GENSET MOVE:    NT$ 1,110 / trip
+(Plus Port Demurrage Risk Avoidance: NT$ 500 / move)
+
+[2] MONTHLY CASH FLOW IMPACT (FLEET LEVEL: ${trucks} TRUCKS)
+--------------------------------------------------------------------------------
+- Gross Avoided Diesel & Generator Cost:             NT$ ${monthlySaving.toLocaleString()} / month
+- CrossRoute Telematics & Thermal SaaS (NT$1,800/mo): NT$ ${platformCost.toLocaleString()} / month
+--------------------------------------------------------------------------------
+NET INCREASE IN MONTHLY OPERATING CASH FLOW:        +NT$ ${netProfit.toLocaleString()} / month
+
+[3] HARDWARE RECOVERY & PROCUREMENT CAPITAL
+--------------------------------------------------------------------------------
+- 5-Min Plug-and-Play Hardware Kit (NT$4,500/truck): NT$ ${(trucks * 4500).toLocaleString()} (One-Time CapEx)
+- Hardware Break-Even / Payback Period:             ${paybackDays} Days (~2 Weeks)
+
+[4] 90-DAY RISK-FREE PILOT TERMS (UNDER MANAGER CAP)
+--------------------------------------------------------------------------------
+- Pilot Investment: NT$ 27,000 flat (covers 3 test trucks for 90 days)
+- Board Approval Exemption: Fits strictly under NT$ 30,000 departmental discretionary limit
+- 100% Contract Credit: 100% of NT$ 27,000 credited toward Year 1 annual subscription
+- Zero-Risk Warranty: ISO 11898-2 passive optical isolation (Zero ECM error codes)
+- Underwritten Liability: Cathay/Fubon cargo insurance rider up to NT$ 5,000,000/container
+================================================================================
+CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
+`;
+
+            const blob = new Blob([memo], { type: "text/plain;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "CrossRoute_CFO_Payback_Memo_" + trucks + "Trucks.txt";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
 
         function updateRoiCalc() {
@@ -1800,5 +1939,49 @@
             fetchLiveWeather();
         });
     </script>
+
+    <!-- Enterprise Pilot Procurement Modal -->
+    <div class="modal-overlay" id="pilotModal" onclick="if(event.target===this)closePilotModal()">
+        <div class="modal-card" style="max-width: 620px;">
+            <div class="modal-header">
+                <div>
+                    <h3 style="font-size: 14px; font-weight: 700; color: #fff;">💼 CrossRoute 企業先導驗證協議與採購訂單 (B2B Pilot PO)</h3>
+                    <p style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">符合企業部門經理採購簽核上限 (免董事會審查 · 滿期100%抵扣年約)</p>
+                </div>
+                <button class="btn-close" onclick="closePilotModal()">✕</button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px;">
+                <div>
+                    <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 4px;">企業客戶類別 (Client Entity)</label>
+                    <select id="pilotClientType" class="form-select" onchange="generateCustomPilot()">
+                        <option value="裕隆集團 / 中華汽車 CMC 商用車事業部">裕隆集團 / 中華汽車 CMC 商用車事業部</option>
+                        <option value="格上租車股份有限公司 (Car Plus Fleet)">格上租車股份有限公司 (Car Plus Fleet)</option>
+                        <option value="裕融企業股份有限公司 (TAC Green Lease)">裕融企業股份有限公司 (TAC Green Lease)</option>
+                        <option value="萬海航運股份有限公司 (Wan Hai Lines)">萬海航運股份有限公司 (Wan Hai Lines)</option>
+                        <option value="高雄港貨櫃拖車公會所屬車隊">高雄港貨櫃拖車公會所屬車隊</option>
+                        <option value="獨立冷鏈物流企業 (Cold Chain Carrier)">獨立冷鏈物流企業 (Cold Chain Carrier)</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 4px;">預計試點車隊規模 (Pilot Fleet Size)</label>
+                    <input type="number" id="pilotFleetSize" class="form-select" value="20" min="3" max="200" oninput="generateCustomPilot()">
+                </div>
+            </div>
+
+            <div id="pilotContractOutput" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--r-md); padding: 12px; display: flex; flex-direction: column; gap: 8px;">
+                <!-- Injected via JS -->
+            </div>
+
+            <div class="modal-actions">
+                <a href="CrossRoute_90Day_Commercial_Pilot_Agreement.pdf" target="_blank" class="btn-modal-action" style="text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(16,185,129,0.1); border-color: var(--cyber-emerald); color: var(--cyber-emerald);">
+                    📥 下載 90天法律合約 PDF
+                </a>
+                <button class="btn-modal-action" onclick="window.print()" style="background: rgba(2,132,199,0.1); border-color: var(--ocean-blue); color: var(--electric-cyan);">
+                    🖨️ 列印存檔採購意向書 (Print LOI)
+                </button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

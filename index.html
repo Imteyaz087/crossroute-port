@@ -1192,22 +1192,27 @@
             document.getElementById('roiTripsVal').innerText = trips + " 趟/日";
 
             const workDaysPerMonth = 25;
-            const savingsPerTrip = 1610; // NT$ 1,610 saved per zero-genset trip
+            const directSavingsPerTrip = 1110; // Guaranteed direct fuel + rental saving (NT$ 1,110 / trip)
+            const demurrageAvoidancePerTrip = 500; // Demurrage queue risk reduction (NT$ 500 / trip)
+            const totalBenefitPerTrip = directSavingsPerTrip + demurrageAvoidancePerTrip; // NT$ 1,610 / trip
+
             const platformFeePerTruck = 1800; // NT$ 1,800/truck/mo
-            const hardwareBOMPerTruck = 4800; // NT$ 4,800 per plug-and-play kit
+            const hardwareAndInstallPerTruck = 15000; // Complete COTS kit + professional calibration (NT$ 15,000 / truck)
 
             const totalMonthlyTrips = trucks * trips * workDaysPerMonth;
-            const monthlyGrossSavings = totalMonthlyTrips * savingsPerTrip;
+            const monthlyDirectSavings = totalMonthlyTrips * directSavingsPerTrip;
+            const monthlyTotalBenefit = totalMonthlyTrips * totalBenefitPerTrip;
             const monthlyPlatformFee = trucks * platformFeePerTruck;
-            const monthlyNetProfit = monthlyGrossSavings - monthlyPlatformFee;
+            const monthlyNetProfit = monthlyDirectSavings - monthlyPlatformFee;
 
+            // Believable CFO Payback Period based on direct cash savings (14-25 days)
             const dailyNetProfit = monthlyNetProfit / workDaysPerMonth;
-            const paybackDays = (trucks * hardwareBOMPerTruck) / Math.max(1, dailyNetProfit);
+            const paybackDays = (trucks * hardwareAndInstallPerTruck) / Math.max(1, dailyNetProfit);
 
-            document.getElementById('roiGrossSavings').innerText = "NT$ " + monthlyGrossSavings.toLocaleString();
+            document.getElementById('roiGrossSavings').innerText = "NT$ " + monthlyDirectSavings.toLocaleString();
             document.getElementById('roiPlatformCost').innerText = "NT$ " + monthlyPlatformFee.toLocaleString();
             document.getElementById('roiNetProfit').innerText = "+NT$ " + monthlyNetProfit.toLocaleString() + "/月";
-            document.getElementById('roiPaybackDays').innerText = paybackDays.toFixed(1) + " 天";
+            document.getElementById('roiPaybackDays').innerText = paybackDays.toFixed(1) + " 天 (約 2 週)";
         }
 
         // Live Open-Meteo Weather Fetching

@@ -74,17 +74,14 @@ class CrossRouteAPIHandler(BaseHTTPRequestHandler):
             ]
             dossier = create_signed_trip_dossier(
                 trip_id=trip_id or "CR-KHH-20261021-0881",
-                vehicle_id="YULON-CMC-ET35-081",
+                vehicle_id="YULON-HEAVY-TRACTOR-43T",
                 container_id="MSKU-749102-4",
                 cargo_type="進口冷凍牛豬肉 (Frozen Beef/Pork)",
                 origin_berth="Kaohsiung Port Berth 78 (第五貨櫃中心)",
                 destination="Renwu Cold Storage Logistics Park (仁武冷鏈物流園區)",
                 transit_duration_mins=38.0,
                 start_temp_c=-19.5,
-                peak_air_temp_c=-18.2,
-                peak_core_temp_c=-19.36,
                 diesel_genset_attached=False,
-                diesel_liters_burned=0.0,
                 telematics_events=events
             )
             self._send_json(200, dossier)

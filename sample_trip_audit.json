@@ -1,11 +1,11 @@
 {
-  "schema_version": "CrossRoute-Audit-v1.2",
+  "schema_version": "CrossRoute-Audit-v1.3",
   "standard_alignment": "ISO 14083:2023 / GLEC Framework v3.0 (Pre-Verification Methodology)",
   "audit_authority": "CrossRoute Telematics Sovereign Node (Kaohsiung Harbor)",
   "public_key_ed25519": "0425b40746bbf6386ba0b966bd7c64f2688f8b24a806aa3d39647843e5ccc03a",
   "trip_summary": {
     "trip_id": "CR-KHH-20261021-0881",
-    "vehicle_id": "YULON-CMC-ET35-081",
+    "vehicle_id": "YULON-HEAVY-TRACTOR-43T",
     "container_id": "MSKU-749102-4",
     "cargo_type": "進口冷凍牛豬肉 (Frozen Beef/Pork)",
     "origin": "Kaohsiung Port Berth 78 (第五貨櫃中心)",
@@ -16,21 +16,22 @@
       "initial_core_temp_c": -19.5,
       "peak_air_temp_c": -18.2,
       "peak_core_temp_c": -19.36,
-      "regulatory_limit_c": -15.0,
+      "regulatory_ceiling_c": -15.0,
       "compliance_verdict": "PASSED"
     },
     "environmental_audit": {
       "genset_diesel_burned_liters": 0.0,
-      "baseline_diesel_liters": 1.77,
-      "wtw_co2e_saved_kg": 5.6,
-      "financial_savings_twd": 1610.0
+      "baseline_diesel_liters": 8.0,
+      "wtw_co2e_saved_kg": 21.44,
+      "guaranteed_direct_savings_twd": 1110.0,
+      "total_commercial_benefit_twd": 1610.0
     }
   },
   "telematics_manifest": {
     "event_count": 4,
-    "merkle_root_sha256": "8a6bfb72058b5381abd2f794770809c37de00909037ca07d0b07a33bf5d77606",
-    "timestamp_utc": "2026-10-21T09:07:34Z",
-    "rfc3161_nonce": "9ef266d44293c9c5"
+    "merkle_root_sha256": "c39b1dba827dec0d14a54b637a46111972e143ddbd7edcd17ad2a831f9e1207a",
+    "timestamp_utc": "2026-10-21T09:28:43Z",
+    "rfc3161_nonce": "c036bc81044f4c20"
   },
   "raw_events": [
     {
@@ -43,21 +44,21 @@
       "status": "BERTH_UNPLUG"
     },
     {
-      "ts": 10,
+      "ts": 12,
       "lat": 22.592,
       "lon": 120.32,
-      "air_c": -19.1,
+      "air_c": -19.0,
       "core_c": -19.48,
-      "speed_kmh": 42,
+      "speed_kmh": 45,
       "status": "HIGHWAY_CRUISE"
     },
     {
-      "ts": 25,
+      "ts": 26,
       "lat": 22.61,
       "lon": 120.335,
-      "air_c": -18.7,
+      "air_c": -18.6,
       "core_c": -19.42,
-      "speed_kmh": 48,
+      "speed_kmh": 50,
       "status": "HIGHWAY_CRUISE"
     },
     {
@@ -66,12 +67,12 @@
       "lon": 120.355,
       "air_c": -18.2,
       "core_c": -19.36,
-      "speed_kmh": 12,
+      "speed_kmh": 15,
       "status": "WAREHOUSE_ARRIVE"
     }
   ],
   "cryptographic_signature": {
     "algorithm": "Ed25519",
-    "signature_hex": "2bead8c9acbe9dd0d1f94bbcc8cf6758b95fe3e752d1f352b1c97102b1fc6e7d28ebc873d5cff05e1d46d11109cf116b0aad4b9ad3d902f3d5d73c9bd71c2209"
+    "signature_hex": "575589dda13b7d1a719f4f5658e16b711e6cb6985d8fffde49a5e2b12527f94fa1ef8e06906d63684669e2f2c50acb7fe86c4c55b04ff8bfdc9dbfd632d89808"
   }
 }

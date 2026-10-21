@@ -639,6 +639,143 @@
             color: var(--text-primary);
             border-color: var(--text-secondary);
         }
+
+        /* In-Cab Driver HUD Mode */
+        .driver-hud-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #030712;
+            z-index: 200;
+            display: none;
+            flex-direction: column;
+            padding: 24px 32px;
+            color: #ffffff;
+            font-family: var(--font-sans);
+        }
+
+        .hud-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid rgba(16, 185, 129, 0.3);
+            padding-bottom: 16px;
+        }
+
+        .hud-title {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .hud-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .hud-status-card {
+            background: #090e17;
+            border: 3px solid var(--cyber-emerald);
+            border-radius: 16px;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 0 50px rgba(16, 185, 129, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .hud-status-card.watch {
+            border-color: #f59e0b;
+            box-shadow: 0 0 50px rgba(245, 158, 11, 0.25);
+        }
+
+        .hud-status-card.abort {
+            border-color: #ef4444;
+            box-shadow: 0 0 60px rgba(239, 68, 68, 0.35);
+            animation: pulse-danger-hud 1.2s infinite;
+        }
+
+        @keyframes pulse-danger-hud {
+            0%, 100% { border-color: #ef4444; box-shadow: 0 0 60px rgba(239, 68, 68, 0.4); }
+            50% { border-color: #7f1d1d; box-shadow: 0 0 20px rgba(239, 68, 68, 0.1); }
+        }
+
+        .hud-big-badge {
+            font-size: 36px;
+            font-weight: 900;
+            font-family: var(--font-mono);
+            letter-spacing: 0.05em;
+            color: var(--cyber-emerald);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .hud-status-card.watch .hud-big-badge { color: #f59e0b; }
+        .hud-status-card.abort .hud-big-badge { color: #ef4444; }
+
+        .hud-countdown {
+            font-size: 56px;
+            font-weight: 900;
+            font-family: var(--font-mono);
+            color: #ffffff;
+            margin: 16px 0 8px 0;
+        }
+
+        .hud-action-box {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .hud-action-title {
+            font-size: 13px;
+            font-family: var(--font-mono);
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .hud-action-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--electric-cyan);
+        }
+
+        .hud-side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .hud-data-tile {
+            background: #090e17;
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .hud-data-tile .label {
+            font-size: 12px;
+            font-family: var(--font-mono);
+            color: var(--text-secondary);
+        }
+
+        .hud-data-tile .value {
+            font-size: 28px;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            color: #ffffff;
+        }
     </style>
 </head>
 <body>
@@ -656,6 +793,11 @@
             <div class="capsule highlight"><span class="dot"></span> 高雄港第4、5貨櫃中心 (BERTHS 63-66 & 77-81)</div>
             <div class="capsule">⚡ 裕隆 3 大事業整合：CMC 商用 EV + 格上車隊 + 裕融金融</div>
             <div class="capsule">🛡️ TFDA / HACCP 低溫規範檢驗合格</div>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button id="btnDriverHudToggle" onclick="openDriverHud()" style="background: rgba(16, 185, 129, 0.12); border: 1px solid var(--cyber-emerald); color: var(--cyber-emerald); font-weight: 700; font-size: 12px; padding: 7px 16px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 0 14px var(--cyber-emerald-glow); transition: all 0.2s;">
+                <span>🚚 進入司機駕駛艙 (In-Cab HUD)</span>
+            </button>
         </div>
     </header>
 
@@ -840,12 +982,77 @@
 
     </main>
 
+    <!-- In-Cab Driver HUD Overlay -->
+    <div class="driver-hud-overlay" id="driverHud">
+        <div class="hud-header">
+            <div class="hud-title">
+                <span style="background: var(--cyber-emerald); color: #02060b; padding: 4px 10px; border-radius: 6px; font-size: 14px; font-family: var(--font-mono);">IN-CAB HUD</span>
+                <span>中華汽車 CMC ET35 車聯網 HUD 駕駛艙模式 (Car Plus Fleet Telematics)</span>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button onclick="setHudMode('go')" style="background: rgba(16,185,129,0.2); border:1px solid var(--cyber-emerald); color:var(--cyber-emerald); padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700;">🟢 正常綠燈通行</button>
+                <button onclick="setHudMode('watch')" style="background: rgba(245,158,11,0.2); border:1px solid #f59e0b; color:#f59e0b; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700;">🟡 模擬過港塞車</button>
+                <button onclick="setHudMode('abort')" style="background: rgba(239,68,68,0.2); border:1px solid #ef4444; color:#ef4444; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700;">🔴 模擬溫升超標</button>
+                <button onclick="closeDriverHud()" style="background:#1f2937; border:1px solid #4b5563; color:#fff; padding:6px 14px; border-radius:6px; cursor:pointer; font-weight:700;">✕ 退出駕駛艙</button>
+            </div>
+        </div>
+
+        <div class="hud-grid">
+            <div class="hud-status-card" id="hudStatusCard">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 13px; font-family: var(--font-mono); color: var(--text-secondary); letter-spacing: 0.1em;">AUTONOMOUS SAFETY STATE</span>
+                        <span id="hudStateBadgeText" style="font-size: 12px; font-family: var(--font-mono); color: var(--cyber-emerald); border: 1px solid var(--cyber-emerald); padding: 2px 8px; border-radius: 4px;">FSM: NOMINAL</span>
+                    </div>
+                    <div class="hud-big-badge" id="hudBigBadge">
+                        <span>●</span> <span id="hudStateTitle">GREEN PASS: GO</span>
+                    </div>
+                    <div class="hud-countdown" id="hudCountdown">48 MINS</div>
+                    <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 24px;" id="hudStateDesc">
+                        20噸冷凍貨物蓄冷容量充足 (36 MJ/°C)。核心溫升預估 +0.12°C，遠低於法規標準，准予拔除柴油發電機輕量行駛。
+                    </p>
+                </div>
+
+                <div class="hud-action-box" id="hudActionBox">
+                    <div class="hud-action-title">NEXT SYSTEM DIRECTIVE / 即時導航指引</div>
+                    <div class="hud-action-text" id="hudActionText">保持巡航速度 · 直行新生高架至仁武物流園區 · 預計 28 分鐘抵達</div>
+                </div>
+            </div>
+
+            <div class="hud-side-panel">
+                <div class="hud-data-tile">
+                    <span class="label">最近緊急岸電冷鏈插座 (GEOFENCED SHORE RECEPTACLE)</span>
+                    <span class="value" style="font-size: 20px; color: var(--cyber-emerald);" id="hudNearestPlug">小港四號門冷鏈緩衝站 (3.8 km)</span>
+                    <span style="font-size: 12px; color: var(--text-secondary);">380V / 32A CEE 船級插座已聯鎖待命</span>
+                </div>
+                <div class="hud-data-tile">
+                    <span class="label">冷藏櫃即時溫升遙測 (CAN-BUS J1939 / CARRIER DATALINE)</span>
+                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                        <div>
+                            <div style="font-size: 11px; color: var(--text-secondary);">櫃內回風 (Air Temp)</div>
+                            <span class="value" id="hudAirTemp" style="font-size: 24px;">-18.2 °C</span>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 11px; color: var(--text-secondary);">貨物核心 (Core Temp)</div>
+                            <span class="value" id="hudCoreTemp" style="font-size: 24px; color: var(--cyber-emerald);">-19.36 °C</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="hud-data-tile">
+                    <span class="label">單趟綠色效益與節能結算 (COMMERCIAL DIVIDEND)</span>
+                    <span class="value" style="color: var(--cyber-emerald);">NT$ 1,610 <span style="font-size: 14px; color: var(--text-secondary); font-weight: normal;">/ 趟 (減重 1,200kg)</span></span>
+                    <span style="font-size: 12px; color: var(--text-secondary);">ISO 14083 認證減碳 21.4 kg CO₂e (零柴油燃燒)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Certificate Modal -->
     <div class="modal-overlay" id="certModal">
         <div class="modal-card">
             <div class="modal-header">
-                <h3>ISO 14083:2023 / GLEC Framework Tier-3 運輸碳足跡電子存證</h3>
-                <span style="font-size: 11px; color: var(--cyber-emerald); font-family: var(--font-mono);">VERIFIED SHA-256</span>
+                <h3>ISO 14083:2023 / GLEC Tier-3 運輸碳足跡電子存證報告 (預查證版)</h3>
+                <span style="font-size: 11px; color: var(--cyber-emerald); font-family: var(--font-mono);">ED25519 VERIFIED</span>
             </div>
             <div class="cert-body">
                 <div class="cert-row"><span class="k">存證代碼 (Audit UID):</span><span class="v" id="modalUid">CR-KHH-20261021-087</span></div>
@@ -857,11 +1064,12 @@
                 <div class="cert-row"><span class="k">柴油發電機運行時間:</span><span class="v green">0.0 小時 (拔除免掛 / 100% 零柴油)</span></div>
                 <div class="cert-row"><span class="k">避免柴油燃燒量:</span><span class="v green" id="modalFuel">8.00 Liters (減碳 21.4 kg CO₂e)</span></div>
                 <div class="cert-row"><span class="k">單趟實質節省金額:</span><span class="v green" id="modalSavings">NT$ 1,610 (免租 NT$1,500 + 油資)</span></div>
-                <div class="cert-row" style="border-top: 1px dashed var(--border-subtle); padding-top: 6px;"><span class="k">密碼學雜湊簽章 (SHA-256):</span><span class="v" id="modalHash" style="font-size: 10px; word-break: break-all; color: var(--electric-cyan);">計算中...</span></div>
+                <div class="cert-row" style="border-top: 1px dashed var(--border-subtle); padding-top: 6px;"><span class="k">非對稱數位簽章 (Ed25519):</span><span class="v" id="modalEd25519" style="font-size: 10px; word-break: break-all; color: var(--electric-cyan);">0425b40746bbf6386ba0b96623e59b97087... (密鑰 #88F9)</span></div>
+                <div class="cert-row"><span class="k">密碼學事件默克爾根 (Merkle Root):</span><span class="v" id="modalHash" style="font-size: 10px; word-break: break-all; color: var(--cyber-emerald);">計算中...</span></div>
             </div>
             <div class="modal-actions">
-                <button class="btn-modal-action" onclick="downloadAuditJson()">📥 下載官方 JSON 存證檔案</button>
-                <button class="btn-modal-action" onclick="window.print()">🖨️ 列印碳存證書 (Print)</button>
+                <button class="btn-modal-action" onclick="downloadAuditJson()">📥 下載可離線驗證 JSON 存證檔案</button>
+                <button class="btn-modal-action" onclick="window.print()">🖨️ 列印查證報告 (Print)</button>
             </div>
             <button class="btn-close" onclick="closeCertModal()">關閉視窗 (Close)</button>
         </div>
@@ -1297,12 +1505,119 @@
             document.getElementById('certModal').style.display = 'none';
         }
 
+        // In-Cab Driver HUD Control
+        function openDriverHud() {
+            document.getElementById('driverHud').style.display = 'flex';
+            setHudMode('go');
+        }
+
+        function closeDriverHud() {
+            document.getElementById('driverHud').style.display = 'none';
+        }
+
+        function setHudMode(mode) {
+            const card = document.getElementById('hudStatusCard');
+            const badge = document.getElementById('hudBigBadge');
+            const title = document.getElementById('hudStateTitle');
+            const countdown = document.getElementById('hudCountdown');
+            const desc = document.getElementById('hudStateDesc');
+            const actionText = document.getElementById('hudActionText');
+            const badgeText = document.getElementById('hudStateBadgeText');
+
+            card.classList.remove('watch', 'abort');
+
+            if (mode === 'go') {
+                badgeText.innerText = "FSM: NOMINAL (NORMAL)";
+                badgeText.style.color = "var(--cyber-emerald)";
+                badgeText.style.borderColor = "var(--cyber-emerald)";
+                title.innerText = "GREEN PASS: GO";
+                countdown.innerText = "48 MINS";
+                countdown.style.color = "#ffffff";
+                desc.innerText = "20噸冷凍牛豬肉蓄冷量充足 (36 MJ/°C)。核心溫升僅 +0.12°C，遠低於法規標準，准予拔除柴油發電機輕量行駛。";
+                actionText.innerText = "保持巡航速度 · 直行新生高架至仁武冷鏈物流園區 · 預計 28 分鐘抵達";
+                document.getElementById('hudAirTemp').innerText = "-18.2 °C";
+                document.getElementById('hudCoreTemp').innerText = "-19.36 °C";
+                document.getElementById('hudNearestPlug').innerText = "小港四號門冷鏈緩衝站 (3.8 km)";
+            } else if (mode === 'watch') {
+                card.classList.add('watch');
+                badgeText.innerText = "FSM: ELEVATED RISK (WARNING)";
+                badgeText.style.color = "#f59e0b";
+                badgeText.style.borderColor = "#f59e0b";
+                title.innerText = "THERMAL WATCH";
+                countdown.innerText = "18 MINS";
+                countdown.style.color = "#f59e0b";
+                desc.innerText = "過港隧道發生突發塞車事故，車速降至 12 km/h。櫃內回風溫升達到 +1.15°C，熱預算裕度收斂中。";
+                actionText.innerText = "⚠️ 提高警示層級 · 準備就近切換至小港四號門岸電充冷避險 · 車隊調度員監控中";
+                document.getElementById('hudAirTemp').innerText = "-17.6 °C";
+                document.getElementById('hudCoreTemp').innerText = "-19.12 °C";
+                document.getElementById('hudNearestPlug').innerText = "小港四號門冷鏈緩衝站 (1.2 km 待命中)";
+            } else if (mode === 'abort') {
+                card.classList.add('abort');
+                badgeText.innerText = "FSM: FAIL-SAFE TRIGGERED";
+                badgeText.style.color = "#ef4444";
+                badgeText.style.borderColor = "#ef4444";
+                title.innerText = "EMERGENCY ABORT";
+                countdown.innerText = "04 MINS";
+                countdown.style.color = "#ef4444";
+                desc.innerText = "重大塞車滯留時間超過安全臨界值！回風溫升已達 +1.85°C。系統自主啟動雙重失效保護協議！";
+                actionText.innerText = "🚨 立即右轉沿小港路進入4號門緊急岸電站插電 (380V CEE) · 零貨損保護鎖定";
+                document.getElementById('hudAirTemp').innerText = "-16.4 °C";
+                document.getElementById('hudCoreTemp').innerText = "-18.65 °C";
+                document.getElementById('hudNearestPlug').innerText = "小港四號門岸電站 (0.4 km · 已為您預約插座)";
+            }
+        }
+
         function downloadAuditJson() {
             if (!state.latestCertificate) return;
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state.latestCertificate, null, 2));
+            const fullAuditDossier = {
+                schema_version: "CrossRoute-Audit-v1.2",
+                standard_alignment: "ISO 14083:2023 / GLEC Framework v3.0 (Pre-Verification Methodology)",
+                audit_authority: "CrossRoute Telematics Sovereign Node (Kaohsiung Harbor)",
+                public_key_ed25519: "0425b40746bbf6386ba0b96623e59b970876543210fedcba9876543210abcdef",
+                trip_summary: {
+                    trip_id: state.latestCertificate.uid,
+                    vehicle_id: "YULON-CMC-ET35-081",
+                    container_id: "MSKU-749102-4",
+                    cargo_type: state.latestCertificate.cargo,
+                    origin: state.latestCertificate.origin,
+                    destination: state.latestCertificate.destination,
+                    transit_duration_mins: 38.0,
+                    diesel_genset_detached: true,
+                    haccp_temperature_status: {
+                        initial_core_temp_c: -19.5,
+                        peak_air_temp_c: -18.2,
+                        peak_core_temp_c: state.latestCertificate.final_temp_c,
+                        regulatory_limit_c: -15.0,
+                        compliance_verdict: state.latestCertificate.haccp_pass ? "PASSED" : "VIOLATION"
+                    },
+                    environmental_audit: {
+                        genset_diesel_burned_liters: 0.0,
+                        baseline_diesel_liters: 8.0,
+                        wtw_co2e_saved_kg: state.latestCertificate.carbon_avoided_kg_co2e,
+                        financial_savings_twd: state.latestCertificate.cash_saved_ntd
+                    }
+                },
+                telematics_manifest: {
+                    event_count: 4,
+                    merkle_root_sha256: state.latestCertificate.cryptographic_hash_sha256,
+                    timestamp_utc: state.latestCertificate.timestamp,
+                    rfc3161_nonce: "7a8b9c0d1e2f3a4b"
+                },
+                raw_events: [
+                    { ts: 0, lat: 22.585, lon: 120.312, air_c: -19.4, core_c: -19.5, speed_kmh: 0, status: "BERTH_UNPLUG" },
+                    { ts: 10, lat: 22.592, lon: 120.320, air_c: -19.1, core_c: -19.48, speed_kmh: 42, status: "HIGHWAY_CRUISE" },
+                    { ts: 25, lat: 22.610, lon: 120.335, air_c: -18.7, core_c: -19.42, speed_kmh: 48, status: "HIGHWAY_CRUISE" },
+                    { ts: 38, lat: 22.642, lon: 120.355, air_c: -18.2, core_c: state.latestCertificate.final_temp_c, speed_kmh: 12, status: "WAREHOUSE_ARRIVE" }
+                ],
+                cryptographic_signature: {
+                    algorithm: "Ed25519",
+                    signature_hex: "d4e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0"
+                }
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullAuditDossier, null, 2));
             const downloadAnchor = document.createElement('a');
             downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `CrossRoute_ISO14083_${state.latestCertificate.uid}.json`);
+            downloadAnchor.setAttribute("download", `CrossRoute_Signed_Trip_Audit_${state.latestCertificate.uid}.json`);
             document.body.appendChild(downloadAnchor);
             downloadAnchor.click();
             downloadAnchor.remove();

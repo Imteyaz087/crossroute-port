@@ -1,0 +1,77 @@
+{
+  "schema_version": "CrossRoute-Audit-v1.2",
+  "standard_alignment": "ISO 14083:2023 / GLEC Framework v3.0 (Pre-Verification Methodology)",
+  "audit_authority": "CrossRoute Telematics Sovereign Node (Kaohsiung Harbor)",
+  "public_key_ed25519": "0425b40746bbf6386ba0b966bd7c64f2688f8b24a806aa3d39647843e5ccc03a",
+  "trip_summary": {
+    "trip_id": "CR-KHH-20261021-0881",
+    "vehicle_id": "YULON-CMC-ET35-081",
+    "container_id": "MSKU-749102-4",
+    "cargo_type": "進口冷凍牛豬肉 (Frozen Beef/Pork)",
+    "origin": "Kaohsiung Port Berth 78 (第五貨櫃中心)",
+    "destination": "Renwu Cold Storage Logistics Park (仁武冷鏈物流園區)",
+    "transit_duration_mins": 38.0,
+    "diesel_genset_detached": true,
+    "haccp_temperature_status": {
+      "initial_core_temp_c": -19.5,
+      "peak_air_temp_c": -18.2,
+      "peak_core_temp_c": -19.36,
+      "regulatory_limit_c": -15.0,
+      "compliance_verdict": "PASSED"
+    },
+    "environmental_audit": {
+      "genset_diesel_burned_liters": 0.0,
+      "baseline_diesel_liters": 1.77,
+      "wtw_co2e_saved_kg": 5.6,
+      "financial_savings_twd": 1610.0
+    }
+  },
+  "telematics_manifest": {
+    "event_count": 4,
+    "merkle_root_sha256": "8a6bfb72058b5381abd2f794770809c37de00909037ca07d0b07a33bf5d77606",
+    "timestamp_utc": "2026-10-21T09:07:34Z",
+    "rfc3161_nonce": "9ef266d44293c9c5"
+  },
+  "raw_events": [
+    {
+      "ts": 0,
+      "lat": 22.585,
+      "lon": 120.312,
+      "air_c": -19.4,
+      "core_c": -19.5,
+      "speed_kmh": 0,
+      "status": "BERTH_UNPLUG"
+    },
+    {
+      "ts": 10,
+      "lat": 22.592,
+      "lon": 120.32,
+      "air_c": -19.1,
+      "core_c": -19.48,
+      "speed_kmh": 42,
+      "status": "HIGHWAY_CRUISE"
+    },
+    {
+      "ts": 25,
+      "lat": 22.61,
+      "lon": 120.335,
+      "air_c": -18.7,
+      "core_c": -19.42,
+      "speed_kmh": 48,
+      "status": "HIGHWAY_CRUISE"
+    },
+    {
+      "ts": 38,
+      "lat": 22.642,
+      "lon": 120.355,
+      "air_c": -18.2,
+      "core_c": -19.36,
+      "speed_kmh": 12,
+      "status": "WAREHOUSE_ARRIVE"
+    }
+  ],
+  "cryptographic_signature": {
+    "algorithm": "Ed25519",
+    "signature_hex": "2bead8c9acbe9dd0d1f94bbcc8cf6758b95fe3e752d1f352b1c97102b1fc6e7d28ebc873d5cff05e1d46d11109cf116b0aad4b9ad3d902f3d5d73c9bd71c2209"
+  }
+}

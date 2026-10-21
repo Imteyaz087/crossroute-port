@@ -1,0 +1,25 @@
+# Private Strategic Intelligence & Databases
+crossroute_pitch_intelligence.db
+crossroute_pitch_intelligence.db-journal
+crossroute_pitch_intelligence.db-wal
+crossroute_pitch_intelligence.db-shm
+
+# Internal Pitch Seeding & Analysis Scripts
+seed_global_intelligence.py
+populate_pitch_db.py
+expand_intelligence_db.py
+query_intelligence.py
+
+# Python environment & cache
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+*.log
+
+# OS & Editor temp files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

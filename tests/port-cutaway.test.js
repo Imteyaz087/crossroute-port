@@ -8,6 +8,47 @@ const plain = value => JSON.parse(JSON.stringify(value));
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const renderer = readFileSync(new URL('../port-scene.js', import.meta.url));
 const baseResult = { valid: true, finalC: -18.54, peakC: -18.54, referenceC: -15, state: 'within_reference', recoveryMinutes: 0, shorePowerKwAssumption: null, heatIngressW: 6787.5 };
+function project(matrix, [x,y,z]) {
+    const cx=matrix[0]*x+matrix[4]*y+matrix[8]*z+matrix[12];
+    const cy=matrix[1]*x+matrix[5]*y+matrix[9]*z+matrix[13];
+    const cw=matrix[3]*x+matrix[7]*y+matrix[11]*z+matrix[15];
+    return { x:cx/cw, y:cy/cw, w:cw };
+}
+
+test('default Overview is a north-oriented orthographic bird’s-eye view framing the complete harbor on desktop and portrait screens', () => {
+    for (const [width,height] of [[900,520],[320,390]]) {
+        const h=harness({ reduced:true,width,height });
+        const camera=h.api.getViewState(),matrix=h.matrices.at(-1);
+        assert.equal(camera.view,'overview');
+        assert.equal(camera.yaw,0,'world X stays horizontal for a stable north-like map orientation');
+        assert.ok(camera.pitch>1.30&&camera.pitch<Math.PI/2-.1,'near overhead but not singular straight down');
+        assert.equal(matrix[11],0,'orthographic projection keeps camera distance from creating perspective skew');
+        assert.equal(matrix[15],1,'orthographic clip w remains constant');
+        const west=project(matrix,[-1,0,0]),east=project(matrix,[1,0,0]);
+        const north=project(matrix,[0,0,-1]),south=project(matrix,[0,0,1]);
+        assert.ok(west.x<east.x,'east-west map axis stays horizontal');
+        assert.ok(north.y>south.y,'north-like negative Z stays at the top of the screen');
+        for(const point of [
+            [-7.31,0.2,-2.2],[-5.95,0.2,-5.5],[-5.35,0.2,1.8],[-0.25,0.3,-2.25],
+            [5.95,0.5,2.55],[7.4,0.5,2.55],[-5.25,0.34,2.78],[5.35,0.34,2.58],
+            [-3.15,4.17,2.8],[0,0.2,5.45],[-4.6,0.45,1.8],[-1.9,0.45,1.8],
+            [-2.2,0.58,1.8],[-0.2,0.65,-2.25],[4.1,2.35,4.2],[0,0.65,3.35]
+        ]) {
+            const p=project(matrix,point);
+            assert.ok(p.w>0&&Math.abs(p.x)<0.96&&Math.abs(p.y)<0.96,`${width}x${height} harbor point ${point} remains framed: ${JSON.stringify(p)}`);
+        }
+        h.api.setView('cutaway');
+        assert.notDeepEqual(h.matrices.at(-1),matrix,'Cutaway remains an independent perspective camera preset');
+        h.api.setView('overview');
+        assert.deepEqual(h.matrices.at(-1),matrix,'reset restores the same stable top-down composition');
+        h.key('ArrowUp');
+        assert.ok(h.api.getViewState().pitch<Math.PI/2,'orbit clamp avoids lookAt singularity');
+        assert.ok(h.matrices.at(-1).every(Number.isFinite),'extreme near-overhead orbit remains numerically stable');
+        h.api.dispose();
+    }
+    assert.match(html,/Bird’s-eye overview · 港區鳥瞰/);
+    assert.match(html,/Bird’s-eye port overview · 港區鳥瞰/);
+});
 
 test('cutaway changes the actual camera matrix/target, supports keyboard/reset and view-specific zoom without RAF in reduced motion', () => {
     const h = harness({ reduced: true });

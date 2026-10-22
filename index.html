@@ -505,6 +505,20 @@
     .thermal-row:last-child { border-bottom: none; }
     .thermal-row .k { color: var(--text-secondary); }
     .thermal-row .v { font-weight: 600; color: var(--text-primary); text-align: right; }
+    .model-note { color: var(--text-secondary); font-size: 10px; line-height: 1.45; margin: 8px 0; }
+    .thermal-explainer { margin-top: 12px; padding: 12px; border: 1px solid var(--border-subtle); border-radius: var(--r-md); background: linear-gradient(145deg, rgba(14,165,233,.08), rgba(16,185,129,.035)); }
+    .thermal-scene { width: 100%; height: auto; display: block; }
+    .thermal-stage { fill: #101b29; stroke: #456078; stroke-width: 1; }
+    .thermal-front { fill: #172536; stroke: #67c6e8; stroke-width: 1.5; }
+    .thermal-top { fill: #243b50; stroke: #67c6e8; stroke-width: 1.5; }
+    .thermal-side { fill: #122131; stroke: #67c6e8; stroke-width: 1.5; }
+    .thermal-cargo { fill: rgba(56,189,248,.2); stroke: #7dd3fc; stroke-width: 1; }
+    .thermal-arrow { stroke: #f59e0b; stroke-width: 2; stroke-dasharray: 4 3; }
+    .thermal-power { stroke: #34d399; stroke-width: 2; }
+    .thermal-scene text { fill: #dbeafe; font: 10px ui-monospace, monospace; }
+    .thermal-scene .muted { fill: #94a3b8; }
+    .model-state { font-size: 11px; font-weight: 700; color: var(--electric-cyan); }
+    @media (prefers-reduced-motion: reduce) { .thermal-scene *, .thermal-explainer * { animation: none !important; transition: none !important; } }
 
     /* ───────── Radar ───────── */
     .radar-canvas-wrap {
@@ -1162,20 +1176,20 @@
             <div class="brand-logo-gem">CR</div>
             <div class="header-title">
                 <h1>CrossRoute · 高雄港智慧綠色航港與零發電機冷鏈調度中樞</h1>
-                <p>AUTONOMOUS DRAYAGE · DYNAMIC THERMAL BUDGETING · ISO 14083 / GLEC TIER-3</p>
+                <p>ILLUSTRATIVE SCENARIO DEMO · MODEL ESTIMATES ONLY · NOT OPERATIONAL OR COMPLIANCE EVIDENCE</p>
             </div>
         </div>
         <div class="header-status-capsules">
             <div class="capsule highlight"><span class="dot"></span> 高雄港第4、5貨櫃中心 (BERTHS 63-66 & 77-81)</div>
             <div class="capsule">⚡ 裕隆 3 大事業整合：CMC 商用 EV + 格上車隊 + 裕融金融</div>
-            <div class="capsule">🛡️ TFDA / HACCP 低溫規範檢驗合格</div>
+            <div class="capsule">Demo reference inputs only · 示意參考值</div>
         </div>
         <div class="header-actions">
             <button id="btnAudioShock" onclick="playAuditoryShock()" class="capsule" title="聽覺震撼：92 dB 柴油發電機噪音 vs 純電靜音對比">
                 <span>🔊 聽覺震撼 92 dB</span>
             </button>
             <button id="btnMobileQr" onclick="openQrModal()" class="capsule" style="font-size: 11.5px; padding: 7px 12px; cursor: pointer; border-color: rgba(255,255,255,0.18); color: #fff; background: rgba(255,255,255,0.05); display: flex; align-items: center; gap: 6px;">
-                <span>📱 評審現場手機掃碼實測</span>
+                <span>📱 手機版示意操作 · Mobile demo</span>
             </button>
             <button id="btnPilotHeader" onclick="openPilotModal()" class="capsule highlight" style="font-size: 12px; padding: 7px 14px; cursor: pointer; font-weight: 600; text-transform: none; border-color: var(--ocean-blue); color: var(--electric-cyan); background: rgba(2, 132, 199, 0.12);">
                 <span>💼 商業採購與報價 (Enterprise Pilot)</span>
@@ -1203,20 +1217,20 @@
                 </div>
                 <div class="demo-buttons">
                     <button class="btn-scenario active" id="btnScenarioNormal" onclick="setScenario('normal')">
-                        <span>1. 標準零發電機起步 (38分抵達)</span>
-                        <span style="color: var(--cyber-emerald);">省 NT$ 1,610</span>
+                        <span>1. 標準示意情境 (38 分鐘 · Normal)</span>
+                        <span style="color: var(--cyber-emerald);">NT$ 1,610* demo assumption</span>
                     </button>
                     <button type="button" class="btn-audio-shock" id="btnAudioShockScenario" onclick="playAuditoryShock()">
                         <span>🔊 聽覺震撼：92 dB 柴油發電機噪音 vs 純電靜音對比</span>
                         <span style="color: #fb7185; font-family: var(--font-mono); font-size: 10px;">3.5s</span>
                     </button>
-                    <button class="btn-scenario" id="btnScenarioStall" onclick="setScenario('stall')">
-                        <span>2. 模擬過港隧道事故 (90分嚴重塞車)</span>
-                        <span style="color: var(--rose-alert);">觸發警報</span>
+                    <button class="btn-scenario" id="btnScenarioStall" onclick="setScenario('delay')">
+                        <span>2. 模擬延誤 (90 分鐘 · Delay)</span>
+                        <span style="color: var(--rose-alert);">Model estimate</span>
                     </button>
-                    <button class="btn-scenario" id="btnScenarioSafety" onclick="setScenario('safety')">
-                        <span>3. 啟動動態避險網 (小港岸電中繼)</span>
-                        <span style="color: var(--electric-cyan);">零貨損解圍</span>
+                    <button class="btn-scenario" id="btnScenarioSafety" onclick="setScenario('recovery')">
+                        <span>3. 模擬延誤後岸電恢復 (Recovery)</span>
+                        <span style="color: var(--electric-cyan);">10 kW assumption</span>
                     </button>
                     <!-- Live Weather Fetch Button -->
                     <button class="btn-scenario" id="btnLiveWeather" onclick="fetchLiveWeather()" style="background: rgba(6, 182, 212, 0.08); border-color: rgba(6, 182, 212, 0.35); color: var(--electric-cyan);">
@@ -1236,9 +1250,9 @@
                 <select id="cargoSelect" class="form-select" onchange="onCargoChange()">
                     <option value="frozen_meat">進口冷凍牛豬肉 (-18°C / 蓄冷容量 36.0 MJ/°C)</option>
                     <option value="deep_freeze_tuna">遠洋超低溫黑鮪魚 (-55°C / 溫差大 需精密防護)</option>
-                    <option value="frozen_seafood">冷凍水產蝦類 (-18°C / 允許安全斷電 75分鐘)</option>
+                    <option value="frozen_seafood">冷凍水產蝦類 (-18°C / illustrative properties)</option>
                     <option value="ice_cream">冷藏冰品乳製品 (-25°C / 結晶敏感 需平滑熱預算)</option>
-                    <option value="fresh_produce">溫控生鮮蔬果 (+4°C / 比熱容極大 零發電機100%安全)</option>
+                    <option value="fresh_produce">溫控生鮮蔬果 (+4°C / illustrative properties)</option>
                     <option value="semi_chemical">半導體光阻劑冷鏈 (-10°C / 高附加價值 防偽存證)</option>
                 </select>
             </div>
@@ -1281,21 +1295,22 @@
                     <span class="v" id="thHeat">1.43 kWh (5.13 MJ)</span>
                 </div>
                 <div class="thermal-row" style="border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 4px;">
-                    <span class="k">拔除發電機·核心溫升 (Drift):</span>
-                    <span class="v" id="thDrift" style="color: var(--cyber-emerald);">+0.14 °C (極安全)</span>
+                    <span class="k">模型估算溫升 (Model drift):</span>
+                    <span class="v" id="thDrift">—</span>
                 </div>
                 <div class="thermal-row">
-                    <span class="k">TFDA/HACCP 法規溫升極限:</span>
-                    <span class="v" id="thLimit" style="color: var(--solar-amber);">±1.50 °C (剩餘安全空間 > 10倍)</span>
+                    <span class="k">使用者輸入參考值 (Reference):</span>
+                    <span class="v" id="thLimit">—</span>
                 </div>
             </div>
+            <p class="model-note">示意模型 · Illustrative model only. Values depend on displayed assumptions and are not operational measurements, validated limits, or a compliance finding.</p>
         </section>
 
         <!-- Column 2: Live Radar & Harbor Map -->
         <section class="glass-card">
             <div class="card-header">
-                <h2>高雄港集疏運即時海事雷達 (Kaohsiung Port Drayage Radar)</h2>
-                <span class="badge" id="radarStatusBadge">BERTH #78 ACTIVE DISCHARGE</span>
+                <h2>高雄港集疏運示意雷達 · Port drayage visualization</h2>
+                <span class="badge" id="radarStatusBadge">SIMULATED PORT VIEW · 示意港區視圖</span>
             </div>
 
             <div class="radar-canvas-wrap">
@@ -1303,26 +1318,54 @@
                 <div class="radar-hud-pill">
                     <div class="hud-row hud-row-main">
                         <span class="hud-live"></span>
-                        <span class="val">WAN HAI 315</span>
+                        <span class="val">DEMO SHIP LABEL</span>
                         <span class="hud-sep">·</span>
-                        <span>BERTH 78 T5</span>
+                        <span>BERTH DEMO</span>
                         <span class="hud-sep">·</span>
-                        <span>CPT-N5107 C1</span>
+                        <span>MODEL VIEW</span>
                         <span class="hud-sep">·</span>
                         <span class="val" id="hudPrechill">-19.5 °C (平準鎖定)</span>
                     </div>
                     <div class="hud-row">
                         <span>SugarSense ±14分</span>
                         <span class="hud-sep">·</span>
-                        <span id="hudSafetyStatus" class="val" style="color: var(--cyber-emerald);">CrossRoute 零發電機綠色通行證核發</span>
+                        <span id="hudSafetyStatus" class="val" style="color: var(--text-secondary);">Demo model · 示意模型</span>
                     </div>
                 </div>
+            </div>
+
+            <div class="thermal-explainer" aria-labelledby="thermalExplainerTitle">
+                <div class="card-header">
+                    <h2 id="thermalExplainerTitle">冷藏櫃熱流示意 · Thermal flow explainer</h2>
+                    <span class="badge">EDITABLE 2.5D · MODEL-DRIVEN</span>
+                </div>
+                <svg class="thermal-scene" viewBox="0 0 420 180" role="img" aria-labelledby="thermalSvgTitle thermalSvgDesc">
+                    <title id="thermalSvgTitle">Illustrative refrigerated container thermal flow</title>
+                    <desc id="thermalSvgDesc">A 2.5D cutaway shows shore-power prechill, ambient heat ingress, a delay, and optional shore-power recovery. It visualizes a model estimate, not a physical digital twin.</desc>
+                    <polygon class="thermal-stage" points="15,142 250,142 313,165 78,165" />
+                    <polygon class="thermal-top" points="64,55 265,55 310,75 108,75" />
+                    <polygon class="thermal-side" points="265,55 310,75 310,134 265,115" />
+                    <polygon class="thermal-front" points="64,55 265,55 265,115 64,115" />
+                    <polygon class="thermal-cargo" points="78,69 250,69 250,104 78,104" />
+                    <text x="83" y="91" id="thermalCargoText">Cargo core —</text>
+                    <text x="18" y="24" id="thermalPhaseLabel">Prechill · 岸電預冷</text>
+                    <text x="18" y="42" class="muted" id="thermalEstimateLabel">Illustrative estimate · 示意估算</text>
+                    <path class="thermal-arrow" d="M 20 74 L 55 74" /><path class="thermal-arrow" d="M 20 96 L 55 96" />
+                    <text x="18" y="128" class="muted">Heat ingress · 外界熱侵入</text>
+                    <path id="thermalPowerLine" class="thermal-power" d="M 125 142 L 125 119 L 145 119" />
+                    <text x="116" y="156" class="muted" id="thermalPowerLabel">Shore power · 岸電</text>
+                    <text x="273" y="129" class="muted" id="thermalEndLabel">End —</text>
+                    <text x="326" y="70" class="muted">Kaohsiung Port</text>
+                    <text x="326" y="86" class="muted">高雄港</text>
+                </svg>
+                <div class="model-state" id="thermalModelState" aria-live="polite">Scenario estimate —</div>
+                <p class="model-note">2.5D native SVG layer, prepared for later editable scene integration. Not Spline, a physical digital twin, or real-world validation. Recovery uses an explicitly illustrative 10 kW shore-power assumption.</p>
             </div>
 
             <!-- Feed Tabs: Events vs CAN-bus Stream vs ROI Calculator -->
             <div class="tab-bar">
                 <button class="tab-btn active" id="tabBtnEvents" onclick="switchTab('events')">📡 即時事件 (CPT/TDX)</button>
-                <button class="tab-btn" id="tabBtnCan" onclick="switchTab('can')">⚡ CAN J1939 數據流</button>
+                <button class="tab-btn" id="tabBtnCan" onclick="switchTab('can')">⚡ 合成 CAN 示意數據 · Synthetic demo</button>
                 <button class="tab-btn" id="tabBtnRoi" onclick="switchTab('roi')" style="color: var(--cyber-emerald); font-weight: 700;">💰 財務回本 (B2B ROI)</button>
                 <button class="tab-btn" id="tabBtnCommercial" onclick="switchTab('commercial')" style="color: var(--electric-cyan); font-weight: 700;">💼 商業模式與定價</button>
                 <button class="tab-btn" id="tabBtnHuman" onclick="switchTab('human')">❤️ 司機與小港孩童 (Human Impact)</button>
@@ -1433,35 +1476,36 @@
         <section class="glass-card">
             <div class="card-header">
                 <h2>裕隆生態圈商業與 ESG 效益結算 (Impact Scorecard)</h2>
-                <span class="badge">ISO 14083 TIER 3</span>
+                <span class="badge">Illustrative assumptions · 示意假設</span>
             </div>
 
             <div class="bento-grid">
                 <div class="bento-item span-2">
                     <div class="bento-label">單趟實質節省金額 (Cash Saved per Move)</div>
-                    <div class="bento-metric" id="metricCash">NT$ 1,610 <span style="font-size: 11px; color: var(--text-secondary);">(免租 NT$1,500 + 油 NT$110)</span></div>
+                    <div class="bento-metric" id="metricCash">NT$ 1,610*</div>
+                    <p class="model-note">*Illustrative normal-scenario assumption only · 僅標準示意情境假設；非報價或保證節省。</p>
                 </div>
                 <div class="bento-item">
                     <div class="bento-label">格上示範車隊月省支出</div>
-                    <div class="bento-metric gold" id="metricFleetCash">NT$ 231.8 萬</div>
+                    <div class="bento-metric gold" id="metricFleetCash">Not estimated</div>
                 </div>
                 <div class="bento-item">
                     <div class="bento-label">單趟避免碳排量 (Scope 3)</div>
-                    <div class="bento-metric cyan" id="metricCarbon">21.4 kg CO₂e</div>
+                    <div class="bento-metric cyan" id="metricCarbon">Not estimated</div>
                 </div>
                 <div class="bento-item">
                     <div class="bento-label">閘口等待縮減 (Turnaround)</div>
-                    <div class="bento-metric" id="metricWaitTime">18 <span style="font-size: 12px; color: var(--text-tertiary);">MIN (-62%)</span></div>
+                    <div class="bento-metric" id="metricWaitTime">Not estimated</div>
                 </div>
                 <div class="bento-item">
                     <div class="bento-label">冷鏈貨損違規率 (Defect Rate)</div>
-                    <div class="bento-metric" style="color: var(--cyber-emerald);" id="metricDefect">0.00%</div>
+                    <div class="bento-metric" style="color: var(--text-secondary);" id="metricDefect">Not estimated</div>
                 </div>
             </div>
 
             <div class="card-header" style="margin-top: 4px;">
-                <h2>實測溫升動態曲線 vs 發電機柴油零消耗</h2>
-                <span class="badge">LIVE MATHEMATICAL MODEL</span>
+                <h2>示意模型溫度曲線 · Illustrative temperature estimate</h2>
+                <span class="badge">NOT LIVE TELEMETRY</span>
             </div>
 
             <div class="chart-wrap">
@@ -1469,7 +1513,7 @@
             </div>
 
             <button class="btn-action" onclick="openCertModal()">
-                <span>📄 查看與下載 ISO 14083 / CBAM 數位存證證書</span>
+                <span>📄 查看與下載未簽署示意模型報告 · Unsigned demo report</span>
             </button>
         </section>
 
@@ -1493,9 +1537,9 @@
                 <span>中華汽車 CMC ET35 車聯網 HUD 駕駛艙模式 (Car Plus Fleet Telematics)</span>
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
-                <button onclick="setHudMode('go')" style="background: rgba(16,185,129,0.2); border:1px solid var(--cyber-emerald); color:var(--cyber-emerald); padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700;">🟢 正常綠燈通行</button>
-                <button onclick="setHudMode('watch')" style="background: rgba(245,158,11,0.2); border:1px solid #f59e0b; color:#f59e0b; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700;">🟡 模擬過港塞車</button>
-                <button onclick="setHudMode('abort')" style="background: rgba(239,68,68,0.2); border:1px solid #ef4444; color:#ef4444; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700;">🔴 模擬溫升超標</button>
+                <button onclick="setHudMode('normal')" style="background: rgba(16,185,129,0.2); border:1px solid var(--cyber-emerald); color:var(--cyber-emerald); padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700;">Normal · 標準</button>
+                <button onclick="setHudMode('delay')" style="background: rgba(245,158,11,0.2); border:1px solid #f59e0b; color:#f59e0b; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700;">Delay · 延誤</button>
+                <button onclick="setHudMode('recovery')" style="background: rgba(6,182,212,0.2); border:1px solid #06b6d4; color:#06b6d4; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700;">Recovery · 岸電恢復</button>
                 <button onclick="closeDriverHud()" style="background:#1f2937; border:1px solid #4b5563; color:#fff; padding:6px 14px; border-radius:6px; cursor:pointer; font-weight:700;">✕ 退出駕駛艙</button>
             </div>
         </div>
@@ -1507,44 +1551,44 @@
                         <span style="font-size: 13px; font-family: var(--font-mono); color: var(--text-secondary); letter-spacing: 0.1em;">AUTONOMOUS SAFETY STATE</span>
                         <span id="hudStateBadgeText" style="font-size: 12px; font-family: var(--font-mono); color: var(--cyber-emerald); border: 1px solid var(--cyber-emerald); padding: 2px 8px; border-radius: 4px;">FSM: NOMINAL</span>
                     </div>
-                    <div class="hud-big-badge" id="hudBigBadge">
-                        <span>●</span> <span id="hudStateTitle">GREEN PASS: GO</span>
+            <div class="hud-big-badge" id="hudBigBadge">
+                        <span>●</span> <span id="hudStateTitle">Illustrative model estimate</span>
                     </div>
-                    <div class="hud-countdown" id="hudCountdown">48 MINS</div>
+                    <div class="hud-countdown" id="hudCountdown">—</div>
                     <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 24px;" id="hudStateDesc">
-                        20噸冷凍貨物蓄冷容量充足 (36 MJ/°C)。核心溫升預估 +0.12°C，遠低於法規標準，准予拔除柴油發電機輕量行駛。
+                        Illustrative model only · 示意模型，非即時遙測或法規判定。
                     </p>
                 </div>
 
                 <div class="hud-action-box" id="hudActionBox">
-                    <div class="hud-action-title">NEXT SYSTEM DIRECTIVE / 即時導航指引</div>
-                    <div class="hud-action-text" id="hudActionText">保持巡航速度 · 直行新生高架至仁武物流園區 · 預計 28 分鐘抵達</div>
+                    <div class="hud-action-title">MODEL STATUS / 模型狀態</div>
+                    <div class="hud-action-text" id="hudActionText">—</div>
                 </div>
             </div>
 
             <div class="hud-side-panel">
                 <div class="hud-data-tile">
                     <span class="label">最近緊急岸電冷鏈插座 (GEOFENCED SHORE RECEPTACLE)</span>
-                    <span class="value" style="font-size: 20px; color: var(--cyber-emerald);" id="hudNearestPlug">小港四號門冷鏈緩衝站 (3.8 km)</span>
-                    <span style="font-size: 12px; color: var(--text-secondary);">380V / 32A CEE 船級插座已聯鎖待命</span>
+                    <span class="value" style="font-size: 20px; color: var(--cyber-emerald);" id="hudNearestPlug">岸電狀態未連線 · Shore power unverified</span>
+                    <span style="font-size: 12px; color: var(--text-secondary);">Scenario assumptions only · 情境假設</span>
                 </div>
                 <div class="hud-data-tile">
-                    <span class="label">冷藏櫃即時溫升遙測 (CAN-BUS J1939 / CARRIER DATALINE)</span>
+                    <span class="label">模型溫度估算 (not CAN-bus telemetry)</span>
                     <div style="display: flex; justify-content: space-between; align-items: baseline;">
                         <div>
-                            <div style="font-size: 11px; color: var(--text-secondary);">櫃內回風 (Air Temp)</div>
-                            <span class="value" id="hudAirTemp" style="font-size: 24px;">-18.2 °C</span>
+                            <div style="font-size: 11px; color: var(--text-secondary);">回風溫度 (not modeled)</div>
+                            <span class="value" id="hudAirTemp" style="font-size: 24px;">Not modeled</span>
                         </div>
                         <div style="text-align: right;">
                             <div style="font-size: 11px; color: var(--text-secondary);">貨物核心 (Core Temp)</div>
-                            <span class="value" id="hudCoreTemp" style="font-size: 24px; color: var(--cyber-emerald);">-19.36 °C</span>
+                            <span class="value" id="hudCoreTemp" style="font-size: 24px; color: var(--cyber-emerald);">—</span>
                         </div>
                     </div>
                 </div>
                 <div class="hud-data-tile">
                     <span class="label">單趟綠色效益與節能結算 (COMMERCIAL DIVIDEND)</span>
-                    <span class="value" style="color: var(--cyber-emerald);">NT$ 1,610 <span style="font-size: 14px; color: var(--text-secondary); font-weight: normal;">/ 趟 (減重 1,200kg)</span></span>
-                    <span style="font-size: 12px; color: var(--text-secondary);">ISO 14083 認證減碳 21.4 kg CO₂e (零柴油燃燒)</span>
+                    <span class="value" style="color: var(--cyber-emerald);" id="hudSavings">Not estimated · 未估算</span>
+                    <span style="font-size: 12px; color: var(--text-secondary);">Illustrative assumptions · 示意假設</span>
                 </div>
             </div>
         </div>
@@ -1554,24 +1598,22 @@
     <div class="modal-overlay" id="certModal">
         <div class="modal-card">
             <div class="modal-header">
-                <h3>ISO 14083:2023 / GLEC Tier-3 運輸碳足跡電子存證報告 (預查證版)</h3>
-                <span style="font-size: 11px; color: var(--cyber-emerald); font-family: var(--font-mono);">ED25519 VERIFIED</span>
+                <h3>CrossRoute 示意模型報告 · Illustrative model report</h3>
+                <span style="font-size: 11px; color: var(--solar-amber); font-family: var(--font-mono);">UNSIGNED · NOT VERIFIED</span>
             </div>
             <div class="cert-body">
                 <div class="cert-row"><span class="k">存證代碼 (Audit UID):</span><span class="v" id="modalUid">CR-KHH-20261021-087</span></div>
-                <div class="cert-row"><span class="k">起運泊位 (Port Origin):</span><span class="v">Kaohsiung Port Berth #78 (Terminal 5)</span></div>
-                <div class="cert-row"><span class="k">目的集散站 (Destination):</span><span class="v">前鎮保稅冷鏈物流園區 (Qianzhen CFS, 19.4 km)</span></div>
-                <div class="cert-row"><span class="k">裕隆商用載具 (Vehicle):</span><span class="v">中華汽車 CMC ET35 純電商用卡車</span></div>
+                <div class="cert-row"><span class="k">範例情境 (Demo context):</span><span class="v">Kaohsiung Port · static illustrative labels</span></div>
                 <div class="cert-row"><span class="k">貨物類別 (Commodity):</span><span class="v" id="modalCargo">進口冷凍牛豬肉 (20,000 kg)</span></div>
-                <div class="cert-row"><span class="k">全程溫升記錄 (Temp Drift):</span><span class="v green" id="modalDrift">+0.14 °C (PASS: HACCP 餘裕 >10倍)</span></div>
-                <div class="cert-row"><span class="k">柴油發電機運行時間:</span><span class="v green">0.0 小時 (拔除免掛 / 100% 零柴油)</span></div>
-                <div class="cert-row"><span class="k">避免柴油燃燒量:</span><span class="v green" id="modalFuel">8.00 Liters (減碳 21.4 kg CO₂e)</span></div>
-                <div class="cert-row"><span class="k">單趟實質節省金額:</span><span class="v green" id="modalSavings">NT$ 1,610 (免租 NT$1,500 + 油資)</span></div>
-                <div class="cert-row" style="border-top: 1px dashed var(--border-subtle); padding-top: 6px;"><span class="k">非對稱數位簽章 (Ed25519):</span><span class="v" id="modalEd25519" style="font-size: 10px; word-break: break-all; color: var(--electric-cyan);">0425b40746bbf6386ba0b96623e59b97087... (密鑰 #88F9)</span></div>
-                <div class="cert-row"><span class="k">密碼學事件默克爾根 (Merkle Root):</span><span class="v" id="modalHash" style="font-size: 10px; word-break: break-all; color: var(--cyber-emerald);">計算中...</span></div>
+                <div class="cert-row"><span class="k">模型估算溫升 (Model drift):</span><span class="v" id="modalDrift">—</span></div>
+                <div class="cert-row"><span class="k">發電機 / 燃油實際紀錄:</span><span class="v">未量測 · Not measured</span></div>
+                <div class="cert-row"><span class="k">能源 / 碳 / 節省:</span><span class="v" id="modalSavings">未估算 · Not estimated</span></div>
+                <div class="cert-row" style="border-top: 1px dashed var(--border-subtle); padding-top: 6px;"><span class="k">文件狀態 (Artifact status):</span><span class="v">示意報告 · unsigned demo artifact</span></div>
+                <div class="cert-row"><span class="k">報告 SHA-256 (未含雜湊欄位的 JSON):</span><span class="v" id="modalHash" style="font-size: 10px; word-break: break-all; color: var(--electric-cyan);">計算中...</span></div>
+                <p class="model-note">本文件不是 ISO 14083 / HACCP 合規證明、經驗證營運紀錄或簽署文件。參考值僅為示意模型輸入。</p>
             </div>
             <div class="modal-actions">
-                <button class="btn-modal-action" onclick="downloadAuditJson()">📥 下載可離線驗證 JSON 存證檔案</button>
+                <button class="btn-modal-action" onclick="downloadAuditJson()">📥 下載未簽署示意 JSON · Download unsigned demo JSON</button>
                 <button class="btn-modal-action" onclick="window.print()">🖨️ 列印查證報告 (Print)</button>
             </div>
             <button class="btn-close" onclick="closeCertModal()">關閉視窗 (Close)</button>
@@ -1580,6 +1622,7 @@
 
     <!-- CrossRoute™ Protected Edge & Telematics Engine (Domain-Locked & Obfuscated) -->
     <!-- Copyright (c) 2026 Imteyaz Ahmad. All Rights Reserved. Taiwan Patent Pending. -->
+    <script src="thermal-model.js"></script>
     <script src="crossroute.min.js"></script>
 
     <!-- Enterprise Pilot Procurement Modal -->
@@ -1630,7 +1673,7 @@
     <div class="modal-overlay" id="qrModal" onclick="if(event.target===this)closeQrModal()">
         <div class="modal-card" style="max-width: 420px; text-align: center; align-items: center;">
             <div class="modal-header" style="width: 100%;">
-                <h3 style="font-size: 14px; font-weight: 700; color: #fff;">📱 評審現場手機即時實測 (Live Mobile Test)</h3>
+                <h3 style="font-size: 14px; font-weight: 700; color: #fff;">📱 手機版示意操作 · Mobile demo</h3>
                 <button class="btn-close" onclick="closeQrModal()">✕</button>
             </div>
             <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">

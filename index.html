@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CrossRoute · 高雄港智慧綠色航港與零發電機冷鏈調度中樞</title>
+    <title>CrossRoute · 高雄港冷鏈情境示意模型</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1175,7 +1175,7 @@
         <div class="header-brand">
             <div class="brand-logo-gem">CR</div>
             <div class="header-title">
-                <h1>CrossRoute · 高雄港智慧綠色航港與零發電機冷鏈調度中樞</h1>
+                <h1>CrossRoute · 高雄港冷鏈情境示意模型</h1>
                 <p>ILLUSTRATIVE SCENARIO DEMO · MODEL ESTIMATES ONLY · NOT OPERATIONAL OR COMPLIANCE EVIDENCE</p>
             </div>
         </div>
@@ -1185,14 +1185,14 @@
             <div class="capsule">Demo reference inputs only · 示意參考值</div>
         </div>
         <div class="header-actions">
-            <button id="btnAudioShock" onclick="playAuditoryShock()" class="capsule" title="聽覺震撼：92 dB 柴油發電機噪音 vs 純電靜音對比">
-                <span>🔊 聽覺震撼 92 dB</span>
+            <button id="btnAudioShock" onclick="playAuditoryShock()" class="capsule" title="合成音效示意；非聲級量測">
+                <span>🔊 合成音效示意 · 非量測</span>
             </button>
             <button id="btnMobileQr" onclick="openQrModal()" class="capsule" style="font-size: 11.5px; padding: 7px 12px; cursor: pointer; border-color: rgba(255,255,255,0.18); color: #fff; background: rgba(255,255,255,0.05); display: flex; align-items: center; gap: 6px;">
                 <span>📱 手機版示意操作 · Mobile demo</span>
             </button>
             <button id="btnPilotHeader" onclick="openPilotModal()" class="capsule highlight" style="font-size: 12px; padding: 7px 14px; cursor: pointer; font-weight: 600; text-transform: none; border-color: var(--ocean-blue); color: var(--electric-cyan); background: rgba(2, 132, 199, 0.12);">
-                <span>💼 商業採購與報價 (Enterprise Pilot)</span>
+                <span>💼 未核准規劃假設</span>
             </button>
             <button id="btnDriverHudToggle" onclick="openDriverHud()" style="background: rgba(16, 185, 129, 0.12); border: 1px solid var(--cyber-emerald); color: var(--cyber-emerald); font-weight: 700; font-size: 12px; padding: 7px 16px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px;  transition: all 0.2s;">
                 <span>🚚 進入司機駕駛艙 (In-Cab HUD)</span>
@@ -1206,8 +1206,8 @@
         <!-- Column 1: Controls & Scenario Switcher -->
         <section class="glass-card">
             <div class="card-header">
-                <h2>決賽現場演示情境 (Live Pitch Scenarios)</h2>
-                <span class="badge" id="activeModeBadge">標準零發電機模式</span>
+                <h2>互動示意情境 (Illustrative scenarios)</h2>
+                <span class="badge" id="activeModeBadge">標準示意情境 · Illustrative</span>
             </div>
 
             <div class="demo-control-box">
@@ -1218,10 +1218,10 @@
                 <div class="demo-buttons">
                     <button class="btn-scenario active" id="btnScenarioNormal" onclick="setScenario('normal')">
                         <span>1. 標準示意情境 (38 分鐘 · Normal)</span>
-                        <span style="color: var(--cyber-emerald);">NT$ 1,610* demo assumption</span>
+                        <span style="color: var(--cyber-emerald);">NT$ 1,610* synthetic assumption</span>
                     </button>
                     <button type="button" class="btn-audio-shock" id="btnAudioShockScenario" onclick="playAuditoryShock()">
-                        <span>🔊 聽覺震撼：92 dB 柴油發電機噪音 vs 純電靜音對比</span>
+                        <span>🔊 合成音效示意 (no sound-level measurement)</span>
                         <span style="color: #fb7185; font-family: var(--font-mono); font-size: 10px;">3.5s</span>
                     </button>
                     <button class="btn-scenario" id="btnScenarioStall" onclick="setScenario('delay')">
@@ -1232,9 +1232,9 @@
                         <span>3. 模擬延誤後岸電恢復 (Recovery)</span>
                         <span style="color: var(--electric-cyan);">10 kW assumption</span>
                     </button>
-                    <!-- Live Weather Fetch Button -->
+                    <!-- Optional user-triggered external weather input -->
                     <button class="btn-scenario" id="btnLiveWeather" onclick="fetchLiveWeather()" style="background: rgba(6, 182, 212, 0.08); border-color: rgba(6, 182, 212, 0.35); color: var(--electric-cyan);">
-                        <span>🌤️ 串接高雄港實時氣象 (Live API)</span>
+                        <span>🌤️ 以外部天氣資料更新示意輸入 (optional weather input)</span>
                         <span id="weatherBadge" style="font-family: var(--font-mono); font-size: 10px;">點擊同步</span>
                     </button>
                 </div>
@@ -1364,11 +1364,11 @@
 
             <!-- Feed Tabs: Events vs CAN-bus Stream vs ROI Calculator -->
             <div class="tab-bar">
-                <button class="tab-btn active" id="tabBtnEvents" onclick="switchTab('events')">📡 即時事件 (CPT/TDX)</button>
+                <button class="tab-btn active" id="tabBtnEvents" onclick="switchTab('events')">📡 模擬事件 · 非即時資料</button>
                 <button class="tab-btn" id="tabBtnCan" onclick="switchTab('can')">⚡ 合成 CAN 示意數據 · Synthetic demo</button>
-                <button class="tab-btn" id="tabBtnRoi" onclick="switchTab('roi')" style="color: var(--cyber-emerald); font-weight: 700;">💰 財務回本 (B2B ROI)</button>
-                <button class="tab-btn" id="tabBtnCommercial" onclick="switchTab('commercial')" style="color: var(--electric-cyan); font-weight: 700;">💼 商業模式與定價</button>
-                <button class="tab-btn" id="tabBtnHuman" onclick="switchTab('human')">❤️ 司機與小港孩童 (Human Impact)</button>
+                <button class="tab-btn" id="tabBtnRoi" onclick="switchTab('roi')" style="color: var(--cyber-emerald); font-weight: 700;">💰 財務情境算例</button>
+                <button class="tab-btn" id="tabBtnCommercial" onclick="switchTab('commercial')" style="color: var(--electric-cyan); font-weight: 700;">💼 未核准的規劃假設</button>
+                <button class="tab-btn" id="tabBtnHuman" onclick="switchTab('human')">❤️ 未驗證影響假設</button>
             </div>
 
             <div class="event-feed" id="eventFeed">
@@ -1381,9 +1381,10 @@
 
             <div class="roi-feed" id="roiFeed" style="display: none; flex-direction: column; gap: 14px; background: rgba(0,0,0,0.3); padding: 14px; border-radius: 8px; border: 1px solid var(--border-subtle);">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 13px; font-weight: 700; color: #ffffff;">車隊規模與財務回本試算 (Commercial Payback Engine)</span>
-                    <span style="font-size: 10px; color: var(--cyber-emerald); font-family: var(--font-mono);">PAID PILOT READY</span>
+                    <span style="font-size: 13px; font-weight: 700; color: #ffffff;">財務情境算例 (Unvalidated planning arithmetic)</span>
+                    <span style="font-size: 10px; color: var(--solar-amber); font-family: var(--font-mono);">UNAPPROVED · NOT A FORECAST</span>
                 </div>
+                <p class="model-note">所有車隊、趟次、租金、油耗、費用、節省與回本值都是可調整的合成假設，不是觀測值、報價、收益預測或保證。 · Synthetic planning assumptions only; no offer or guaranteed outcome.</p>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                     <div>
                         <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
@@ -1403,7 +1404,7 @@
 
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 6px;">
                     <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); padding: 10px; border-radius: 6px; text-align: center;">
-                        <div style="font-size: 10px; color: var(--text-secondary);">每月省下發電機與柴油</div>
+                        <div style="font-size: 10px; color: var(--text-secondary);">假設成本差額 · 非觀測節省</div>
                         <div id="roiGrossSavings" style="font-size: 16px; font-weight: 800; font-family: var(--font-mono); color: #ffffff; margin-top: 4px;">NT$ 2,415,000</div>
                     </div>
                     <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); padding: 10px; border-radius: 6px; text-align: center;">
@@ -1411,61 +1412,61 @@
                         <div id="roiPlatformCost" style="font-size: 16px; font-weight: 800; font-family: var(--font-mono); color: var(--text-secondary); margin-top: 4px;">NT$ 36,000</div>
                     </div>
                     <div style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.4); padding: 10px; border-radius: 6px; text-align: center;">
-                        <div style="font-size: 10px; color: var(--cyber-emerald); font-weight: 700;">車隊實質淨增利潤</div>
+                        <div style="font-size: 10px; color: var(--cyber-emerald); font-weight: 700;">算例差額 · 非實際利潤</div>
                         <div id="roiNetProfit" style="font-size: 17px; font-weight: 900; font-family: var(--font-mono); color: var(--cyber-emerald); margin-top: 4px;">+NT$ 2,379,000/月</div>
                     </div>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(6,182,212,0.06); border: 1px dashed rgba(6,182,212,0.3); padding: 8px 12px; border-radius: 6px;">
-                    <span style="font-size: 11px; color: var(--electric-cyan);">硬體無損快裝回本期 (BOM Payback): <strong id="roiPaybackDays" style="font-family: var(--font-mono);">14.2 天</strong></span>
-                    <a href="CrossRoute_90Day_Commercial_Pilot_Agreement.pdf" target="_blank" style="font-size: 11px; color: var(--cyber-emerald); text-decoration: underline; font-weight: 700;">📄 檢視 90天企業先導驗證合約 (PDF)</a>
+                    <span style="font-size: 11px; color: var(--electric-cyan);">假設值算術期 · 非回本預測: <strong id="roiPaybackDays" style="font-family: var(--font-mono);">14.2 天</strong></span>
+                    <span style="font-size: 11px; color: var(--cyber-emerald); font-weight: 700;">📄 參考草案未核准，未提供為可執行協議</span>
                 </div>
                 <button class="btn-modal-action" onclick="exportCfoMemo()" style="width: 100%; margin-top: 4px; border-color: rgba(16,185,129,0.4); color: var(--cyber-emerald); background: rgba(16,185,129,0.06);">
-                    📄 匯出財務長審查備忘錄 (Export CFO Payback Memo)
+                    📄 匯出未驗證情境算例 (Export illustrative scenario)
                 </button>
             </div>
             <div class="event-feed" id="commercialFeed" style="display: none; height: 160px; overflow-y: auto; flex-direction: column; gap: 8px; padding: 6px; background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: var(--r-md);">
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
                     <div style="background: var(--bg-surface); border: 1px solid rgba(16,185,129,0.35); border-radius: var(--r-md); padding: 8px;">
-                        <div style="font-size: 10px; color: var(--cyber-emerald); font-weight: 700;">方案 A: 90天先導驗證</div>
-                        <div style="font-size: 14px; font-weight: 800; font-family: var(--font-mono); color: #fff; margin: 2px 0;">NT$ 27,000</div>
-                        <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.3;">3輛車隊列 · 經理額度免招標 · 滿期100%抵扣年約</div>
+                        <div style="font-size: 10px; color: var(--cyber-emerald); font-weight: 700;">假設 A: 試點討論輸入 · 未核准</div>
+                        <div style="font-size: 14px; font-weight: 800; font-family: var(--font-mono); color: #fff; margin: 2px 0;">NT$ 27,000 (示意)</div>
+                        <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.3;">假設範圍 3 輛車；費用、採購與折抵條款未定</div>
                     </div>
                     <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--r-md); padding: 8px;">
                         <div style="font-size: 10px; color: var(--electric-cyan); font-weight: 700;">方案 B: 商用車隊 SaaS</div>
                         <div style="font-size: 14px; font-weight: 800; font-family: var(--font-mono); color: #fff; margin: 2px 0;">NT$ 1,800 <span style="font-size: 10px; font-weight: normal; color: var(--text-tertiary);">/車/月</span></div>
-                        <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.3;">動態溫控 + CAN聯網 + 硬體NT$4,500 (3年保固)</div>
+                        <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.3;">評估情境功能範圍；費用、相容性及保固未確認</div>
                     </div>
                     <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--r-md); padding: 8px;">
-                        <div style="font-size: 10px; color: var(--solar-amber); font-weight: 700;">方案 C: 碼頭與航商 TOS</div>
-                        <div style="font-size: 14px; font-weight: 800; font-family: var(--font-mono); color: #fff; margin: 2px 0;">NT$ 150,000 <span style="font-size: 10px; font-weight: normal; color: var(--text-tertiary);">/年</span></div>
-                        <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.3;">專屬港區插電排程 API · SLA 99.95%</div>
+                        <div style="font-size: 10px; color: var(--solar-amber); font-weight: 700;">假設 C: 港區整合討論範圍</div>
+                        <div style="font-size: 14px; font-weight: 800; font-family: var(--font-mono); color: #fff; margin: 2px 0;">費用未定</div>
+                        <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.3;">整合與服務水準未確認；沒有可用 API 或 SLA 承諾</div>
                     </div>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(2,132,199,0.06); border: 1px solid rgba(2,132,199,0.25); border-radius: var(--r-md); padding: 8px 12px;">
-                    <span style="font-size: 11px; color: var(--text-secondary);">🛡️ 原廠保固無損 (ISO 11898-2 光電隔離) · 裕隆集團新安東京海上產險背書</span>
-                    <button class="btn-modal-action" onclick="openPilotModal()" style="padding: 4px 10px; font-size: 11px; background: rgba(2,132,199,0.2); border-color: var(--ocean-blue); color: #fff;">💼 線上產生採購訂單</button>
+                    <span style="font-size: 11px; color: var(--text-secondary);">保固、ISO 相容性與保險背書均未確認；不代表任何第三方核准或承保。</span>
+                    <button class="btn-modal-action" onclick="openPilotModal()" style="padding: 4px 10px; font-size: 11px; background: rgba(2,132,199,0.2); border-color: var(--ocean-blue); color: #fff;">💼 檢視未核准試點假設</button>
                 </div>
             </div>
             <div class="human-feed" id="humanFeed">
                 <div class="human-grid">
                     <article class="human-card bao">
-                        <div class="kicker">Hearing Recovery · Berth 78</div>
-                        <h3>陳大哥（Brother Bao）職業聽力復原</h3>
-                        <p>56 歲高雄港拖車司機。柴油發電機緊貼後頸，長達四年以 85 dB 持續轟鳴——等於把電鑽焊在駕駛艙後壁。拔除發電機後，車艙從聽力受損門檻回到純電巡航。</p>
-                        <div class="stat">85 dB 聽損噪音 → 42 dB 純電寧靜</div>
+                        <div class="kicker">Noise scenario hypothesis · 未驗證假設</div>
+                        <h3>噪音量測可作為未來試點指標</h3>
+                        <p>本頁沒有司機訪談、聲級量測或聽力檢查資料。若未來另行核准研究，可評估不同作業情境的噪音變化；此示意不代表已觀測改善或健康結果。</p>
+                        <div class="stat">未量測 · 無聽力或健康成效主張</div>
                     </article>
                     <article class="human-card school">
-                        <div class="kicker">Xiaogang · Shan-Ming Elementary</div>
-                        <h3>小港山明國小 · 孩童氣喘回歸基準線</h3>
-                        <p>山明國小緊鄰沿海路貨櫃走廊。以往 10,000 輛拖車怠速發電機把 PM2.5 與 NOx 送進教室。零發電機調度把小港兒科氣喘從全國 2.3 倍壓回基準線。</p>
-                        <div class="stat">2.3× 全國氣喘率 → 基準線 (baseline)</div>
+                        <div class="kicker">Air-quality hypothesis · 未驗證假設</div>
+                        <h3>局部排氣監測可納入未來研究</h3>
+                        <p>本示意沒有學校暴露、空氣品質、兒童健康或流行病學資料，不推論任何排放或氣喘因果關係。若有核准且具適當設計的研究，可另行評估局部空氣指標。</p>
+                        <div class="stat">沒有健康資料 · 不作排放或氣喘成效主張</div>
                     </article>
                     <article class="human-card wage">
-                        <div class="kicker">Driver Take-Home · +144%</div>
-                        <h3>單趟淨資從 NT$900 躍升至 NT$2,200</h3>
-                        <p>陳大哥從 78 號碼頭拖一櫃到前鎮冷鏈，毛收 NT$2,800。發電機租金吞 NT$1,500、柴油再吞 NT$400，只剩 NT$900。零發電機把那 NT$1,610 還給司機。</p>
-                        <div class="stat">NT$900 → NT$2,200／趟 · +144%</div>
+                        <div class="kicker">Earnings scenario hypothesis · 未驗證假設</div>
+                        <h3>收入影響需要實際成本資料驗證</h3>
+                        <p>此工具沒有司機收入、燃油、租賃或行程成本觀測。任何單趟差額都只是使用者可調整的算例，並非收入、節省或保證結果。</p>
+                        <div class="stat">未觀測收入 · 不承諾節省或增收</div>
                     </article>
                 </div>
             </div>
@@ -1475,22 +1476,22 @@
         <!-- Column 3: Impact Scorecard & Carbon Audit -->
         <section class="glass-card">
             <div class="card-header">
-                <h2>裕隆生態圈商業與 ESG 效益結算 (Impact Scorecard)</h2>
+                <h2>示意情境摘要 (Illustrative scenario summary)</h2>
                 <span class="badge">Illustrative assumptions · 示意假設</span>
             </div>
 
             <div class="bento-grid">
                 <div class="bento-item span-2">
-                    <div class="bento-label">單趟實質節省金額 (Cash Saved per Move)</div>
+                    <div class="bento-label">單趟成本差額假設 (Scenario arithmetic)</div>
                     <div class="bento-metric" id="metricCash">NT$ 1,610*</div>
                     <p class="model-note">*Illustrative normal-scenario assumption only · 僅標準示意情境假設；非報價或保證節省。</p>
                 </div>
                 <div class="bento-item">
-                    <div class="bento-label">格上示範車隊月省支出</div>
+                    <div class="bento-label">示例車隊月成本算例 · 非客戶</div>
                     <div class="bento-metric gold" id="metricFleetCash">Not estimated</div>
                 </div>
                 <div class="bento-item">
-                    <div class="bento-label">單趟避免碳排量 (Scope 3)</div>
+                    <div class="bento-label">單趟碳排影響</div>
                     <div class="bento-metric cyan" id="metricCarbon">Not estimated</div>
                 </div>
                 <div class="bento-item">
@@ -1498,7 +1499,7 @@
                     <div class="bento-metric" id="metricWaitTime">Not estimated</div>
                 </div>
                 <div class="bento-item">
-                    <div class="bento-label">冷鏈貨損違規率 (Defect Rate)</div>
+                    <div class="bento-label">冷鏈貨損與偏差率 (未估算)</div>
                     <div class="bento-metric" style="color: var(--text-secondary);" id="metricDefect">Not estimated</div>
                 </div>
             </div>
@@ -1521,8 +1522,8 @@
 
     <div id="audioShockOverlay" class="audio-shock-overlay" aria-live="polite">
         <div class="db-badge loud" id="dbBadge">
-            <div class="db-value" id="dbValue">92 dB</div>
-            <div class="db-caption" id="dbCaption">極度吵雜 / 聽力受損</div>
+            <div class="db-value" id="dbValue">DEMO</div>
+            <div class="db-caption" id="dbCaption">合成音效示意 · 非量測</div>
             <div class="db-bars" id="dbBars" aria-hidden="true">
                 <span style="height:8px"></span><span style="height:14px"></span><span style="height:6px"></span><span style="height:16px"></span><span style="height:10px"></span>
             </div>
@@ -1548,8 +1549,8 @@
             <div class="hud-status-card" id="hudStatusCard">
                 <div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-size: 13px; font-family: var(--font-mono); color: var(--text-secondary); letter-spacing: 0.1em;">AUTONOMOUS SAFETY STATE</span>
-                        <span id="hudStateBadgeText" style="font-size: 12px; font-family: var(--font-mono); color: var(--cyber-emerald); border: 1px solid var(--cyber-emerald); padding: 2px 8px; border-radius: 4px;">FSM: NOMINAL</span>
+                        <span style="font-size: 13px; font-family: var(--font-mono); color: var(--text-secondary); letter-spacing: 0.1em;">ILLUSTRATIVE MODEL STATE · 示意模型狀態</span>
+                        <span id="hudStateBadgeText" style="font-size: 12px; font-family: var(--font-mono); color: var(--cyber-emerald); border: 1px solid var(--cyber-emerald); padding: 2px 8px; border-radius: 4px;">DEMO · NOT OPERATIONAL</span>
                     </div>
             <div class="hud-big-badge" id="hudBigBadge">
                         <span>●</span> <span id="hudStateTitle">Illustrative model estimate</span>
@@ -1586,7 +1587,7 @@
                     </div>
                 </div>
                 <div class="hud-data-tile">
-                    <span class="label">單趟綠色效益與節能結算 (COMMERCIAL DIVIDEND)</span>
+                    <span class="label">未驗證情境差額 · 非商業收益</span>
                     <span class="value" style="color: var(--cyber-emerald);" id="hudSavings">Not estimated · 未估算</span>
                     <span style="font-size: 12px; color: var(--text-secondary);">Illustrative assumptions · 示意假設</span>
                 </div>
@@ -1625,13 +1626,13 @@
     <script src="thermal-model.js"></script>
     <script src="crossroute.min.js"></script>
 
-    <!-- Enterprise Pilot Procurement Modal -->
+    <!-- Unapproved pilot planning assumptions modal -->
     <div class="modal-overlay" id="pilotModal" onclick="if(event.target===this)closePilotModal()">
         <div class="modal-card" style="max-width: 620px;">
             <div class="modal-header">
                 <div>
-                    <h3 style="font-size: 14px; font-weight: 700; color: #fff;">💼 CrossRoute 企業先導驗證協議與採購訂單 (B2B Pilot PO)</h3>
-                    <p style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">符合企業部門經理採購簽核上限 (免董事會審查 · 滿期100%抵扣年約)</p>
+                    <h3 style="font-size: 14px; font-weight: 700; color: #fff;">💼 CrossRoute 未核准試點規劃假設</h3>
+                    <p style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">僅供情境討論；並非採購單、協議、報價或已核准條款。費用、折抵及簽核尚未確認。</p>
                 </div>
                 <button class="btn-close" onclick="closePilotModal()">✕</button>
             </div>
@@ -1658,11 +1659,9 @@
             </div>
 
             <div class="modal-actions">
-                <a href="CrossRoute_90Day_Commercial_Pilot_Agreement.pdf" target="_blank" class="btn-modal-action" style="text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(16,185,129,0.1); border-color: var(--cyber-emerald); color: var(--cyber-emerald);">
-                    📥 下載 90天法律合約 PDF
-                </a>
+                <span class="model-note">原有 PDF 參考文件未核准，且此示意不提供為可執行協議。</span>
                 <button class="btn-modal-action" onclick="window.print()" style="background: rgba(2,132,199,0.1); border-color: var(--ocean-blue); color: var(--electric-cyan);">
-                    🖨️ 列印存檔採購意向書 (Print LOI)
+                    🖨️ 列印目前假設 (Print assumptions)
                 </button>
             </div>
         </div>

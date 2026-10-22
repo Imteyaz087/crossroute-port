@@ -1,5 +1,5 @@
 /*!
- * CrossRoute™ AI Telematics & Cold-Chain Carbon-Demurrage Optimization Engine
+ * CrossRoute illustrative cold-chain scenario demo
  * Version: 2.4.0 (Production Release)
  * Author: Imteyaz Ahmad (伊穆泰) <imteyaz087@gmail.com>
  * Copyright (c) 2026 Imteyaz Ahmad / Qistara Technologies Co., Ltd.
@@ -73,13 +73,13 @@
         const chartCanvas = document.getElementById('telemetryChart');
         const chartCtx = chartCanvas.getContext('2d');
 
-        // Initial Event Feeds
+        // Seeded illustrative entries only. No live dispatch, AIS, or equipment events are represented.
         const initialEvents = [
-            { time: "16:16:40", msg: "[SYSTEM] 2026永續智慧創新黑客松 裕隆集團 (15-M) 官方報名成功確認！", alert: false, danger: false },
-            { time: "16:16:05", msg: "[SUGARSENSE] 萬海315輪 AIS 靠泊訊號鎖定：誤差縮減至 ±14分鐘內", alert: false, danger: false },
-            { time: "16:15:30", msg: "[SHORE-POWER] 78號碼頭岸電預冷啟動：深冷至 -19.5°C 充飽冷能蓄熱池", alert: false, danger: false },
-            { time: "16:15:10", msg: "[DTBE] 動態熱預算核發：20噸貨物蓄冷 36 MJ/°C，核准拔除發電機", alert: false, danger: false },
-            { time: "16:14:45", msg: "[FLEET] 中華汽車 CMC ET35 貨櫃拖車出閘：減重1,200kg，零排碳起跑", alert: false, danger: false }
+            { time: "DEMO", msg: "[SIMULATED DEMO] Sample dashboard event; no external registration or dispatch authorization.", alert: false, danger: false },
+            { time: "DEMO", msg: "[SIMULATED DEMO] Example vessel-arrival marker; no live AIS/CPT/TDX feed is connected.", alert: false, danger: false },
+            { time: "DEMO", msg: "[SIMULATED INPUT] Initial cargo temperature −19.5°C is an assumption, not sensor data.", alert: false, danger: false },
+            { time: "DEMO", msg: "[SIMULATED MODEL] Scenario only; no thermal permit or dispatch authorization is issued.", alert: false, danger: false },
+            { time: "DEMO", msg: "[SIMULATED DEMO] Vehicle movement is illustrative; no actual fleet, fuel, or emissions are observed.", alert: false, danger: false }
         ];
 
         function fitHiDPICanvas(c) {
@@ -148,33 +148,33 @@
             const monthlySaving = trucks * 3 * 25 * 1110;
             const netMonthlyBenefit = monthlySaving - (trucks * 1800);
             const paybackDays = ((trucks * 4500) / (monthlySaving / 25)).toFixed(1);
-            const contractId = "CR-2026-PILOT-" + (Math.floor(Math.random() * 8999) + 1000);
+            const contractId = "DEMO ONLY · NO PURCHASE ORDER";
 
             const html = `
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-subtle); padding-bottom:6px;">
-                    <span style="font-size:11px; color:var(--text-tertiary);">採購單號 (PO Number):</span>
+                    <span style="font-size:11px; color:var(--text-tertiary);">示意識別 (Demo identifier):</span>
                     <strong style="font-family:var(--font-mono); color:var(--electric-cyan);">${contractId}</strong>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size:11px; color:var(--text-secondary);">簽約對象 (Client):</span>
+                    <span style="font-size:11px; color:var(--text-secondary);">示意目標類型 (Example target):</span>
                     <strong style="font-size:12px; color:#fff;">${client}</strong>
                 </div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:4px 0;">
                     <div style="background:var(--bg-base); padding:8px; border-radius:4px; border:1px solid var(--border-subtle);">
-                        <div style="font-size:10px; color:var(--text-secondary);">90天先導驗證專案總額</div>
+                        <div style="font-size:10px; color:var(--text-secondary);">未核准的 90 天試點規劃輸入</div>
                         <div style="font-size:16px; font-weight:800; font-family:var(--font-mono); color:var(--cyber-emerald);">NT$ ${pilotFee.toLocaleString()}</div>
-                        <div style="font-size:9.5px; color:var(--cyber-emerald);">(滿期100%抵扣年約)</div>
+                        <div style="font-size:9.5px; color:var(--cyber-emerald);">(示意數值；非報價或合約)</div>
                     </div>
                     <div style="background:var(--bg-base); padding:8px; border-radius:4px; border:1px solid var(--border-subtle);">
-                        <div style="font-size:10px; color:var(--text-secondary);">${trucks}輛車預期月增淨利</div>
+                        <div style="font-size:10px; color:var(--text-secondary);">${trucks} 輛車 · 未驗證情境計算</div>
                         <div style="font-size:16px; font-weight:800; font-family:var(--font-mono); color:#38bdf8;">+NT$ ${netMonthlyBenefit.toLocaleString()}</div>
-                        <div style="font-size:9.5px; color:var(--electric-cyan);">(回本期 ${paybackDays} 天)</div>
+                        <div style="font-size:9.5px; color:var(--electric-cyan);">(非收益預測 · ${paybackDays} 天算例)</div>
                     </div>
                 </div>
                 <div style="font-size:10.5px; color:var(--text-tertiary); line-height:1.4;">
-                    ✓ 包含 3 輛車 OBD-II / J1939 無損直上硬體套件 (ISO 11898-2 光電隔離，保固無損)<br>
-                    ✓ 90 天即時冷鏈熱蓄冷演算法 · 支援司機 LINE 官方帳號免裝 App 接收綠色通行證<br>
-                    ✓ 專屬冷鏈工程師現場調校，成效未達標 100% 全額無條件退款
+                    試點假設：可評估 3 輛車與 OBD-II / J1939 相容性；硬體相容、保固與服務尚未確認。<br>
+                    試點假設：可用合成資料評估冷鏈情境；即時遙測、LINE 整合與派車功能未承諾。<br>
+                    驗收標準、保險、退款、折抵與責任條款尚未定義；此頁不構成報價、合約或承諾。
                 </div>
             `;
             document.getElementById('pilotContractOutput').innerHTML = html;
@@ -189,41 +189,39 @@
             const paybackDays = ((trucks * 4500) / (monthlySaving / 25)).toFixed(1);
 
             const memo = `================================================================================
-CROSSROUTE B2B COMMERCIAL ROI & PAYBACK MEMO (FOR FLEET CFO & PROCUREMENT)
+CROSSROUTE ILLUSTRATIVE ROI SCENARIO (UNVALIDATED · NOT AN OFFER OR FORECAST)
 ================================================================================
+NOTICE: Every price, saving, trip, operating-cost and payback value below is a user-adjustable planning assumption. No outcome is observed or guaranteed. No contract, procurement approval, warranty, insurance coverage, refund or service level is offered by this memo.
 Generated: ${new Date().toISOString()}
-Target Entity: Kaohsiung Smart Port Drayage Fleet
-Fleet Configuration: ${trucks} Trucks | ${trips} Trips/Day/Truck | 25 Operational Days/Month
+Example target: Kaohsiung Smart Port Drayage Fleet (not a customer)
+Scenario inputs: ${trucks} trucks | ${trips} trips/day/truck | 25 assumed operating days/month
 
 [1] DIRECT P&L SAVINGS BREAKDOWN (PER TRIP)
 --------------------------------------------------------------------------------
-- Avoided Diesel Generator (Genset) Rental Fee:     NT$ 1,000 / trip
-- Avoided Diesel Fuel Idling (3.8L/hr @ NT$28.5/L):  NT$   110 / trip
+- Assumed generator rental cost:                    NT$ 1,000 / trip
+- Assumed diesel idling cost:                       NT$   110 / trip
 --------------------------------------------------------------------------------
-TOTAL GUARANTEED CASH SAVED PER ZERO-GENSET MOVE:    NT$ 1,110 / trip
-(Plus Port Demurrage Risk Avoidance: NT$ 500 / move)
+Illustrative cost-avoidance arithmetic:             NT$ 1,110 / trip
+(Port queue/demurrage effect is not estimated or observed.)
 
 [2] MONTHLY CASH FLOW IMPACT (FLEET LEVEL: ${trucks} TRUCKS)
 --------------------------------------------------------------------------------
-- Gross Avoided Diesel & Generator Cost:             NT$ ${monthlySaving.toLocaleString()} / month
-- CrossRoute Telematics & Thermal SaaS (NT$1,800/mo): NT$ ${platformCost.toLocaleString()} / month
+- Assumption-based gross cost arithmetic:            NT$ ${monthlySaving.toLocaleString()} / month
+- Example platform fee input (NT$1,800/mo):           NT$ ${platformCost.toLocaleString()} / month
 --------------------------------------------------------------------------------
-NET INCREASE IN MONTHLY OPERATING CASH FLOW:        +NT$ ${netProfit.toLocaleString()} / month
+Unvalidated scenario difference:                    NT$ ${netProfit.toLocaleString()} / month
 
 [3] HARDWARE RECOVERY & PROCUREMENT CAPITAL
 --------------------------------------------------------------------------------
 - 5-Min Plug-and-Play Hardware Kit (NT$4,500/truck): NT$ ${(trucks * 4500).toLocaleString()} (One-Time CapEx)
-- Hardware Break-Even / Payback Period:             ${paybackDays} Days (~2 Weeks)
+- Arithmetic-only payback estimate:                 ${paybackDays} days (not a forecast)
 
-[4] 90-DAY RISK-FREE PILOT TERMS (UNDER MANAGER CAP)
+[4] HYPOTHETICAL PILOT DISCUSSION INPUTS (UNAPPROVED)
 --------------------------------------------------------------------------------
-- Pilot Investment: NT$ 27,000 flat (covers 3 test trucks for 90 days)
-- Board Approval Exemption: Fits strictly under NT$ 30,000 departmental discretionary limit
-- 100% Contract Credit: 100% of NT$ 27,000 credited toward Year 1 annual subscription
-- Zero-Risk Warranty: ISO 11898-2 passive optical isolation (Zero ECM error codes)
-- Underwritten Liability: Tokio Marine Newa (新安東京海上產險) cargo insurance rider up to NT$ 5,000,000/container
+- Pilot fee, operating scope, acceptance criteria and procurement authority are undefined.
+- No warranty, compatibility assurance, insurer endorsement, insurance coverage, refund, credit or liability limit is represented.
 ================================================================================
-CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
+Planning scenario only · validate assumptions before any commercial proposal
 `;
 
             const blob = new Blob([memo], { type: "text/plain;charset=utf-8" });
@@ -245,9 +243,9 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
             document.getElementById('roiTripsVal').innerText = trips + " 趟/日";
 
             const workDaysPerMonth = 25;
-            const directSavingsPerTrip = 1110; // Guaranteed direct fuel + rental saving (NT$ 1,110 / trip)
-            const demurrageAvoidancePerTrip = 500; // Demurrage queue risk reduction (NT$ 500 / trip)
-            const totalBenefitPerTrip = directSavingsPerTrip + demurrageAvoidancePerTrip; // NT$ 1,610 / trip
+            const directSavingsPerTrip = 1110; // Unvalidated planning input, not observed savings
+            const demurrageAvoidancePerTrip = 500; // Unvalidated planning input, not observed risk reduction
+            const totalBenefitPerTrip = directSavingsPerTrip + demurrageAvoidancePerTrip;
 
             const platformFeePerTruck = 1800; // NT$ 1,800/truck/mo
             const hardwareAndInstallPerTruck = 15000; // Complete COTS kit + professional calibration (NT$ 15,000 / truck)
@@ -258,7 +256,7 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
             const monthlyPlatformFee = trucks * platformFeePerTruck;
             const monthlyNetProfit = monthlyDirectSavings - monthlyPlatformFee;
 
-            // Believable CFO Payback Period based on direct cash savings (14-25 days)
+            // Arithmetic-only payback estimate from planning inputs; not a forecast.
             const dailyNetProfit = monthlyNetProfit / workDaysPerMonth;
             const paybackDays = (trucks * hardwareAndInstallPerTruck) / Math.max(1, dailyNetProfit);
 
@@ -268,7 +266,7 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
             document.getElementById('roiPaybackDays').innerText = paybackDays.toFixed(1) + " 天 (約 2 週)";
         }
 
-        // Live Open-Meteo Weather Fetching
+        // Optional user-triggered Open-Meteo input; model state otherwise starts from seeded defaults.
         async function fetchLiveWeather() {
             const badge = document.getElementById('weatherBadge');
             badge.innerText = "連線中...";
@@ -281,7 +279,7 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
                     state.temp = temp;
                     document.getElementById('sliderTemp').value = temp;
                     badge.innerText = `${temp}°C 實況`;
-                    addEvent(`[WEATHER-API] 成功串接高雄港即時氣象：氣溫 ${temp}°C，風速 ${wind} km/h`, false, false);
+                    addEvent(`[EXTERNAL WEATHER INPUT] Open-Meteo returned ${temp}°C and ${wind} km/h; this is weather input, not port, cargo, or vehicle telemetry.`, false, false);
                     updatePhysics();
                 }
             } catch (err) {
@@ -329,7 +327,7 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
 
             const packets = [
                 { id: "0x18FEE900", pgn: 65269, hex: ambHex, desc: `AMB_Temp: ${state.temp.toFixed(1)}°C` },
-                { id: "0x18FEF200", pgn: 65266, hex: "00 00 00 00 FF FF FF FF", desc: "LFE_FuelRate: 0.00 L/hr (ZERO_GENSET)" },
+                { id: "0x18FEF200", pgn: 65266, hex: "00 00 00 00 FF FF FF FF", desc: "[SYNTHETIC DEMO] Fuel-rate placeholder 0.00 L/hr; not a vehicle observation or zero-fuel claim." },
                 { id: "0x18FF0000", pgn: 65520, hex: `12 04 01 FF FF FF FF FF`, desc: `DEMO ESTIMATE: Core=${state.modelResult && state.modelResult.valid ? state.modelResult.finalC.toFixed(2) : '—'}°C | Not telemetry` }
             ];
 
@@ -1214,8 +1212,8 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
             overlay.classList.add('live');
             badge.classList.remove('quiet');
             badge.classList.add('loud');
-            dbValue.textContent = '92 dB';
-            dbCaption.textContent = '極度吵雜 / 聽力受損';
+            dbValue.textContent = 'DEMO';
+            dbCaption.textContent = '合成音效示意 · 非聲級量測';
             headerBtn.classList.add('playing');
             sceneBtn.classList.add('playing');
 
@@ -1312,29 +1310,16 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
                 badge.classList.add('quiet');
                 headerBtn.classList.remove('playing');
                 sceneBtn.classList.remove('playing');
-                const start = performance.now();
-                const from = 92;
-                const to = 42;
-                const tick = function (ts) {
-                    const p = Math.min(1, (ts - start) / 380);
-                    const eased = 1 - Math.pow(1 - p, 3);
-                    dbValue.textContent = Math.round(from + (to - from) * eased) + ' dB';
-                    if (p < 1) {
-                        audioShockRaf = requestAnimationFrame(tick);
-                    } else {
-                        dbValue.textContent = '42 dB';
-                        dbCaption.textContent = '純電寧靜 / 司機尊嚴';
-                        addEvent('[AUDIO] 聽覺震撼對比完成：92 dB 柴油發電機 → 42 dB 純電靜音', false, false);
-                        audioShockTimer = setTimeout(function () {
-                            overlay.classList.remove('live');
-                            badge.classList.remove('quiet');
-                            badge.classList.add('loud');
-                            dbValue.textContent = '92 dB';
-                            dbCaption.textContent = '極度吵雜 / 聽力受損';
-                        }, 3800);
-                    }
-                };
-                audioShockRaf = requestAnimationFrame(tick);
+                    dbValue.textContent = 'DEMO';
+                    dbCaption.textContent = '合成音效示意 · 非聲級量測';
+                    addEvent('[SIMULATED AUDIO] Audio effect finished; no sound level or driver-health outcome was measured.', false, false);
+                    audioShockTimer = setTimeout(function () {
+                        overlay.classList.remove('live');
+                        badge.classList.remove('quiet');
+                        badge.classList.add('loud');
+                        dbValue.textContent = 'DEMO';
+                        dbCaption.textContent = '合成音效示意 · 非聲級量測';
+                    }, 3800);
             }, 3500);
         }
 
@@ -1350,6 +1335,4 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
             initTrucks();
             drawMap();
             updatePhysics();
-            // Auto fetch weather on load
-            fetchLiveWeather();
         });

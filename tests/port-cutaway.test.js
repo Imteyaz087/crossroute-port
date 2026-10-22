@@ -50,6 +50,76 @@ test('default Overview is a north-oriented orthographic bird’s-eye view framin
     assert.match(html,/Bird’s-eye port overview · 港區鳥瞰/);
 });
 
+test('label decluttering preserves landmark priority, stays near anchors, and hides IDs only when crowded', () => {
+    const h=harness({reduced:true}),layout=h.scene.layoutSceneLabels;
+    const landmarks=[
+        {id:'terminal-4',kind:'essential',x:50,y:50,width:100,height:14},
+        {id:'terminal-5',kind:'essential',x:95,y:50,width:100,height:14},
+        {id:'berth-78',kind:'essential',x:75,y:58,width:105,height:14},
+        {id:'ship',kind:'essential',x:140,y:150,width:80,height:14},
+        {id:'cold-hub',kind:'essential',x:235,y:80,width:110,height:14},
+        {id:'tunnel',kind:'context',x:80,y:300,width:80,height:14}
+    ];
+    const essential=landmarks.slice(0,5).map(item=>item.id),limit={essential:40,context:32,vehicle:24};
+    function vehiclesFor(width) {
+        return Array.from({length:16},(_,index)=>({
+            id:`CMC-ET35-${100+index}`,kind:'vehicle',
+            x:width>500?70+(index%8)*100:40+(index%4)*76,
+            y:width>500?390+Math.floor(index/8)*38:250+Math.floor(index/4)*28,
+            width:64,height:12
+        }));
+    }
+    function assertNoCollisions(result,width,height) {
+        const visible=result.filter(item=>item.visible);
+        for(let i=0;i<visible.length;i++)for(let j=i+1;j<visible.length;j++) {
+            const a=visible[i],b=visible[j];
+            const separated=Math.abs(a.x-b.x)>=(a.width+b.width)/2+4||Math.abs(a.y-b.y)>=(a.height+b.height)/2+4;
+            assert.ok(separated,`${a.id} and ${b.id} overlap at ${width}x${height}`);
+        }
+        for(const item of visible)assert.ok(item.displacement<=limit[item.kind],`${item.id} moved too far from its anchor: ${item.displacement}px`);
+    }
+    let desktopFleetVertexCount=0;
+    for(const [width,height] of [[900,520],[320,390]]) {
+        const proposals=[...landmarks,...vehiclesFor(width)];
+        const result=layout(proposals,width,height),again=layout(proposals,width,height);
+        assert.deepEqual(result,again,'same ordered inputs always produce the same placements');
+        const byId=new Map(result.map(item=>[item.id,item]));
+        for(const id of essential)assert.equal(byId.get(id).visible,true,`${id} remains prioritized`);
+        assert.equal(byId.get('tunnel').visible,true,'secondary harbor context follows required tags');
+        assertNoCollisions(result,width,height);
+        const fleetVisible=result.filter(item=>item.id.startsWith('CMC-ET35-')&&item.visible).length;
+        if(width===900)assert.equal(fleetVisible,16,'distinct projected labels return when the wide view provides room');
+        else assert.ok(fleetVisible>0&&fleetVisible<=16,'portrait layout keeps only fleet IDs that fit nearby');
+        assert.equal(h.scene.createDemoFleet().length,16,'decluttering affects labels only, never the 16 vehicle meshes');
+        const mounted=harness({reduced:true,width,height}),overlay=mounted.parent.children.find(element=>element.className==='port-fleet-label-overlay');
+        assert.equal(overlay.children.length,22,'all map tags and all vehicle label nodes stay mounted');
+        const fleetVertexCount=mounted.draws.at(-1).count;
+        assert.ok(fleetVertexCount>0,'all vehicle geometry is submitted independently from its labels');
+        if(width===900)desktopFleetVertexCount=fleetVertexCount;
+        else assert.equal(fleetVertexCount,desktopFleetVertexCount,'portrait label decluttering never removes or changes vehicle meshes');
+        const mountedLabels=overlay.children.filter(label=>!label.hidden).map(label=>{
+            const vehicle=label.textContent.startsWith('CMC-ET35-');
+            const w=Math.ceil([...label.textContent].length*4.82+(vehicle?6:8)),heightPx=vehicle?12:14;
+            const x=parseFloat(label.style.left),y=parseFloat(label.style.top);
+            return {id:label.textContent,x,y,w,height:heightPx};
+        });
+        for(const id of ['TERMINAL 4 · 63–66','TERMINAL 5 · 77–81','BERTH 78 · ACTIVE','WAN HAI 315','QIANZHEN COLD HUB'])assert.ok(mountedLabels.some(label=>label.id===id),`${id} remains visible`);
+        for(let i=0;i<mountedLabels.length;i++)for(let j=i+1;j<mountedLabels.length;j++) {
+            const a=mountedLabels[i],b=mountedLabels[j];
+            const separated=Math.abs(a.x-b.x)>=(a.w+b.w)/2+4||Math.abs(a.y-b.y)>=(a.height+b.height)/2+4;
+            assert.ok(separated,`mounted labels ${a.id} and ${b.id} do not overlap at ${width}x${height}`);
+        }
+        mounted.api.dispose();
+    }
+    const clustered=[...landmarks,...Array.from({length:16},(_,index)=>({id:`CMC-ET35-${100+index}`,kind:'vehicle',x:160,y:350,width:64,height:12}))];
+    const crowded=layout(clustered,320,390);
+    assert.deepEqual(crowded,layout(clustered,320,390));
+    assert.ok(crowded.filter(item=>item.id.startsWith('CMC-ET35-')&&item.visible).length<16,'coincident anchors hide excess IDs instead of scattering them away');
+    assertNoCollisions(crowded,320,390);
+    assert.match(renderer.toString('utf8'),/for\(const vehicle of demoFleet\)\s*\{\s*const pose=getDemoFleetPose/,'all fleet geometry remains independent from label visibility');
+    h.api.dispose();
+});
+
 test('cutaway changes the actual camera matrix/target, supports keyboard/reset and view-specific zoom without RAF in reduced motion', () => {
     const h = harness({ reduced: true });
     const overview = h.matrices.at(-1);

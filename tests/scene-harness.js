@@ -10,19 +10,25 @@ export function harness({ reduced = false, adapter = false, webgl = true, shader
     let now = 1000, buffer = null, nextId = 0, rafId = 0, fallbackDraws = 0;
     const draws = [], matrices = [], buffers = new Map(), queue = new Map(), nodes = {}, fallbackEvents = [];
     const rect = { width, height };
-    function element() {
+    function element(svg = false) {
         const listeners = {};
-        return { style: {}, children: [], attributes: {}, listeners, hidden: false, textContent: '',
+        const e = { style: {}, children: [], attributes: {}, listeners, textContent: '',
             setAttribute(k, v) { this.attributes[k] = String(v); }, getAttribute(k) { return this.attributes[k]; },
+            hasAttribute(k) { return Object.hasOwn(this.attributes, k); }, removeAttribute(k) { delete this.attributes[k]; },
             appendChild(e) { this.children.push(e); e.parentElement = this; },
             remove() { if (this.parentElement) this.parentElement.children = this.parentElement.children.filter(e => e !== this); this.parentElement = null; },
             getBoundingClientRect() { return rect; }, setPointerCapture() {},
             addEventListener(k, fn) { listeners[k] = fn; }, removeEventListener(k) { delete listeners[k]; },
             dispatch(k, event = {}) { listeners[k]?.(event); }
         };
+        // Real HTML hidden reflects an attribute; SVG hidden is only an expando.
+        if (svg === true) e.hidden = false;
+        else Object.defineProperty(e, 'hidden', { get() { return this.hasAttribute('hidden'); }, set(value) { if (value) this.setAttribute('hidden', ''); else this.removeAttribute('hidden'); } });
+        return e;
     }
     for (const match of html.matchAll(/<[^>]+\bid="([^"]+)"[^>]*>/g)) {
-        const e = nodes[match[1]] = element(); e.hidden = /\shidden(?:\s|>)/.test(match[0]);
+        const e = nodes[match[1]] = element(/^<svg\b/.test(match[0]));
+        if (/\shidden(?:\s|>)/.test(match[0])) e.setAttribute('hidden', '');
         e.value = match[0].match(/\bvalue="([^"]*)"/)?.[1] || '';
     }
     const parent = nodes.portSceneViewport, canvas = nodes.portWebGLCanvas;

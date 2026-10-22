@@ -42,13 +42,13 @@ test('portrait cutaway projection keeps cab, cargo and power cabinet inside the 
     }
 });
 
-test('real shared-model dashboard updates feed in-scene cargo/temp/reference/recovery readouts and preserve hidden SVG IDs', () => {
+test('real shared-model dashboard updates feed docked scene-panel cargo/temp/reference/recovery readouts and preserve hidden SVG IDs', () => {
     const h = harness({ reduced: true, adapter: true, dashboard: true });
     const { context, nodes, state } = h;
     assert.equal(nodes.portCargoName.textContent, h.cargo.name);
     assert.equal(nodes.portCargoTemp.textContent, state.modelResult.finalC.toFixed(2) + ' °C');
     assert.equal(nodes.portCargoReference.textContent, '-15.00 °C');
-    assert.equal(nodes.thermalFallbackIllustration.hidden, true);
+    assert.equal(nodes.thermalFallbackIllustration.hasAttribute('hidden'), true);
     assert.ok(nodes.thermalCargoText.textContent.includes(nodes.portCargoTemp.textContent));
     assert.match(nodes.portCargoRecovery.textContent, /^0 min/);
     context.showPortFocus('cutaway');
@@ -95,18 +95,18 @@ test('3D→2D→3D preserves focus, toggles only redundant illustration, and pre
     for (let i = 0; i < 3; i++) {
         context.showPortView('2d');
         assert.equal(nodes.portWebGLCanvas.hidden, true); assert.equal(nodes.port2dView.hidden, false);
-        assert.equal(nodes.thermalFallbackIllustration.hidden, false); assert.equal(nodes.portThermalReadout.hidden, true);
+        assert.equal(nodes.thermalFallbackIllustration.hasAttribute('hidden'), false); assert.equal(nodes.portThermalReadout.hidden, true);
         assert.equal(nodes.thermalModelState.hidden, false); assert.equal(nodes.btnPortCutaway.disabled, true);
         assert.equal(h.queue.size, 0);
         h.changeMotion(true); h.changeMotion(false);
         assert.equal(nodes.portWebGLCanvas.hidden, true); assert.equal(h.queue.size, 0);
         context.showPortView('3d');
-        assert.equal(nodes.thermalFallbackIllustration.hidden, true); assert.equal(nodes.portThermalReadout.hidden, false);
+        assert.equal(nodes.thermalFallbackIllustration.hasAttribute('hidden'), true); assert.equal(nodes.portThermalReadout.hidden, false);
         assert.equal(nodes.btnPortCutaway.getAttribute('aria-pressed'), 'true');
         assert.equal(nodes.btnPortCutaway.disabled, false); assert.equal(h.queue.size, 1);
     }
     h.loseContext();
-    assert.equal(h.queue.size, 0); assert.equal(nodes.thermalFallbackIllustration.hidden, false);
+    assert.equal(h.queue.size, 0); assert.equal(nodes.thermalFallbackIllustration.hasAttribute('hidden'), false);
     assert.equal(nodes.btnPortCutaway.disabled, true);
     context.showPortView('3d'); h.changeMotion(true); h.changeMotion(false);
     assert.equal(nodes.portWebGLCanvas.hidden, true); assert.equal(h.queue.size, 0);
@@ -117,12 +117,12 @@ test('WebGL and shader failures retain readable 2D thermal content and never ann
     for (const options of [{ webgl: false }, { shader: false }]) {
         const h = harness({ ...options, adapter: true, dashboard: true });
         assert.equal(h.nodes.portWebGLCanvas.hidden, true);
-        assert.equal(h.nodes.thermalFallbackIllustration.hidden, false);
+        assert.equal(h.nodes.thermalFallbackIllustration.hasAttribute('hidden'), false);
         assert.equal(h.nodes.portThermalReadout.hidden, true);
         assert.equal(h.nodes.btnPortOverview.disabled, true);
         assert.equal(h.parent.children.filter(e => e.className === 'port-fleet-label-overlay').length, 0);
         assert.equal(h.queue.size, 0);
-        h.context.showPortView('3d'); assert.equal(h.nodes.thermalFallbackIllustration.hidden, false);
+        h.context.showPortView('3d'); assert.equal(h.nodes.thermalFallbackIllustration.hasAttribute('hidden'), false);
         const direct = harness(options);
         assert.equal(direct.api.available, false);
         assert.ok(direct.fallbackEvents.every(event => event.active));
@@ -168,5 +168,56 @@ test('fallback layout contract fills the viewport and production fitHiDPICanvas 
         assert.equal(canvas.width, width * 2);
         assert.equal(canvas.height, height * 2);
         assert.ok(fitted.w >= 40 && fitted.h >= 40, 'original drawMap no longer takes its undersized-canvas early return');
+    }
+});
+
+test('SVG fallback visibility uses the hidden attribute even when its hidden property does not reflect', () => {
+    const h = harness({ adapter: true, dashboard: true });
+    const svg = h.nodes.thermalFallbackIllustration;
+    assert.equal(svg.hidden, false, 'mock SVG property is deliberately independent of attributes');
+    assert.equal(svg.hasAttribute('hidden'), true, 'active 3D sets the CSS-visible attribute');
+    for (let i = 0; i < 3; i++) {
+        h.context.showPortView('2d');
+        assert.equal(svg.hasAttribute('hidden'), false, 'fallback removes rather than sets hidden="false"');
+        assert.equal(h.nodes.portThermalReadout.hasAttribute('hidden'), true);
+        h.context.showPortView('3d');
+        assert.equal(svg.hasAttribute('hidden'), true);
+        assert.equal(h.nodes.portThermalReadout.hasAttribute('hidden'), false);
+        assert.equal(svg.hidden, false, 'no ineffective SVG expando writes');
+    }
+    h.loseContext();
+    assert.equal(svg.hasAttribute('hidden'), false, 'context loss restores the SVG');
+    assert.equal(h.nodes.portThermalReadout.hasAttribute('hidden'), true);
+});
+
+test('thermal readout is the next normal-flow sibling below the canvas viewport, never a geometry overlay', () => {
+    // Structural HTML/CSS contract; native browser appearance is checked separately.
+    const stack = [], byId = new Map(), root = { children: [] };
+    const voidTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
+    for (const match of html.matchAll(/<(\/?)([a-z][\w-]*)\b[^>]*>/gi)) {
+        const tag = match[2].toLowerCase();
+        if (match[1]) {
+            const index = stack.findLastIndex(node => node.tag === tag);
+            if (index >= 0) stack.length = index;
+        } else {
+            const parent = stack.at(-1) || root, node = { tag, parent, children: [] };
+            parent.children.push(node);
+            const id = match[0].match(/\bid="([^"]+)"/)?.[1];
+            if (id) byId.set(id, node);
+            if (!voidTags.has(tag) && !match[0].endsWith('/>')) stack.push(node);
+        }
+    }
+    const viewport = byId.get('portSceneViewport'), readout = byId.get('portThermalReadout');
+    assert.equal(readout.parent, viewport.parent, 'readout remains inside the same scene panel');
+    assert.equal(viewport.parent.children.indexOf(readout), viewport.parent.children.indexOf(viewport) + 1);
+    const rule = html.match(/\.port-thermal-readout\s*\{([^}]+)\}/)?.[1];
+    const declarations = Object.fromEntries(rule.split(';').filter(part => part.includes(':')).map(part => part.split(':').map(value => value.trim())));
+    assert.ok(!declarations.position || declarations.position === 'static');
+    assert.equal(declarations.inset, undefined);
+    assert.equal(declarations['pointer-events'], undefined, 'values remain selectable and readable');
+    for (const id of ['portCargoName', 'portCargoTemp', 'portCargoReference', 'portCargoRecovery']) {
+        let node = byId.get(id);
+        while (node && node !== readout) node = node.parent;
+        assert.equal(node, readout, `${id} stays inside the docked card`);
     }
 });

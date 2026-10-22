@@ -1,5 +1,5 @@
 /*!
- * CrossRoute™ AI Telematics & Cold-Chain Carbon-Demurrage Optimization Engine
+ * CrossRoute illustrative cold-chain scenario demo
  * Version: 2.4.0 (Production Release)
  * Author: Imteyaz Ahmad (伊穆泰) <imteyaz087@gmail.com>
  * Copyright (c) 2026 Imteyaz Ahmad / Qistara Technologies Co., Ltd.
@@ -63,6 +63,8 @@
             activeTab: 'events',
             canPackets: [],
             latestCertificate: null,
+            modelResult: null,
+            modelRevision: 0,
             audioCtx: null
         };
 
@@ -71,13 +73,13 @@
         const chartCanvas = document.getElementById('telemetryChart');
         const chartCtx = chartCanvas.getContext('2d');
 
-        // Initial Event Feeds
+        // Seeded illustrative entries only. No live dispatch, AIS, or equipment events are represented.
         const initialEvents = [
-            { time: "16:16:40", msg: "[SYSTEM] 2026永續智慧創新黑客松 裕隆集團 (15-M) 官方報名成功確認！", alert: false, danger: false },
-            { time: "16:16:05", msg: "[SUGARSENSE] 萬海315輪 AIS 靠泊訊號鎖定：誤差縮減至 ±14分鐘內", alert: false, danger: false },
-            { time: "16:15:30", msg: "[SHORE-POWER] 78號碼頭岸電預冷啟動：深冷至 -19.5°C 充飽冷能蓄熱池", alert: false, danger: false },
-            { time: "16:15:10", msg: "[DTBE] 動態熱預算核發：20噸貨物蓄冷 36 MJ/°C，核准拔除發電機", alert: false, danger: false },
-            { time: "16:14:45", msg: "[FLEET] 中華汽車 CMC ET35 貨櫃拖車出閘：減重1,200kg，零排碳起跑", alert: false, danger: false }
+            { time: "DEMO", msg: "[SIMULATED DEMO] Sample dashboard event; no external registration or dispatch authorization.", alert: false, danger: false },
+            { time: "DEMO", msg: "[SIMULATED DEMO] Example vessel-arrival marker; no live AIS/CPT/TDX feed is connected.", alert: false, danger: false },
+            { time: "DEMO", msg: "[SIMULATED INPUT] Initial cargo temperature −19.5°C is an assumption, not sensor data.", alert: false, danger: false },
+            { time: "DEMO", msg: "[SIMULATED MODEL] Scenario only; no thermal permit or dispatch authorization is issued.", alert: false, danger: false },
+            { time: "DEMO", msg: "[SIMULATED DEMO] Vehicle movement is illustrative; no actual fleet, fuel, or emissions are observed.", alert: false, danger: false }
         ];
 
         function fitHiDPICanvas(c) {
@@ -146,33 +148,33 @@
             const monthlySaving = trucks * 3 * 25 * 1110;
             const netMonthlyBenefit = monthlySaving - (trucks * 1800);
             const paybackDays = ((trucks * 4500) / (monthlySaving / 25)).toFixed(1);
-            const contractId = "CR-2026-PILOT-" + (Math.floor(Math.random() * 8999) + 1000);
+            const contractId = "DEMO ONLY · NO PURCHASE ORDER";
 
             const html = `
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-subtle); padding-bottom:6px;">
-                    <span style="font-size:11px; color:var(--text-tertiary);">採購單號 (PO Number):</span>
+                    <span style="font-size:11px; color:var(--text-tertiary);">示意識別 (Demo identifier):</span>
                     <strong style="font-family:var(--font-mono); color:var(--electric-cyan);">${contractId}</strong>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size:11px; color:var(--text-secondary);">簽約對象 (Client):</span>
+                    <span style="font-size:11px; color:var(--text-secondary);">示意目標類型 (Example target):</span>
                     <strong style="font-size:12px; color:#fff;">${client}</strong>
                 </div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:4px 0;">
                     <div style="background:var(--bg-base); padding:8px; border-radius:4px; border:1px solid var(--border-subtle);">
-                        <div style="font-size:10px; color:var(--text-secondary);">90天先導驗證專案總額</div>
+                        <div style="font-size:10px; color:var(--text-secondary);">未核准的 90 天試點規劃輸入</div>
                         <div style="font-size:16px; font-weight:800; font-family:var(--font-mono); color:var(--cyber-emerald);">NT$ ${pilotFee.toLocaleString()}</div>
-                        <div style="font-size:9.5px; color:var(--cyber-emerald);">(滿期100%抵扣年約)</div>
+                        <div style="font-size:9.5px; color:var(--cyber-emerald);">(示意數值；非報價或合約)</div>
                     </div>
                     <div style="background:var(--bg-base); padding:8px; border-radius:4px; border:1px solid var(--border-subtle);">
-                        <div style="font-size:10px; color:var(--text-secondary);">${trucks}輛車預期月增淨利</div>
+                        <div style="font-size:10px; color:var(--text-secondary);">${trucks} 輛車 · 未驗證情境計算</div>
                         <div style="font-size:16px; font-weight:800; font-family:var(--font-mono); color:#38bdf8;">+NT$ ${netMonthlyBenefit.toLocaleString()}</div>
-                        <div style="font-size:9.5px; color:var(--electric-cyan);">(回本期 ${paybackDays} 天)</div>
+                        <div style="font-size:9.5px; color:var(--electric-cyan);">(非收益預測 · ${paybackDays} 天算例)</div>
                     </div>
                 </div>
                 <div style="font-size:10.5px; color:var(--text-tertiary); line-height:1.4;">
-                    ✓ 包含 3 輛車 OBD-II / J1939 無損直上硬體套件 (ISO 11898-2 光電隔離，保固無損)<br>
-                    ✓ 90 天即時冷鏈熱蓄冷演算法 · 支援司機 LINE 官方帳號免裝 App 接收綠色通行證<br>
-                    ✓ 專屬冷鏈工程師現場調校，成效未達標 100% 全額無條件退款
+                    試點假設：可評估 3 輛車與 OBD-II / J1939 相容性；硬體相容、保固與服務尚未確認。<br>
+                    試點假設：可用合成資料評估冷鏈情境；即時遙測、LINE 整合與派車功能未承諾。<br>
+                    驗收標準、保險、退款、折抵與責任條款尚未定義；此頁不構成報價、合約或承諾。
                 </div>
             `;
             document.getElementById('pilotContractOutput').innerHTML = html;
@@ -187,41 +189,39 @@
             const paybackDays = ((trucks * 4500) / (monthlySaving / 25)).toFixed(1);
 
             const memo = `================================================================================
-CROSSROUTE B2B COMMERCIAL ROI & PAYBACK MEMO (FOR FLEET CFO & PROCUREMENT)
+CROSSROUTE ILLUSTRATIVE ROI SCENARIO (UNVALIDATED · NOT AN OFFER OR FORECAST)
 ================================================================================
+NOTICE: Every price, saving, trip, operating-cost and payback value below is a user-adjustable planning assumption. No outcome is observed or guaranteed. No contract, procurement approval, warranty, insurance coverage, refund or service level is offered by this memo.
 Generated: ${new Date().toISOString()}
-Target Entity: Kaohsiung Smart Port Drayage Fleet
-Fleet Configuration: ${trucks} Trucks | ${trips} Trips/Day/Truck | 25 Operational Days/Month
+Example target: Kaohsiung Smart Port Drayage Fleet (not a customer)
+Scenario inputs: ${trucks} trucks | ${trips} trips/day/truck | 25 assumed operating days/month
 
 [1] DIRECT P&L SAVINGS BREAKDOWN (PER TRIP)
 --------------------------------------------------------------------------------
-- Avoided Diesel Generator (Genset) Rental Fee:     NT$ 1,000 / trip
-- Avoided Diesel Fuel Idling (3.8L/hr @ NT$28.5/L):  NT$   110 / trip
+- Assumed generator rental cost:                    NT$ 1,000 / trip
+- Assumed diesel idling cost:                       NT$   110 / trip
 --------------------------------------------------------------------------------
-TOTAL GUARANTEED CASH SAVED PER ZERO-GENSET MOVE:    NT$ 1,110 / trip
-(Plus Port Demurrage Risk Avoidance: NT$ 500 / move)
+Illustrative cost-avoidance arithmetic:             NT$ 1,110 / trip
+(Port queue/demurrage effect is not estimated or observed.)
 
 [2] MONTHLY CASH FLOW IMPACT (FLEET LEVEL: ${trucks} TRUCKS)
 --------------------------------------------------------------------------------
-- Gross Avoided Diesel & Generator Cost:             NT$ ${monthlySaving.toLocaleString()} / month
-- CrossRoute Telematics & Thermal SaaS (NT$1,800/mo): NT$ ${platformCost.toLocaleString()} / month
+- Assumption-based gross cost arithmetic:            NT$ ${monthlySaving.toLocaleString()} / month
+- Example platform fee input (NT$1,800/mo):           NT$ ${platformCost.toLocaleString()} / month
 --------------------------------------------------------------------------------
-NET INCREASE IN MONTHLY OPERATING CASH FLOW:        +NT$ ${netProfit.toLocaleString()} / month
+Unvalidated scenario difference:                    NT$ ${netProfit.toLocaleString()} / month
 
 [3] HARDWARE RECOVERY & PROCUREMENT CAPITAL
 --------------------------------------------------------------------------------
 - 5-Min Plug-and-Play Hardware Kit (NT$4,500/truck): NT$ ${(trucks * 4500).toLocaleString()} (One-Time CapEx)
-- Hardware Break-Even / Payback Period:             ${paybackDays} Days (~2 Weeks)
+- Arithmetic-only payback estimate:                 ${paybackDays} days (not a forecast)
 
-[4] 90-DAY RISK-FREE PILOT TERMS (UNDER MANAGER CAP)
+[4] HYPOTHETICAL PILOT DISCUSSION INPUTS (UNAPPROVED)
 --------------------------------------------------------------------------------
-- Pilot Investment: NT$ 27,000 flat (covers 3 test trucks for 90 days)
-- Board Approval Exemption: Fits strictly under NT$ 30,000 departmental discretionary limit
-- 100% Contract Credit: 100% of NT$ 27,000 credited toward Year 1 annual subscription
-- Zero-Risk Warranty: ISO 11898-2 passive optical isolation (Zero ECM error codes)
-- Underwritten Liability: Tokio Marine Newa (新安東京海上產險) cargo insurance rider up to NT$ 5,000,000/container
+- Pilot fee, operating scope, acceptance criteria and procurement authority are undefined.
+- No warranty, compatibility assurance, insurer endorsement, insurance coverage, refund, credit or liability limit is represented.
 ================================================================================
-CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
+Planning scenario only · validate assumptions before any commercial proposal
 `;
 
             const blob = new Blob([memo], { type: "text/plain;charset=utf-8" });
@@ -243,9 +243,9 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
             document.getElementById('roiTripsVal').innerText = trips + " 趟/日";
 
             const workDaysPerMonth = 25;
-            const directSavingsPerTrip = 1110; // Guaranteed direct fuel + rental saving (NT$ 1,110 / trip)
-            const demurrageAvoidancePerTrip = 500; // Demurrage queue risk reduction (NT$ 500 / trip)
-            const totalBenefitPerTrip = directSavingsPerTrip + demurrageAvoidancePerTrip; // NT$ 1,610 / trip
+            const directSavingsPerTrip = 1110; // Unvalidated planning input, not observed savings
+            const demurrageAvoidancePerTrip = 500; // Unvalidated planning input, not observed risk reduction
+            const totalBenefitPerTrip = directSavingsPerTrip + demurrageAvoidancePerTrip;
 
             const platformFeePerTruck = 1800; // NT$ 1,800/truck/mo
             const hardwareAndInstallPerTruck = 15000; // Complete COTS kit + professional calibration (NT$ 15,000 / truck)
@@ -256,7 +256,7 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
             const monthlyPlatformFee = trucks * platformFeePerTruck;
             const monthlyNetProfit = monthlyDirectSavings - monthlyPlatformFee;
 
-            // Believable CFO Payback Period based on direct cash savings (14-25 days)
+            // Arithmetic-only payback estimate from planning inputs; not a forecast.
             const dailyNetProfit = monthlyNetProfit / workDaysPerMonth;
             const paybackDays = (trucks * hardwareAndInstallPerTruck) / Math.max(1, dailyNetProfit);
 
@@ -266,7 +266,7 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
             document.getElementById('roiPaybackDays').innerText = paybackDays.toFixed(1) + " 天 (約 2 週)";
         }
 
-        // Live Open-Meteo Weather Fetching
+        // Optional user-triggered Open-Meteo input; model state otherwise starts from seeded defaults.
         async function fetchLiveWeather() {
             const badge = document.getElementById('weatherBadge');
             badge.innerText = "連線中...";
@@ -279,7 +279,7 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
                     state.temp = temp;
                     document.getElementById('sliderTemp').value = temp;
                     badge.innerText = `${temp}°C 實況`;
-                    addEvent(`[WEATHER-API] 成功串接高雄港即時氣象：氣溫 ${temp}°C，風速 ${wind} km/h`, false, false);
+                    addEvent(`[EXTERNAL WEATHER INPUT] Open-Meteo returned ${temp}°C and ${wind} km/h; this is weather input, not port, cargo, or vehicle telemetry.`, false, false);
                     updatePhysics();
                 }
             } catch (err) {
@@ -292,7 +292,7 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
             state.cargoKey = document.getElementById('cargoSelect').value;
             const cargo = CARGO_DB[state.cargoKey];
             document.getElementById('hudPrechill').innerText = cargo.prechill + " °C (平準鎖定)";
-            addEvent(`[CARGO] 切換貨物物理特性：${cargo.name} (基準 ${cargo.target}°C，HACCP上限 ${cargo.critical}°C)`);
+            addEvent(`[CARGO] Model inputs · ${cargo.name} (target ${cargo.target}°C; selected reference ${cargo.critical}°C)`);
             updatePhysics();
         }
 
@@ -327,8 +327,8 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
 
             const packets = [
                 { id: "0x18FEE900", pgn: 65269, hex: ambHex, desc: `AMB_Temp: ${state.temp.toFixed(1)}°C` },
-                { id: "0x18FEF200", pgn: 65266, hex: "00 00 00 00 FF FF FF FF", desc: "LFE_FuelRate: 0.00 L/hr (ZERO_GENSET)" },
-                { id: "0x18FF0000", pgn: 65520, hex: `12 04 01 FF FF FF FF FF`, desc: `REEFER: Core=${(cargo.prechill + 0.14).toFixed(1)}°C | Status=SECURE_PASS` }
+                { id: "0x18FEF200", pgn: 65266, hex: "00 00 00 00 FF FF FF FF", desc: "[SYNTHETIC DEMO] Fuel-rate placeholder 0.00 L/hr; not a vehicle observation or zero-fuel claim." },
+                { id: "0x18FF0000", pgn: 65520, hex: `12 04 01 FF FF FF FF FF`, desc: `DEMO ESTIMATE: Core=${state.modelResult && state.modelResult.valid ? state.modelResult.finalC.toFixed(2) : '—'}°C | Not telemetry` }
             ];
 
             packets.forEach(p => {
@@ -349,45 +349,30 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
 
         // Pitch Scenarios
         function setScenario(sc) {
+            if (!['normal', 'delay', 'recovery'].includes(sc)) return;
             state.scenario = sc;
-            document.querySelectorAll('.btn-scenario').forEach(b => b.classList.remove('active', 'alert-active'));
-
-            if (sc === 'normal') {
-                document.getElementById('btnScenarioNormal').classList.add('active');
-                document.getElementById('sliderDuration').value = 38;
-                document.getElementById('activeModeBadge').innerText = "標準零發電機模式";
-                document.getElementById('activeModeBadge').style.borderColor = "rgba(16, 185, 129, 0.3)";
-                document.getElementById('activeModeBadge').style.color = "var(--cyber-emerald)";
-                document.getElementById('hudSafetyStatus').innerText = "通行證核發：拔除發電機";
-                document.getElementById('hudSafetyStatus').style.color = "var(--cyber-emerald)";
-                addEvent("[MODE] 切換至標準零發電機模式：車程 38 分鐘，現省 NT$ 1,610！");
-            } else if (sc === 'stall') {
-                document.getElementById('btnScenarioStall').classList.add('alert-active');
-                document.getElementById('sliderDuration').value = 90;
-                document.getElementById('activeModeBadge').innerText = "⚠️ 警報：過港隧道嚴重車禍塞車";
-                document.getElementById('activeModeBadge').style.borderColor = "rgba(244, 63, 94, 0.4)";
-                document.getElementById('activeModeBadge').style.color = "var(--rose-alert)";
-                document.getElementById('hudSafetyStatus').innerText = "⚠️ 溫升斜率偏離！需避險支援";
-                document.getElementById('hudSafetyStatus').style.color = "var(--rose-alert)";
-                addEvent("[ALERT] 模擬過港隧道大塞車：預估卡關 90 分鐘，動態預算進入防護警戒！", true, true);
-            } else if (sc === 'safety') {
-                document.getElementById('btnScenarioSafety').classList.add('active');
-                document.getElementById('sliderDuration').value = 52;
-                document.getElementById('activeModeBadge').innerText = "🛡️ 動態安全網啟動：小港中繼插座";
-                document.getElementById('activeModeBadge').style.borderColor = "rgba(6, 182, 212, 0.4)";
-                document.getElementById('activeModeBadge').style.color = "var(--electric-cyan)";
-                document.getElementById('hudSafetyStatus').innerText = "已轉向小港中繼岸電：保證零貨損";
-                document.getElementById('hudSafetyStatus').style.color = "var(--electric-cyan)";
-                addEvent("[SAFETY-NET] 動態避險網介入：卡車轉向小港中繼站補電，保證零貨損！", true, false);
-            }
+            const settings = {
+                normal: { duration: 38, label: 'Standard illustrative scenario · 標準示意情境', button: 'btnScenarioNormal' },
+                delay: { duration: 90, label: 'Delay illustrative scenario · 延誤示意情境', button: 'btnScenarioStall' },
+                recovery: { duration: 104, label: 'Delay + shore-power recovery assumption · 延誤後岸電恢復假設', button: 'btnScenarioSafety' }
+            }[sc];
+            document.getElementById('sliderDuration').value = settings.duration;
+            document.querySelectorAll('.btn-scenario').forEach(button => button.classList.remove('active', 'alert-active'));
+            document.getElementById(settings.button).classList.add(sc === 'delay' ? 'alert-active' : 'active');
+            document.getElementById('activeModeBadge').innerText = settings.label;
+            addEvent(`[DEMO SCENARIO] ${settings.label}. Illustrative model only.`, sc !== 'normal', false);
             updatePhysics();
         }
 
-        // Rigorous Thermodynamic Differential Calculations
+        // Illustrative thermal model. Outputs are scenario estimates, not operational evidence.
         function updatePhysics() {
             state.temp = parseFloat(document.getElementById('sliderTemp').value);
             state.payload = parseFloat(document.getElementById('sliderPayload').value);
             state.duration = parseFloat(document.getElementById('sliderDuration').value);
+            const scenarioDuration = { normal: 38, delay: 90, recovery: 104 }[state.scenario];
+            document.getElementById('activeModeBadge').innerText = state.duration === scenarioDuration
+                ? ({ normal: 'Standard illustrative scenario · 標準示意情境', delay: 'Delay illustrative scenario · 延誤示意情境', recovery: 'Delay + shore-power recovery assumption · 延誤後岸電恢復假設' }[state.scenario])
+                : 'Custom illustrative inputs · 自訂示意輸入';
 
             document.getElementById('valTemp').innerText = state.temp.toFixed(1) + " °C";
             document.getElementById('valPayload').innerText = state.payload.toFixed(1) + " 噸";
@@ -395,37 +380,58 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
 
             const cargo = CARGO_DB[state.cargoKey];
             const prechillTemp = cargo.prechill;
-            const deltaT_ambient = state.temp - prechillTemp;
-
-            // Physics calculation
-            const heatLeakRate = state.leakRate * deltaT_ambient + (29.8 * 600.0 * 0.25); // Conduction + Solar
-            const totalHeatJoules = heatLeakRate * (state.duration * 60); // Joules
-            const totalHeatKwh = totalHeatJoules / 3600000;
-            const cargoCapacity = (state.payload * 1000 * cargo.cp) + (4200 * 490); // Cargo + Steel tare
-            const tempRise = totalHeatJoules / cargoCapacity;
-            const finalTemp = prechillTemp + tempRise;
-            const isSafe = (finalTemp <= cargo.critical);
-
-            document.getElementById('thLeak').innerText = state.leakRate.toFixed(1) + " W/K (" + (heatLeakRate/1000).toFixed(2) + " kW)";
-            document.getElementById('thCap').innerText = (cargoCapacity / 1000000).toFixed(1) + " MJ / °C";
-            document.getElementById('thHeat').innerText = totalHeatKwh.toFixed(2) + " kWh (" + (totalHeatJoules/1000000).toFixed(2) + " MJ)";
-            
+            state.modelRevision++;
+            state.latestCertificate = null;
+            const modelInput = { scenario: state.scenario, cargoKey: state.cargoKey, ambientC: state.temp, payloadTon: state.payload, durationMin: state.duration, leakRateWPerK: state.leakRate };
+            const result = window.CrossRouteThermalModel.evaluate(modelInput, cargo);
+            state.modelResult = result;
+            const heatIngressW = result.valid ? result.heatIngressW : 0;
+            const heatIngressJ = result.valid ? result.heatIngressJ : 0;
+            document.getElementById('thLeak').innerText = result.valid ? `${state.leakRate.toFixed(1)} W/K (${(heatIngressW / 1000).toFixed(2)} kW estimated ingress)` : 'Invalid inputs';
+            document.getElementById('thCap').innerText = result.valid ? `${(result.heatCapacityJPerC / 1000000).toFixed(1)} MJ / °C (assumed)` : '—';
+            document.getElementById('thHeat').innerText = result.valid ? `${(heatIngressJ / 3600000).toFixed(2)} kWh (${(heatIngressJ / 1000000).toFixed(2)} MJ)` : '—';
+            const statusText = !result.valid ? 'Invalid model inputs · 輸入無效' : result.state === 'within_reference' ? 'Within selected reference · 低於輸入參考值' : 'Exceeds selected reference · 超過輸入參考值';
             const driftEl = document.getElementById('thDrift');
-            driftEl.innerText = "+" + tempRise.toFixed(2) + " °C (" + (isSafe ? "極安全" : "需中繼補電") + ")";
-            driftEl.style.color = isSafe ? "var(--cyber-emerald)" : "var(--rose-alert)";
+            driftEl.innerText = result.valid ? `${(result.finalC - result.initialC >= 0 ? '+' : '')}${(result.finalC - result.initialC).toFixed(2)} °C · ${statusText}` : statusText;
+            driftEl.style.color = !result.valid || result.state === 'exceeds_reference' ? 'var(--rose-alert)' : 'var(--text-primary)';
+            document.getElementById('thLimit').innerText = result.valid ? `${cargo.critical.toFixed(1)} °C · margin ${(result.marginC >= 0 ? '+' : '')}${result.marginC.toFixed(2)} °C (selected model reference; not a legal limit)` : '—';
 
-            const limitEl = document.getElementById('thLimit');
-            const margin = cargo.critical - finalTemp;
-            limitEl.innerText = `上限 ${cargo.critical}°C (安全餘裕 +${margin.toFixed(2)}°C)`;
+            const savings = result.valid && state.scenario === 'normal' && state.duration === 38 ? 'NT$ 1,610*' : 'Not estimated';
+            document.getElementById('metricCash').innerText = savings;
+            document.getElementById('metricFleetCash').innerText = 'Not estimated';
+            document.getElementById('metricCarbon').innerText = 'Not estimated';
+            document.getElementById('metricDefect').innerText = 'Not estimated';
+            document.getElementById('metricWaitTime').innerText = 'Not estimated';
+            document.getElementById('hudSafetyStatus').innerText = `Demo model · ${statusText}`;
+            document.getElementById('hudSafetyStatus').style.color = result.valid && result.state === 'within_reference' ? 'var(--text-primary)' : 'var(--rose-alert)';
+            renderThermalExplainer(result, cargo);
+            renderHud(result, cargo, statusText, savings);
+            updateChartData(result);
+        }
 
-            // Update Financial & Carbon Metrics
-            const cashSaved = (state.scenario === 'normal' || state.scenario === 'safety') ? 1610 : 0;
-            document.getElementById('metricCash').innerHTML = `NT$ ${cashSaved} <span style="font-size: 11px; color: var(--text-secondary);">(免租 NT$1,500 + 油資)</span>`;
-            document.getElementById('metricFleetCash').innerText = `NT$ ${(cashSaved * 30 * 2 * 24 / 10000).toFixed(1)} 萬`;
-            document.getElementById('metricCarbon').innerText = (state.scenario === 'normal' || state.scenario === 'safety') ? "21.4 kg CO₂e" : "0.0 kg (發電機重啟)";
+        function renderThermalExplainer(result, cargo) {
+            document.getElementById('thermalCargoText').textContent = result.valid ? `${cargo.name} · ${result.finalC.toFixed(2)} °C` : 'Invalid model input';
+            document.getElementById('thermalEndLabel').textContent = result.valid ? `End ${result.finalC.toFixed(2)} °C` : 'End —';
+            const recovering = result.valid && result.recoveryMinutes > 0;
+            document.getElementById('thermalPhaseLabel').textContent = recovering ? `Recovery · 岸電恢復 ${result.recoveryMinutes} min` : state.scenario === 'delay' ? `Delay · 延誤 ${result.disconnectedMinutes} min` : 'Prechill → transit · 預冷→運輸';
+            document.getElementById('thermalPowerLabel').textContent = recovering ? `Shore power ${result.shorePowerKwAssumption} kW assumed` : 'Assumed prechill · 預冷假設';
+            document.getElementById('thermalPowerLine').style.opacity = recovering ? '1' : '.4';
+            document.getElementById('thermalModelState').textContent = !result.valid ? 'Invalid model input · 輸入無效' : `Illustrative ${result.state === 'within_reference' ? 'estimate below' : 'estimate above'} selected reference · ${result.finalC.toFixed(2)} °C`;
+        }
 
-            // Update Telemetry Chart
-            updateChartData(prechillTemp, tempRise, state.duration);
+        function renderHud(result, cargo, statusText, savings) {
+            const title = document.getElementById('hudStateTitle');
+            const badge = document.getElementById('hudStateBadgeText');
+            const detail = result.valid ? `${state.scenario} · ${statusText}; estimated cargo temperature ${result.finalC.toFixed(2)} °C against selected reference ${cargo.critical.toFixed(1)} °C. Illustrative model only.` : 'Invalid model inputs · 輸入無效';
+            title.innerText = !result.valid ? 'MODEL INPUT ERROR' : result.state === 'within_reference' ? 'MODEL ESTIMATE' : 'REFERENCE EXCEEDED';
+            badge.innerText = 'DEMO MODEL · NOT OPERATIONAL';
+            document.getElementById('hudCountdown').innerText = '—';
+            document.getElementById('hudStateDesc').innerText = 'Illustrative estimate only · 示意估算；非即時遙測、操作建議或合規判定。';
+            document.getElementById('hudActionText').innerText = detail;
+            document.getElementById('hudCoreTemp').innerText = result.valid ? `${result.finalC.toFixed(2)} °C estimate` : '—';
+            document.getElementById('hudAirTemp').innerText = 'Not modeled';
+            document.getElementById('hudNearestPlug').innerText = result.valid && result.recoveryMinutes > 0 ? `${result.shorePowerKwAssumption} kW assumed · location/availability unverified` : 'Shore-power status unverified · 岸電未連線';
+            document.getElementById('hudSavings').innerText = savings;
         }
 
         // Radar Simulation Canvas
@@ -809,7 +815,7 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
 
             // Harbor tunnel
             ctx.save();
-            const stall = state.scenario === 'stall';
+            const stall = state.scenario === 'delay';
             const tA = { x: t5x + t5.bankW + 8, y: t5y + t5.bankH * 0.45 };
             const tB = { x: hubX - 8, y: 210 };
             const tLen = Math.hypot(tB.x - tA.x, tB.y - tA.y) || 1;
@@ -843,12 +849,12 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
             placeTag(
                 w * 0.52,
                 200,
-                state.scenario === 'stall' ? 'TUNNEL STALL 90M' : 'HARBOR TUNNEL 38M',
-                state.scenario === 'stall' ? '#fb7185' : '#94a3b8',
+                state.scenario === 'delay' ? 'DEMO DELAY 90M' : state.scenario === 'recovery' ? 'DELAY + RECOVERY' : 'HARBOR TRANSIT 38M',
+                state.scenario === 'delay' ? '#fb7185' : '#94a3b8',
                 false
             );
 
-            if (state.scenario === 'safety') {
+            if (state.scenario === 'recovery') {
                 const px = w * 0.40;
                 const py = h - 86;
                 ctx.save();
@@ -860,7 +866,7 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
                 ctx.fill();
                 ctx.stroke();
                 ctx.restore();
-                placeTag(px + 8, py + 8, 'XIAOGANG SHORE POWER', '#fbbf24', false);
+                placeTag(px + 8, py + 8, 'SHORE POWER ASSUMED', '#34d399', false);
             }
 
             state.trucks.forEach((t, idx) => {
@@ -918,13 +924,17 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
         }
 
         // Telemetry Chart
-        function updateChartData(prechill, rise, duration) {
+        function updateChartData(result) {
             state.telemetryHistory = [];
+            if (!result || !result.valid) { drawChart(); return; }
             const steps = 15;
             for (let i = 0; i <= steps; i++) {
                 const fraction = i / steps;
-                const m = fraction * duration;
-                const temp = prechill + (rise * fraction);
+                const m = fraction * state.duration;
+                const recoveryStart = result.disconnectedMinutes / Math.max(1, state.duration);
+                const temp = fraction <= recoveryStart || result.recoveryMinutes === 0
+                    ? result.initialC + (result.peakC - result.initialC) * Math.min(1, fraction / Math.max(recoveryStart, 0.0001))
+                    : result.peakC + (result.finalC - result.peakC) * ((fraction - recoveryStart) / Math.max(1 - recoveryStart, 0.0001));
                 state.telemetryHistory.push({ min: m, temp: temp });
             }
             drawChart();
@@ -1029,7 +1039,7 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
                 chartCtx.font = '600 9px JetBrains Mono, ui-monospace, monospace';
                 chartCtx.textAlign = 'left';
                 chartCtx.textBaseline = 'bottom';
-                chartCtx.fillText('HACCP ' + critical.toFixed(1) + '°C', padL + 6, yCrit - 3);
+                chartCtx.fillText('Reference ' + critical.toFixed(1) + '°C', padL + 6, yCrit - 3);
                 chartCtx.restore();
             }
 
@@ -1079,7 +1089,7 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
 
             const chips = [
                 { label: 'Start Temp', value: startT.toFixed(2) + '°C', color: '#e2e8f0' },
-                { label: 'Safety Margin', value: (margin >= 0 ? '+' : '') + margin.toFixed(2) + '°C', color: margin >= 0 ? '#34d399' : '#fb7185' },
+                { label: 'Reference Margin', value: (margin >= 0 ? '+' : '') + margin.toFixed(2) + '°C', color: margin >= 0 ? '#34d399' : '#fb7185' },
                 { label: 'End Temp', value: endT.toFixed(2) + '°C', color: '#e2e8f0' }
             ];
             const chipW = (w - 12) / 3;
@@ -1105,46 +1115,44 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
             });
         }
 
-        // ISO 14083 Certificate Modal with SHA-256
+        // Unsigned illustrative model report. SHA-256 identifies report bytes only.
         async function openCertModal() {
             const cargo = CARGO_DB[state.cargoKey];
-            const deltaT_ambient = state.temp - cargo.prechill;
-            const heatLeakRate = state.leakRate * deltaT_ambient + (29.8 * 600.0 * 0.25);
-            const totalHeatJoules = heatLeakRate * (state.duration * 60);
-            const cargoCapacity = (state.payload * 1000 * cargo.cp) + (4200 * 490);
-            const tempRise = totalHeatJoules / cargoCapacity;
-            const finalTemp = cargo.prechill + tempRise;
-
-            document.getElementById('modalCargo').innerText = `${cargo.name} (${state.payload} 噸)`;
-            document.getElementById('modalDrift').innerText = `+${tempRise.toFixed(2)} °C (最終 ${finalTemp.toFixed(2)}°C | 合規)`;
-            document.getElementById('modalSavings').innerText = `NT$ 1,610 (免租 NT$1,500 + 油資 NT$110)`;
-
-            // Compute Real Cryptographic SHA-256
-            const certPayload = {
-                standard: "ISO 14083:2023 / GLEC Framework Tier-3",
-                uid: "CR-KHH-20261021-087",
-                issuer: "CrossRoute Telematics & Yulon TAC Green Audit",
-                timestamp: new Date().toISOString(),
-                origin: "高雄港 第五貨櫃中心 78號碼頭",
-                destination: "前鎮保稅冷鏈物流園區 (19.4 km)",
-                vehicle: "中華汽車 CMC ET35 商用電動車",
-                cargo: cargo.name,
-                payload_ton: state.payload,
-                temp_rise_c: tempRise,
-                final_temp_c: finalTemp,
-                haccp_pass: (finalTemp <= cargo.critical),
-                cash_saved_ntd: 1610,
-                carbon_avoided_kg_co2e: 21.44
+            const result = state.modelResult;
+            if (!result || !result.valid) return;
+            const revision = state.modelRevision;
+            const input = { scenario: state.scenario, cargoKey: state.cargoKey, ambientC: state.temp, payloadTon: state.payload, durationMin: state.duration, leakRateWPerK: state.leakRate };
+            if (!window.CrossRouteThermalModel.isSnapshotCurrent(result, input)) return;
+            const report = {
+                artifact_type: "unsigned_illustrative_demo_report",
+                evidence_type: result.evidenceType,
+                verification_status: "not_signed_or_verified",
+                compliance_claim: false,
+                notice: "Illustrative model estimate only; not operational telemetry, validated cargo evidence, regulatory compliance evidence, or a certificate.",
+                report_id: `CR-DEMO-${Date.now()}`,
+                created_at_utc: new Date().toISOString(),
+                scenario: state.scenario,
+                model_inputs: input,
+                assumptions: { solar_load_w: 4470, tare_heat_capacity_j_per_c: 2058000, shore_power_kw: result.shorePowerKwAssumption },
+                model_output: { initial_c: result.initialC, peak_c: result.peakC, final_c: result.finalC, selected_reference_c: result.referenceC, margin_c: result.marginC, heat_ingress_j: result.heatIngressJ, heat_removed_j: result.heatRemovedJ, state: result.state },
+                scenario_only_savings_estimate_ntd: state.scenario === 'normal' && state.duration === 38 ? 1610 : null,
+                carbon_estimate_kg_co2e: null,
+                signature: null,
+                report_sha256_scope: "SHA-256 of the JSON object before report_sha256 is added; not a signature or Merkle root."
             };
-            state.latestCertificate = certPayload;
-
-            const textEncoder = new TextEncoder();
-            const data = textEncoder.encode(JSON.stringify(certPayload));
+            const data = new TextEncoder().encode(JSON.stringify(report));
             const hashBuffer = await crypto.subtle.digest('SHA-256', data);
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-            certPayload.cryptographic_hash_sha256 = hashHex;
+            if (revision !== state.modelRevision || !window.CrossRouteThermalModel.isSnapshotCurrent(result, {
+                scenario: state.scenario, cargoKey: state.cargoKey, ambientC: state.temp, payloadTon: state.payload, durationMin: state.duration, leakRateWPerK: state.leakRate
+            })) return;
+            report.report_sha256 = hashHex;
+            state.latestCertificate = report;
+            document.getElementById('modalUid').innerText = report.report_id;
+            document.getElementById('modalCargo').innerText = `${cargo.name} (${state.payload} 噸) · illustrative input`;
+            document.getElementById('modalDrift').innerText = `final ${result.finalC.toFixed(2)} °C estimate · selected reference ${result.referenceC.toFixed(1)} °C`;
+            document.getElementById('modalSavings').innerText = state.scenario === 'normal' && state.duration === 38 ? 'NT$ 1,610* illustrative scenario assumption; other benefits not estimated' : 'Not estimated for this scenario';
             document.getElementById('modalHash').innerText = hashHex;
             document.getElementById('certModal').style.display = 'flex';
         }
@@ -1156,7 +1164,7 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
         // In-Cab Driver HUD Control
         function openDriverHud() {
             document.getElementById('driverHud').style.display = 'flex';
-            setHudMode('go');
+            if (state.modelResult) renderHud(state.modelResult, CARGO_DB[state.cargoKey], state.modelResult.valid ? (state.modelResult.state === 'within_reference' ? 'Within selected reference' : 'Exceeds selected reference') : 'Invalid model inputs', state.scenario === 'normal' && state.duration === 38 ? 'NT$ 1,610*' : 'Not estimated');
         }
 
         function closeDriverHud() {
@@ -1164,111 +1172,23 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
         }
 
         function setHudMode(mode) {
-            const card = document.getElementById('hudStatusCard');
-            const badge = document.getElementById('hudBigBadge');
-            const title = document.getElementById('hudStateTitle');
-            const countdown = document.getElementById('hudCountdown');
-            const desc = document.getElementById('hudStateDesc');
-            const actionText = document.getElementById('hudActionText');
-            const badgeText = document.getElementById('hudStateBadgeText');
-
-            card.classList.remove('watch', 'abort');
-
-            if (mode === 'go') {
-                badgeText.innerText = "FSM: NOMINAL (NORMAL)";
-                badgeText.style.color = "var(--cyber-emerald)";
-                badgeText.style.borderColor = "var(--cyber-emerald)";
-                title.innerText = "GREEN PASS: GO";
-                countdown.innerText = "48 MINS";
-                countdown.style.color = "#ffffff";
-                desc.innerText = "20噸冷凍牛豬肉蓄冷量充足 (36 MJ/°C)。核心溫升僅 +0.12°C，遠低於法規標準，准予拔除柴油發電機輕量行駛。";
-                actionText.innerText = "保持巡航速度 · 直行新生高架至仁武冷鏈物流園區 · 預計 28 分鐘抵達";
-                document.getElementById('hudAirTemp').innerText = "-18.2 °C";
-                document.getElementById('hudCoreTemp').innerText = "-19.36 °C";
-                document.getElementById('hudNearestPlug').innerText = "小港四號門冷鏈緩衝站 (3.8 km)";
-            } else if (mode === 'watch') {
-                card.classList.add('watch');
-                badgeText.innerText = "FSM: ELEVATED RISK (WARNING)";
-                badgeText.style.color = "#f59e0b";
-                badgeText.style.borderColor = "#f59e0b";
-                title.innerText = "THERMAL WATCH";
-                countdown.innerText = "18 MINS";
-                countdown.style.color = "#f59e0b";
-                desc.innerText = "過港隧道發生突發塞車事故，車速降至 12 km/h。櫃內回風溫升達到 +1.15°C，熱預算裕度收斂中。";
-                actionText.innerText = "⚠️ 提高警示層級 · 準備就近切換至小港四號門岸電充冷避險 · 車隊調度員監控中";
-                document.getElementById('hudAirTemp').innerText = "-17.6 °C";
-                document.getElementById('hudCoreTemp').innerText = "-19.12 °C";
-                document.getElementById('hudNearestPlug').innerText = "小港四號門冷鏈緩衝站 (1.2 km 待命中)";
-            } else if (mode === 'abort') {
-                card.classList.add('abort');
-                badgeText.innerText = "FSM: FAIL-SAFE TRIGGERED";
-                badgeText.style.color = "#ef4444";
-                badgeText.style.borderColor = "#ef4444";
-                title.innerText = "EMERGENCY ABORT";
-                countdown.innerText = "04 MINS";
-                countdown.style.color = "#ef4444";
-                desc.innerText = "重大塞車滯留時間超過安全臨界值！回風溫升已達 +1.85°C。系統自主啟動雙重失效保護協議！";
-                actionText.innerText = "🚨 立即右轉沿小港路進入4號門緊急岸電站插電 (380V CEE) · 零貨損保護鎖定";
-                document.getElementById('hudAirTemp').innerText = "-16.4 °C";
-                document.getElementById('hudCoreTemp').innerText = "-18.65 °C";
-                document.getElementById('hudNearestPlug').innerText = "小港四號門岸電站 (0.4 km · 已為您預約插座)";
-            }
+            if (!['normal', 'delay', 'recovery'].includes(mode)) return;
+            setScenario(mode);
         }
 
         function downloadAuditJson() {
-            if (!state.latestCertificate) return;
-            const fullAuditDossier = {
-                schema_version: "CrossRoute-Audit-v1.2",
-                standard_alignment: "ISO 14083:2023 / GLEC Framework v3.0 (Pre-Verification Methodology)",
-                audit_authority: "CrossRoute Telematics Sovereign Node (Kaohsiung Harbor)",
-                public_key_ed25519: "0425b40746bbf6386ba0b96623e59b970876543210fedcba9876543210abcdef",
-                trip_summary: {
-                    trip_id: state.latestCertificate.uid,
-                    vehicle_id: "YULON-CMC-ET35-081",
-                    container_id: "MSKU-749102-4",
-                    cargo_type: state.latestCertificate.cargo,
-                    origin: state.latestCertificate.origin,
-                    destination: state.latestCertificate.destination,
-                    transit_duration_mins: 38.0,
-                    diesel_genset_detached: true,
-                    haccp_temperature_status: {
-                        initial_core_temp_c: -19.5,
-                        peak_air_temp_c: -18.2,
-                        peak_core_temp_c: state.latestCertificate.final_temp_c,
-                        regulatory_limit_c: -15.0,
-                        compliance_verdict: state.latestCertificate.haccp_pass ? "PASSED" : "VIOLATION"
-                    },
-                    environmental_audit: {
-                        genset_diesel_burned_liters: 0.0,
-                        baseline_diesel_liters: 8.0,
-                        wtw_co2e_saved_kg: state.latestCertificate.carbon_avoided_kg_co2e,
-                        financial_savings_twd: state.latestCertificate.cash_saved_ntd
-                    }
-                },
-                telematics_manifest: {
-                    event_count: 4,
-                    merkle_root_sha256: state.latestCertificate.cryptographic_hash_sha256,
-                    timestamp_utc: state.latestCertificate.timestamp,
-                    rfc3161_nonce: "7a8b9c0d1e2f3a4b"
-                },
-                raw_events: [
-                    { ts: 0, lat: 22.585, lon: 120.312, air_c: -19.4, core_c: -19.5, speed_kmh: 0, status: "BERTH_UNPLUG" },
-                    { ts: 10, lat: 22.592, lon: 120.320, air_c: -19.1, core_c: -19.48, speed_kmh: 42, status: "HIGHWAY_CRUISE" },
-                    { ts: 25, lat: 22.610, lon: 120.335, air_c: -18.7, core_c: -19.42, speed_kmh: 48, status: "HIGHWAY_CRUISE" },
-                    { ts: 38, lat: 22.642, lon: 120.355, air_c: -18.2, core_c: state.latestCertificate.final_temp_c, speed_kmh: 12, status: "WAREHOUSE_ARRIVE" }
-                ],
-                cryptographic_signature: {
-                    algorithm: "Ed25519",
-                    signature_hex: "d4e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0"
-                }
-            };
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullAuditDossier, null, 2));
+            if (!state.latestCertificate || !state.modelResult) return;
+            const input = { scenario: state.scenario, cargoKey: state.cargoKey, ambientC: state.temp, payloadTon: state.payload, durationMin: state.duration, leakRateWPerK: state.leakRate };
+            if (!window.CrossRouteThermalModel.isSnapshotCurrent(state.modelResult, input)) return;
+            const reportData = { ...state.latestCertificate };
+            const dataStr = URL.createObjectURL(new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json;charset=utf-8' }));
             const downloadAnchor = document.createElement('a');
             downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `CrossRoute_Signed_Trip_Audit_${state.latestCertificate.uid}.json`);
+            downloadAnchor.setAttribute("download", `CrossRoute_Unsigned_Demo_Report_${state.latestCertificate.report_id}.json`);
             document.body.appendChild(downloadAnchor);
             downloadAnchor.click();
             downloadAnchor.remove();
+            setTimeout(() => URL.revokeObjectURL(dataStr), 1000);
         }
 
         // Auditory Decibel Shock Demo — Web Audio API (no samples, $0)
@@ -1292,8 +1212,8 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
             overlay.classList.add('live');
             badge.classList.remove('quiet');
             badge.classList.add('loud');
-            dbValue.textContent = '92 dB';
-            dbCaption.textContent = '極度吵雜 / 聽力受損';
+            dbValue.textContent = 'DEMO';
+            dbCaption.textContent = '合成音效示意 · 非聲級量測';
             headerBtn.classList.add('playing');
             sceneBtn.classList.add('playing');
 
@@ -1390,29 +1310,16 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
                 badge.classList.add('quiet');
                 headerBtn.classList.remove('playing');
                 sceneBtn.classList.remove('playing');
-                const start = performance.now();
-                const from = 92;
-                const to = 42;
-                const tick = function (ts) {
-                    const p = Math.min(1, (ts - start) / 380);
-                    const eased = 1 - Math.pow(1 - p, 3);
-                    dbValue.textContent = Math.round(from + (to - from) * eased) + ' dB';
-                    if (p < 1) {
-                        audioShockRaf = requestAnimationFrame(tick);
-                    } else {
-                        dbValue.textContent = '42 dB';
-                        dbCaption.textContent = '純電寧靜 / 司機尊嚴';
-                        addEvent('[AUDIO] 聽覺震撼對比完成：92 dB 柴油發電機 → 42 dB 純電靜音', false, false);
-                        audioShockTimer = setTimeout(function () {
-                            overlay.classList.remove('live');
-                            badge.classList.remove('quiet');
-                            badge.classList.add('loud');
-                            dbValue.textContent = '92 dB';
-                            dbCaption.textContent = '極度吵雜 / 聽力受損';
-                        }, 3800);
-                    }
-                };
-                audioShockRaf = requestAnimationFrame(tick);
+                    dbValue.textContent = 'DEMO';
+                    dbCaption.textContent = '合成音效示意 · 非聲級量測';
+                    addEvent('[SIMULATED AUDIO] Audio effect finished; no sound level or driver-health outcome was measured.', false, false);
+                    audioShockTimer = setTimeout(function () {
+                        overlay.classList.remove('live');
+                        badge.classList.remove('quiet');
+                        badge.classList.add('loud');
+                        dbValue.textContent = 'DEMO';
+                        dbCaption.textContent = '合成音效示意 · 非聲級量測';
+                    }, 3800);
             }, 3500);
         }
 
@@ -1428,6 +1335,4 @@ CrossRoute Technologies · Commercial Procurement Dept · https://crossroute.app
             initTrucks();
             drawMap();
             updatePhysics();
-            // Auto fetch weather on load
-            fetchLiveWeather();
         });

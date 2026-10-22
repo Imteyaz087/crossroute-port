@@ -102,7 +102,7 @@ test("reduced motion retains an explicitly selectable static 3D view", () => {
 test("WebGL remains original, accessible, scenario-driven, and has reduced-motion/2D fallback", () => {
     assert.match(renderer, /getContext\(["']webgl["']/);
     assert.match(renderer, /prefers-reduced-motion/);
-    assert.match(renderer, /createSceneState\(next\.scenario,next\.result\)/);
+    assert.match(renderer, /createSceneState\(next\.scenario,next\.result,next\.cargo\)/);
     assert.match(renderer, /pointerdown/);
     assert.match(renderer, /ArrowLeft/);
     assert.doesNotMatch(renderer, /unpkg\.com|jsdelivr\.net|spline\.design/i);
@@ -112,9 +112,9 @@ test("WebGL remains original, accessible, scenario-driven, and has reduced-motio
     assert.match(html, /showPortView\('2d'\)/);
     assert.match(html, /when WebGL is unavailable/);
     assert.match(html, /no live telemetry or dispatch connection/);
-    assert.match(html, /<script src="crossroute\.min\.js"><\/script>\s*<script src="port-scene\.js"><\/script>/);
+    assert.match(html, /<script src="crossroute\.min\.js"><\/script>\s*<script src="port-scene\.js\?v=[a-f0-9]{64}"><\/script>/);
     assert.match(renderer, /root\.updatePhysics = function/);
-    assert.match(renderer, /renderer\.update\(\{ scenario: state\.scenario, result: state\.modelResult \}\)/);
+    assert.match(renderer, /renderer\.update\(next\)/);
     assert.match(renderer, /if \(useFallback && !\(query && query\.matches\)\) return originalDrawMap\.apply/);
     assert.match(renderer, /if\(fleetLabels\)fleetLabels\.hidden=useFallback/);
 });

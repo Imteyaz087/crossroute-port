@@ -1,0 +1,140 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { harness } from './scene-harness.js';
+
+const plain = value => JSON.parse(JSON.stringify(value));
+const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+const renderer = readFileSync(new URL('../port-scene.js', import.meta.url));
+const baseResult = { valid: true, finalC: -18.54, peakC: -18.54, referenceC: -15, state: 'within_reference', recoveryMinutes: 0, shorePowerKwAssumption: null, heatIngressW: 6787.5 };
+
+test('cutaway changes the actual camera matrix/target, supports keyboard/reset and view-specific zoom without RAF in reduced motion', () => {
+    const h = harness({ reduced: true });
+    const overview = h.matrices.at(-1);
+    assert.equal(h.api.setView('cutaway'), true);
+    assert.deepEqual(plain(h.api.getViewState().target), [-0.62, 1.25, 1.72]);
+    assert.notDeepEqual(h.matrices.at(-1), overview);
+    assert.equal(h.queue.size, 0);
+    const cutaway = h.api.getViewState(), before = h.draws.length;
+    assert.equal(h.key('+'), true);
+    assert.equal(h.api.getViewState().distance, cutaway.distance - 0.8);
+    assert.equal(h.draws.length, before + 4);
+    h.key('ArrowRight'); assert.ok(h.api.getViewState().yaw > cutaway.yaw);
+    assert.equal(h.key('Escape'), true);
+    assert.deepEqual(h.matrices.at(-1), overview);
+    assert.equal(h.api.setView('bogus'), false);
+    assert.equal(h.api.setView('__proto__'), false);
+    assert.equal(h.key('2'), true); assert.equal(h.api.getViewState().view, 'cutaway');
+    assert.equal(h.key('1'), true); assert.equal(h.api.getViewState().view, 'overview');
+    h.api.dispose();
+});
+
+test('portrait cutaway projection keeps cab, cargo and power cabinet inside the visible viewport', () => {
+    for (const [width, height] of [[900, 520], [320, 390]]) {
+        const h = harness({ reduced: true, width, height }); h.api.setView('cutaway');
+        const m = h.matrices.at(-1);
+        for (const p of [[-3.15, 1.1, 1.72], [-.62, 1.4, 2.3], [1.94, 1.1, 1.62]]) {
+            const x = m[0]*p[0]+m[4]*p[1]+m[8]*p[2]+m[12], y = m[1]*p[0]+m[5]*p[1]+m[9]*p[2]+m[13], w = m[3]*p[0]+m[7]*p[1]+m[11]*p[2]+m[15];
+            assert.ok(w > 0 && Math.abs(x/w) < .96 && Math.abs(y/w) < .55, `${width}px framing ${p}`);
+        }
+        h.api.dispose();
+    }
+});
+
+test('real shared-model dashboard updates feed in-scene cargo/temp/reference/recovery readouts and preserve hidden SVG IDs', () => {
+    const h = harness({ reduced: true, adapter: true, dashboard: true });
+    const { context, nodes, state } = h;
+    assert.equal(nodes.portCargoName.textContent, h.cargo.name);
+    assert.equal(nodes.portCargoTemp.textContent, state.modelResult.finalC.toFixed(2) + ' °C');
+    assert.equal(nodes.portCargoReference.textContent, '-15.00 °C');
+    assert.equal(nodes.thermalFallbackIllustration.hidden, true);
+    assert.ok(nodes.thermalCargoText.textContent.includes(nodes.portCargoTemp.textContent));
+    assert.match(nodes.portCargoRecovery.textContent, /^0 min/);
+    context.showPortFocus('cutaway');
+    state.scenario = 'recovery'; nodes.sliderDuration.value = '104'; context.updatePhysics();
+    assert.equal(nodes.portCargoRecovery.textContent, '14 min · 10 kW assumed');
+    assert.equal(nodes.portCargoPeak.textContent, state.modelResult.peakC.toFixed(2) + ' °C');
+    assert.equal(nodes.portCargoHeat.textContent, (state.modelResult.heatIngressW / 1000).toFixed(2) + ' kW estimated ingress');
+    assert.equal(nodes.btnPortCutaway.getAttribute('aria-pressed'), 'true');
+    assert.match(nodes.thermalPhaseLabel.textContent, /14 min/);
+    h.cargo.name = '<b>Different cargo</b>'; h.cargo.critical = -22;
+    context.updatePhysics();
+    assert.equal(nodes.portCargoName.textContent, '<b>Different cargo</b>', 'literal text, not HTML injection');
+    assert.equal(nodes.portCargoReference.textContent, '-22.00 °C');
+    assert.equal(nodes.portCargoStatus.textContent, 'Exceeds selected reference');
+    nodes.sliderPayload.value = '0'; context.updatePhysics();
+    assert.equal(nodes.portCargoTemp.textContent, '—');
+    assert.equal(nodes.portCargoRecovery.textContent, 'Recovery unavailable');
+    assert.equal(nodes.portCargoName.textContent, 'Invalid model input');
+});
+
+test('cargo geometry is model-colored and recovery lead appears only for valid modeled recovery', () => {
+    const h = harness({ reduced: true });
+    const cargoColor = () => {
+        const data = h.draws.at(-3).data;
+        for (let i = 0; i < data.length; i += 9) if (Math.abs(data[i] + 1.71) < .001 && Math.abs(data[i+1] - 1.01) < .001 && Math.abs(data[i+2] - 1.79) < .001) return data.slice(i+6, i+9);
+        assert.fail('colored cargo body not submitted to WebGL');
+    };
+    h.api.update({ scenario: 'normal', result: baseResult });
+    const normalCount = h.draws.at(-3).count, normalColor = cargoColor();
+    h.api.update({ scenario: 'delay', result: { ...baseResult, finalC: -10, peakC: -10, state: 'exceeds_reference' } });
+    assert.notDeepEqual(cargoColor(), normalColor);
+    h.api.update({ scenario: 'recovery', result: { ...baseResult, recoveryMinutes: 14, shorePowerKwAssumption: 10 } });
+    assert.deepEqual(cargoColor(), normalColor);
+    assert.equal(h.draws.at(-3).count, normalCount + 18, 'three cable ribbons reach near side');
+    h.api.update({ scenario: 'recovery', result: { valid: false } });
+    assert.equal(h.draws.at(-3).count, normalCount);
+    h.api.dispose();
+});
+
+test('3D→2D→3D preserves focus, toggles only redundant illustration, and preference changes never override chosen 2D', () => {
+    const h = harness({ adapter: true, dashboard: true });
+    const { nodes, context } = h;
+    context.showPortFocus('cutaway');
+    for (let i = 0; i < 3; i++) {
+        context.showPortView('2d');
+        assert.equal(nodes.portWebGLCanvas.hidden, true); assert.equal(nodes.port2dView.hidden, false);
+        assert.equal(nodes.thermalFallbackIllustration.hidden, false); assert.equal(nodes.portThermalReadout.hidden, true);
+        assert.equal(nodes.thermalModelState.hidden, false); assert.equal(nodes.btnPortCutaway.disabled, true);
+        assert.equal(h.queue.size, 0);
+        h.changeMotion(true); h.changeMotion(false);
+        assert.equal(nodes.portWebGLCanvas.hidden, true); assert.equal(h.queue.size, 0);
+        context.showPortView('3d');
+        assert.equal(nodes.thermalFallbackIllustration.hidden, true); assert.equal(nodes.portThermalReadout.hidden, false);
+        assert.equal(nodes.btnPortCutaway.getAttribute('aria-pressed'), 'true');
+        assert.equal(nodes.btnPortCutaway.disabled, false); assert.equal(h.queue.size, 1);
+    }
+    h.loseContext();
+    assert.equal(h.queue.size, 0); assert.equal(nodes.thermalFallbackIllustration.hidden, false);
+    assert.equal(nodes.btnPortCutaway.disabled, true);
+    context.showPortView('3d'); h.changeMotion(true); h.changeMotion(false);
+    assert.equal(nodes.portWebGLCanvas.hidden, true); assert.equal(h.queue.size, 0);
+    assert.ok(h.fallbackDraws > 0);
+});
+
+test('WebGL and shader failures retain readable 2D thermal content and never announce 3D ready', () => {
+    for (const options of [{ webgl: false }, { shader: false }]) {
+        const h = harness({ ...options, adapter: true, dashboard: true });
+        assert.equal(h.nodes.portWebGLCanvas.hidden, true);
+        assert.equal(h.nodes.thermalFallbackIllustration.hidden, false);
+        assert.equal(h.nodes.portThermalReadout.hidden, true);
+        assert.equal(h.nodes.btnPortOverview.disabled, true);
+        assert.equal(h.parent.children.filter(e => e.className === 'port-fleet-label-overlay').length, 0);
+        assert.equal(h.queue.size, 0);
+        h.context.showPortView('3d'); assert.equal(h.nodes.thermalFallbackIllustration.hidden, false);
+        const direct = harness(options);
+        assert.equal(direct.api.available, false);
+        assert.ok(direct.fallbackEvents.every(event => event.active));
+    }
+});
+
+test('shipped scene script URL resolves to this exact renderer byte hash and follows the dashboard bundle', () => {
+    const srcs = [...html.matchAll(/<script\b[^>]*\bsrc="([^"]+)"/g)].map(match => match[1]);
+    const sceneSrc = srcs.find(src => src.startsWith('port-scene.js'));
+    const url = new URL(sceneSrc, 'https://example.invalid/crossroute-port/');
+    assert.equal(url.pathname, '/crossroute-port/port-scene.js');
+    assert.equal(url.searchParams.get('v'), createHash('sha256').update(renderer).digest('hex'));
+    assert.ok(srcs.indexOf(sceneSrc) > srcs.indexOf('crossroute.min.js'));
+    assert.ok(html.includes('.thermal-explainer [hidden] { display: none !important; }'));
+});

@@ -47,7 +47,7 @@ test("3D parity keeps 16 reproducible per-vehicle instances, original IDs, state
     assert.equal(fleet.filter(vehicle => vehicle.moving).length, 12);
     assert.ok(fleet.every(vehicle => vehicle.trailLength === 14));
     assert.deepEqual(fleet, scene.createDemoFleet());
-    for (const element of ["illustrative-16-vehicle-fleet", "individual-vehicle-trails", "animated-tunnel-cues", "animated-crane-trolley"]) {
+    for (const element of ["illustrative-16-vehicle-fleet", "individual-vehicle-trails", "animated-tunnel-cues", "animated-crane-trolley", "qijin-breakwater", "navigational-channel"]) {
         assert.ok(scene.SCENE_MANIFEST.includes(element));
     }
     assert.match(renderer, /for\(let k=0;k<3;k\+\+\)/);

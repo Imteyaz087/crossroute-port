@@ -30,7 +30,8 @@
     const SCENE_MANIFEST = Object.freeze([
         "harbor-water", "quay-and-road", "gantry-crane", "cold-warehouse", "container-stacks",
         "refrigerated-truck", "container-cutaway-and-cargo", "shore-power-unit", "scenario-route",
-        "illustrative-16-vehicle-fleet", "individual-vehicle-trails", "animated-tunnel-cues", "animated-crane-trolley"
+        "illustrative-16-vehicle-fleet", "individual-vehicle-trails", "animated-tunnel-cues", "animated-crane-trolley",
+        "qijin-breakwater", "navigational-channel"
     ]);
 
     // A reproducible illustration of the original radar's 16 vehicle slots, not a
@@ -213,6 +214,9 @@
         };
         // Harbor basin, raised quay, service road, bollards and water-side edge.
         box(staticData,0,-0.32,-1.0,15,0.34,11,C.water);
+        // Qijin-side breakwater and a separate navigational fairway cue.
+        box(staticData,-6.95,0.18,-2.20,0.72,0.72,7.8,[0.16,0.23,0.29]);
+        ribbon(staticData,[-5.95,-0.105,-5.5],[-5.95,-0.105,0.72],0.11,[0.18,0.58,0.72]);
         box(staticData,0,-0.06,3.15,13,0.42,4.6,C.quay);
         box(staticData,0,0.18,1.02,12.8,0.08,0.12,C.waterLight);
         box(staticData,0,0.17,4.55,12.4,0.06,1.25,C.road);

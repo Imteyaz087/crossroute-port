@@ -116,5 +116,5 @@ test("WebGL remains original, accessible, scenario-driven, and has reduced-motio
     assert.match(renderer, /root\.updatePhysics = function/);
     assert.match(renderer, /renderer\.update\(next\)/);
     assert.match(renderer, /if \(useFallback && !\(query && query\.matches\)\) return originalDrawMap\.apply/);
-    assert.match(renderer, /if\(fleetLabels\)fleetLabels\.hidden=useFallback/);
+    assert.match(renderer, /setHidden\(fleetLabels, useFallback\)/);
 });

@@ -583,18 +583,26 @@
         if (!useFallback) node("portSceneStatus").textContent = `Illustrative 3D ${focus} active; no live port feed is connected.`;
     }
 
+    // SVGElement does not reflect `.hidden` like HTMLElement. Use the attribute
+    // for both namespaces so the shared [hidden] CSS rule always takes effect.
+    function setHidden(element, hidden) {
+        if (!element) return;
+        if (hidden) element.setAttribute("hidden", "");
+        else element.removeAttribute("hidden");
+    }
+
     function setFallback(active, reason) {
         useFallback = Boolean(active);
-        webglCanvas.hidden = useFallback;
-        fallbackView.hidden = !useFallback;
+        setHidden(webglCanvas, useFallback);
+        setHidden(fallbackView, !useFallback);
         const fleetLabels=root.document.querySelector(".port-fleet-label-overlay");
-        if(fleetLabels)fleetLabels.hidden=useFallback;
+        setHidden(fleetLabels, useFallback);
         // Keep every legacy thermal DOM ID mounted: the dashboard still updates it.
         for (const id of ["thermalFallbackIllustration", "thermalFallbackBadge", "thermalFallbackNote"]) {
-            const element = node(id); if (element) element.hidden = !useFallback;
+            setHidden(node(id), !useFallback);
         }
         for (const id of ["portThermalReadout", "thermal3dNote"]) {
-            const element = node(id); if (element) element.hidden = useFallback;
+            setHidden(node(id), useFallback);
         }
         node("btnPortView2D").setAttribute("aria-pressed", String(useFallback));
         node("btnPortView3D").setAttribute("aria-pressed", String(!useFallback));

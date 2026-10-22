@@ -8,6 +8,9 @@
     "use strict";
 
     const SCENARIOS = new Set(["normal", "delay", "recovery"]);
+    const DEMO_ROUTE_POINTS=Object.freeze([[-5.25,2.78],[1.55,2.78],[1.90,2.75],[2.10,2.68],[2.25,2.58],[5.35,2.58]].map(point=>Object.freeze(point)));
+    const DEMO_ROUTE_LENGTHS=DEMO_ROUTE_POINTS.slice(1).map((point,index)=>Math.hypot(point[0]-DEMO_ROUTE_POINTS[index][0],point[1]-DEMO_ROUTE_POINTS[index][1]));
+    const DEMO_ROUTE_LENGTH=DEMO_ROUTE_LENGTHS.reduce((sum,length)=>sum+length,0);
 
     function createSceneState(scenario, result) {
         if (!SCENARIOS.has(scenario) || !result || result.valid !== true ||
@@ -40,10 +43,35 @@
         return Array.from({ length: 16 }, (_, index) => ({
             id: `CMC-ET35-${100 + index}`,
             moving: index % 4 !== 0,
+            direction: index % 2 === 0 ? 1 : -1,
             progress: ((index * 37) % 97) / 97,
             lane: index % 4,
             trailLength: 14
         }));
+    }
+
+    function getDemoRoutePosition(progress,lane) {
+        let distance=Math.max(0,Math.min(1,progress))*DEMO_ROUTE_LENGTH;
+        for(let i=0;i<DEMO_ROUTE_LENGTHS.length;i++) {
+            const length=DEMO_ROUTE_LENGTHS[i];
+            if(distance<=length||i===DEMO_ROUTE_LENGTHS.length-1) {
+                const part=length?distance/length:0,a=DEMO_ROUTE_POINTS[i],b=DEMO_ROUTE_POINTS[i+1];
+                return [a[0]+(b[0]-a[0])*part,0.34,a[1]+(b[1]-a[1])*part+(lane-1.5)*0.07];
+            }
+            distance-=length;
+        }
+        return [DEMO_ROUTE_POINTS[0][0],0.34,DEMO_ROUTE_POINTS[0][1]];
+    }
+
+    function getDemoFleetMotion(vehicle,seconds) {
+        if(!vehicle.moving) return {progress:vehicle.progress,direction:vehicle.direction};
+        const phase=(((vehicle.progress+vehicle.direction*seconds*0.025)%2)+2)%2;
+        return {progress:phase<=1?phase:2-phase,direction:vehicle.direction*(phase<=1?1:-1)};
+    }
+
+    function getDemoFleetPose(vehicle,seconds) {
+        const motion=getDemoFleetMotion(vehicle,seconds),center=getDemoRoutePosition(motion.progress,vehicle.lane),ahead=getDemoRoutePosition(motion.progress+motion.direction*0.001,vehicle.lane);
+        return {x:center[0],y:center[1],z:center[2],progress:motion.progress,direction:motion.direction,heading:Math.atan2(-(ahead[2]-center[2]),ahead[0]-center[0])};
     }
 
     function mount(canvas, fallbackCanvas, onFallback) {
@@ -76,9 +104,9 @@
             return label;
         });
         const sceneTags=[
-            ["TERMINAL 4 · 63–66",[-4.6,0.45,2.38]],["TERMINAL 5 · 77–81",[-1.9,0.45,2.38]],
-            ["BERTH 78 · ACTIVE",[-2.2,0.58,2.38]],["WAN HAI 315",[-0.2,0.65,-2.25]],
-            ["QIANZHEN COLD HUB",[4.1,2.35,4.05]],["HARBOR TUNNEL",[0,0.65,3.35]]
+            ["TERMINAL 4 · 63–66",[-4.6,0.45,1.80]],["TERMINAL 5 · 77–81",[-1.9,0.45,1.80]],
+            ["BERTH 78 · ACTIVE",[-2.2,0.58,1.80]],["WAN HAI 315",[-0.2,0.65,-2.25]],
+            ["QIANZHEN COLD HUB",[4.1,2.35,4.20]],["HARBOR TUNNEL",[0,0.65,3.35]]
         ].map(([text,point])=>{
             const label=document.createElement("span");label.textContent=text;
             Object.assign(label.style,{position:"absolute",padding:"2px 4px",borderRadius:"3px",font:"700 8px ui-monospace,monospace",color:"#b6f5e4",background:"rgba(5,17,28,.84)",whiteSpace:"nowrap",transform:"translate(-50%,-50%)"});
@@ -93,10 +121,8 @@
                 return {visible,x:((clipX/clipW+1)/2)*parentRect.width,y:((1-clipY/clipW)/2)*parentRect.height};
             }
             demoFleet.forEach((vehicle,index)=>{
-                const speed=vehicle.moving?0.025:0;
-                const progress=vehicle.moving?((vehicle.progress+(motionOkay()?performance.now()/1000:0)*speed)%1):vehicle.progress;
-                const [x,y,z]=routePosition(progress,vehicle.lane);
-                const position=project([x,y+0.30,z]);
+                const pose=getDemoFleetPose(vehicle,motionOkay()?performance.now()/1000:0);
+                const position=project([pose.x,pose.y+0.30,pose.z]);
                 fleetLabels[index].hidden=!position.visible;
                 if(position.visible){fleetLabels[index].style.left=`${position.x}px`;fleetLabels[index].style.top=`${position.y}px`;}
             });
@@ -205,6 +231,19 @@
                 triangle(target,[x,y,z+depth/2],p3,p2,[0,0,1],color);
             }
         }
+        function transformLocalGeometry(target,geometry,x,y,z,heading) {
+            const c=Math.cos(heading),s=Math.sin(heading);
+            for(let i=0;i<geometry.length;i+=9) {
+                const lx=geometry[i],ly=geometry[i+1],lz=geometry[i+2],nx=geometry[i+3],ny=geometry[i+4],nz=geometry[i+5];
+                target.push(x+lx*c+lz*s,y+ly,z-lx*s+lz*c,nx*c+nz*s,ny,-nx*s+nz*c,geometry[i+6],geometry[i+7],geometry[i+8]);
+            }
+        }
+        function orientedBox(target,x,y,z,sx,sy,sz,color,heading) {
+            const local=[];box(local,0,0,0,sx,sy,sz,color);transformLocalGeometry(target,local,x,y,z,heading);
+        }
+        function orientedWheel(target,x,y,z,radius,depth,color,sides,heading) {
+            const local=[];wheel(local,0,0,0,radius,depth,color,sides);transformLocalGeometry(target,local,x,y,z,heading);
+        }
         const C = {
             water:[0.025,0.16,0.23], waterLight:[0.04,0.29,0.38], quay:[0.20,0.27,0.32], road:[0.09,0.14,0.18],
             line:[0.22,0.43,0.49], steel:[0.40,0.62,0.68], crane:[0.80,0.56,0.20], craneDark:[0.34,0.30,0.23],
@@ -219,20 +258,20 @@
         ribbon(staticData,[-5.95,-0.105,-5.5],[-5.95,-0.105,0.72],0.11,[0.18,0.58,0.72]);
         box(staticData,0,-0.06,3.15,13,0.42,4.6,C.quay);
         box(staticData,0,0.18,1.02,12.8,0.08,0.12,C.waterLight);
-        box(staticData,0,0.17,4.55,12.4,0.06,1.25,C.road);
-        for (let x=-5.5;x<=5.5;x+=1.1) box(staticData,x,0.22,4.50,0.48,0.012,0.035,C.line);
+        box(staticData,0,0.17,2.78,12.4,0.06,0.42,C.road);
+        for (let x=-5.5;x<=5.5;x+=1.1) box(staticData,x,0.22,2.78,0.48,0.012,0.035,C.line);
         for (let x=-5.4;x<=5.4;x+=1.8) cylinderY(staticData,x,0.34,1.35,0.10,0.28,C.steel,10);
         // Warehouse, cold-room doors and container stacks.
-        box(staticData,4.25,1.08,4.05,3.7,2.15,2.05,C.warehouse);
-        box(staticData,4.25,2.19,4.05,3.86,0.12,2.18,C.warehouseRoof);
+        box(staticData,4.25,1.08,4.20,3.7,2.15,2.05,C.warehouse);
+        box(staticData,4.25,2.19,4.20,3.86,0.12,2.18,C.warehouseRoof);
         for(let row=0;row<3;row++) for(let column=0;column<3;column++) {
-            box(staticData,3.05+column*0.78,0.52+row*0.50,2.995,0.55,0.36,0.045,C.window);
+            box(staticData,3.05+column*0.78,0.52+row*0.50,3.145,0.55,0.36,0.045,C.window);
         }
         // Illustrative terminal berths, stationary WAN HAI 315 and its twelve deck boxes.
         for(let i=0;i<9;i++) {
             const x=i<4?-5.35+i*0.52:-2.75+(i-4)*0.52;
             const berthColor=i===5?[0.12,0.70,0.48]:i<4?[0.24,0.34,0.39]:[0.21,0.38,0.39];
-            box(staticData,x,0.18,2.38,0.44,0.12,0.72,berthColor);
+            box(staticData,x,0.18,1.80,0.44,0.12,0.72,berthColor);
         }
         box(staticData,-0.25,-0.04,-2.25,5.4,0.34,1.35,[0.12,0.25,0.32]);
         for(let i=0;i<12;i++) {
@@ -261,7 +300,7 @@
         box(staticData,-2.65,0.69,1.72,0.95,0.68,0.82,C.truck);
         box(staticData,-2.88,1.02,1.72,0.46,0.25,0.84,C.cab);
         box(staticData,-2.64,0.72,2.145,0.40,0.26,0.018,C.window);
-        for(const x of [-2.45,-1.10,0.15]) for(const z of [1.18,2.26]) cylinderY(staticData,x,0.30,z,0.27,0.15,C.rubber,14);
+        for(const x of [-2.45,-1.10,0.15]) for(const z of [1.18,2.26]) wheel(staticData,x,0.30,z,0.27,0.15,C.rubber,14);
         // Container shell is intentionally open along the near side to show cargo inside.
         box(staticData,-0.62,0.95,1.72,2.55,0.11,1.18,[0.07,0.36,0.41]);
         box(staticData,-0.62,1.68,1.72,2.55,0.11,1.18,[0.08,0.44,0.48]);
@@ -306,7 +345,7 @@
         function updateDynamic() {
             dynamicData.length=0;
             const color=!modelState.valid?[0.75,0.53,0.38]:modelState.scenario==="delay"?[0.92,0.25,0.37]:modelState.scenario==="recovery"?[0.20,0.88,0.63]:[0.14,0.72,0.82];
-            const path=[[-5.2,0.235,1.72],[-3.0,0.235,1.72],[-0.9,0.235,1.72],[1.55,0.235,1.72],[3.4,0.235,2.4],[4.0,0.235,3.0]];
+            const path=routePoints.map(([x,z])=>[x,0.235,z]);
             for(let i=1;i<path.length;i++) ribbon(dynamicData,path[i-1],path[i],0.075,color);
             // Temperature indicator is explicitly a model estimate against the selected reference.
             const exceeds=modelState.valid&&!modelState.withinReference;
@@ -348,25 +387,11 @@
             gl.enableVertexAttribArray(locations.color);gl.vertexAttribPointer(locations.color,3,gl.FLOAT,false,stride,6*4);
         }
         const demoFleet=createDemoFleet();
-        const routePoints=[[-5.25,4.48],[1.55,4.48],[3.40,3.85],[4.00,3.05],[4.00,2.65]];
-        const routeLengths=routePoints.slice(1).map((point,index)=>Math.hypot(point[0]-routePoints[index][0],point[1]-routePoints[index][1]));
-        const routeLength=routeLengths.reduce((sum,length)=>sum+length,0);
-        function routePosition(progress,lane) {
-            let distance=(((progress%1)+1)%1)*routeLength;
-            for(let i=0;i<routeLengths.length;i++) {
-                const length=routeLengths[i];
-                if(distance<=length||i===routeLengths.length-1) {
-                    const part=length?distance/length:0, a=routePoints[i],b=routePoints[i+1];
-                    return [a[0]+(b[0]-a[0])*part,0.34,a[1]+(b[1]-a[1])*part+(lane-1.5)*0.16];
-                }
-                distance-=length;
-            }
-            return [routePoints[0][0],0.34,routePoints[0][1]];
-        }
+        const routePoints=DEMO_ROUTE_POINTS;
         function draw(now,force) {
             if(disposed||!visible||(!motionOkay()&&!force)) return;
             if(motionOkay()&&!force) raf=requestAnimationFrame(draw);
-            if(now-lastFrame<33) return;
+            if(!force&&now-lastFrame<33) return;
             lastFrame=now;
             const rect=canvas.getBoundingClientRect();
             if(rect.width<4||rect.height<4) return;
@@ -400,8 +425,8 @@
             box(motionData,trolleyX,3.30,2.70,0.035,0.58,0.035,C.steel);
             box(motionData,trolleyX,3.00,2.70,0.78,0.08,0.94,C.crane);
             const sweepAngle=motionOkay()?((now*0.00035)% (Math.PI*2)):0;
-            const sweepEnd=[-4.6+Math.cos(sweepAngle)*1.4,0.055,4.45+Math.sin(sweepAngle)*1.4];
-            ribbon(motionData,[-4.6,0.055,4.45],sweepEnd,0.035,[0.16,0.66,0.72]);
+            const sweepEnd=[-4.6+Math.cos(sweepAngle)*1.4,0.24,4.45+Math.sin(sweepAngle)*1.4];
+            ribbon(motionData,[-4.6,0.24,4.45],sweepEnd,0.035,[0.16,0.66,0.72]);
             const fleetData=[];
             const timeSeconds=motionOkay()?now/1000:0;
             const heatColor=!modelState.valid?[0.52,0.57,0.55]:modelState.withinReference?[0.14,0.72,0.64]:[0.92,0.27,0.30];
@@ -412,23 +437,24 @@
             box(motionData,0.88,1.30,1.06,0.36,0.035,0.035,heatColor);
             triangle(motionData,[0.68,1.30,1.06],[0.54,1.39,1.06],[0.54,1.21,1.06],[0,0,1],heatColor);
             for(const vehicle of demoFleet) {
-                const direction=vehicle.lane%2===0?1:-1;
-                const speed=vehicle.moving?0.025:0;
-                const progress=vehicle.moving?((vehicle.progress+timeSeconds*speed)%1):vehicle.progress;
-                const [x,y,laneZ]=routePosition(progress,vehicle.lane);
+                const pose=getDemoFleetPose(vehicle,timeSeconds),{x,y,z:laneZ,progress,direction,heading}=pose;
+                const c=Math.cos(heading),s=Math.sin(heading);
+                const local=(lx,ly,lz)=>[x+lx*c+lz*s,y+ly,laneZ-lx*s+lz*c];
                 const color=vehicle.moving?markerColor:[0.12,0.52,0.78];
                 // Each vehicle gets its own tractor, cab and refrigerated box.
-                box(fleetData,x,y,laneZ,0.72,0.12,0.27,color);
-                box(fleetData,x-direction*0.25,y+0.14,laneZ,0.22,0.18,0.25,[0.72,0.84,0.84]);
-                box(fleetData,x+direction*0.13,y+0.16,laneZ,0.39,0.25,0.25,vehicle.moving?[0.06,0.40,0.45]:[0.10,0.25,0.37]);
-                for(const wx of [x-0.22,x+0.23]) wheel(fleetData,wx,y-0.07,laneZ-0.15,0.075,0.045,C.rubber,8);
+                orientedBox(fleetData,x,y,laneZ,0.72,0.12,0.27,color,heading);
+                const cab=local(0.25,0.14,0),reefer=local(-0.13,0.16,0);
+                orientedBox(fleetData,cab[0],cab[1],cab[2],0.22,0.18,0.25,[0.72,0.84,0.84],heading);
+                orientedBox(fleetData,reefer[0],reefer[1],reefer[2],0.39,0.25,0.25,vehicle.moving?[0.06,0.40,0.45]:[0.10,0.25,0.37],heading);
+                for(const wx of [-0.22,0.23]) for(const wz of [-0.15,0.15]) {
+                    const center=local(wx,-0.07,wz);orientedWheel(fleetData,center[0],center[1],center[2],0.075,0.045,C.rubber,8,heading);
+                }
                 if(vehicle.moving) {
                     // Short route-tail segments are deterministic per vehicle and scenario colored.
                     const tailSteps=vehicle.trailLength;
-                    const tailEnd=Math.max(0,progress-0.045);
                     for(let step=1;step<tailSteps;step++) {
-                        const p0=Math.max(0,tailEnd-(step-1)*0.0032),p1=Math.max(0,tailEnd-step*0.0032);
-                        const q0=routePosition(p0,vehicle.lane),q1=routePosition(p1,vehicle.lane);
+                        const p0=progress-direction*(step-1)*0.0032,p1=progress-direction*step*0.0032;
+                        const q0=getDemoRoutePosition(p0,vehicle.lane),q1=getDemoRoutePosition(p1,vehicle.lane);
                         ribbon(fleetData,[q0[0],0.245,q0[2]],[q1[0],0.245,q1[2]],0.018,pathColor);
                     }
                 }
@@ -464,7 +490,7 @@
         return apiRef;
     }
 
-    return { createSceneState, createDemoFleet, SCENE_MANIFEST, mount };
+    return { createSceneState, createDemoFleet, getDemoRoutePosition, getDemoFleetMotion, getDemoFleetPose, DEMO_ROUTE_POINTS, SCENE_MANIFEST, mount };
 });
 
 // The readable/minified CrossRoute dashboard bundle stays byte-for-byte in sync.

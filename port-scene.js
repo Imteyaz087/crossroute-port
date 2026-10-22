@@ -12,7 +12,12 @@
     const DEMO_ROUTE_LENGTHS=DEMO_ROUTE_POINTS.slice(1).map((point,index)=>Math.hypot(point[0]-DEMO_ROUTE_POINTS[index][0],point[1]-DEMO_ROUTE_POINTS[index][1]));
     const DEMO_ROUTE_LENGTH=DEMO_ROUTE_LENGTHS.reduce((sum,length)=>sum+length,0);
 
-    function createSceneState(scenario, result) {
+    const VIEW_PRESETS = Object.freeze({
+        overview: Object.freeze({ target: Object.freeze([0, 1.35, 2.0]), yaw: 0.70, pitch: 0.48, distance: 15.8, minDistance: 10, maxDistance: 23 }),
+        cutaway: Object.freeze({ target: Object.freeze([-0.62, 1.25, 1.72]), yaw: 0.12, pitch: 0.16, distance: 7.2, minDistance: 5.2, maxDistance: 12 })
+    });
+
+    function createSceneState(scenario, result, cargo) {
         if (!SCENARIOS.has(scenario) || !result || result.valid !== true ||
             !Number.isFinite(result.finalC) || !Number.isFinite(result.peakC) ||
             !Number.isFinite(result.referenceC)) {
@@ -21,12 +26,36 @@
         return {
             valid: true,
             scenario,
+            cargoName: cargo && typeof cargo.name === "string" ? cargo.name : "Selected cargo",
+            heatIngressW: Number.isFinite(result.heatIngressW) ? result.heatIngressW : null,
+            disconnectedMinutes: Number.isFinite(result.disconnectedMinutes) ? result.disconnectedMinutes : null,
             finalC: result.finalC,
             peakC: result.peakC,
             referenceC: result.referenceC,
             withinReference: result.state === "within_reference",
             recoveryMinutes: Number.isFinite(result.recoveryMinutes) ? result.recoveryMinutes : 0,
             shorePowerKwAssumption: Number.isFinite(result.shorePowerKwAssumption) ? result.shorePowerKwAssumption : null
+        };
+    }
+
+    // Text and geometry consume the same snapshot, without a second thermal calculation.
+    function createThermalReadout(snapshot) {
+        if (!snapshot.valid) return {
+            cargo: "Invalid model input", phase: "Scenario unavailable", temperature: "—", peak: "—",
+            reference: "—", recovery: "Recovery unavailable", heat: "Heat estimate unavailable", status: "No valid estimate"
+        };
+        const recovering = snapshot.scenario === "recovery" && snapshot.recoveryMinutes > 0;
+        return {
+            cargo: snapshot.cargoName,
+            phase: snapshot.scenario === "recovery" ? "Recovery scenario" : snapshot.scenario === "delay" ? "Delay scenario" : "Normal transit scenario",
+            temperature: `${snapshot.finalC.toFixed(2)} °C`,
+            peak: `${snapshot.peakC.toFixed(2)} °C`,
+            reference: `${snapshot.referenceC.toFixed(2)} °C`,
+            recovery: recovering
+                ? `${snapshot.recoveryMinutes} min · ${snapshot.shorePowerKwAssumption === null ? "power unspecified" : snapshot.shorePowerKwAssumption + " kW assumed"}`
+                : "0 min · no recovery power modeled",
+            heat: snapshot.heatIngressW === null ? "Heat estimate unavailable" : `${(snapshot.heatIngressW / 1000).toFixed(2)} kW estimated ingress`,
+            status: snapshot.withinReference ? "Within selected reference" : "Exceeds selected reference"
         };
     }
 
@@ -74,7 +103,7 @@
         return {x:center[0],y:center[1],z:center[2],progress:motion.progress,direction:motion.direction,heading:Math.atan2(-(ahead[2]-center[2]),ahead[0]-center[0])};
     }
 
-    function mount(canvas, fallbackCanvas, onFallback) {
+    function mount(canvas, fallbackCanvas, onFallback, onViewChange) {
         const reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)");
         const notifyFallback = (active, reason) => {
             if (typeof onFallback === "function") onFallback(active, reason);
@@ -91,7 +120,6 @@
             notifyFallback(true, "webgl-unavailable");
             return { available: false, update() {}, dispose() {} };
         }
-        notifyFallback(false, "webgl-ready");
         const labelOverlay=document.createElement("div");
         labelOverlay.className="port-fleet-label-overlay";
         labelOverlay.setAttribute("aria-hidden","true");
@@ -123,11 +151,11 @@
             demoFleet.forEach((vehicle,index)=>{
                 const pose=getDemoFleetPose(vehicle,motionOkay()?performance.now()/1000:0);
                 const position=project([pose.x,pose.y+0.30,pose.z]);
-                fleetLabels[index].hidden=!position.visible;
+                fleetLabels[index].hidden=view!=="overview"||!position.visible;
                 if(position.visible){fleetLabels[index].style.left=`${position.x}px`;fleetLabels[index].style.top=`${position.y}px`;}
             });
             for(const tag of sceneTags) {
-                const position=project(tag.point);tag.label.hidden=!position.visible;
+                const position=project(tag.point);tag.label.hidden=view!=="overview"||!position.visible;
                 if(position.visible){tag.label.style.left=`${position.x}px`;tag.label.style.top=`${position.y}px`;}
             }
         }
@@ -169,6 +197,7 @@
         let program;
         try { program = makeProgram(); }
         catch (_) {
+            if(labelOverlay.parentElement) labelOverlay.remove();
             notifyFallback(true, "shader-unavailable");
             return { available: false, update() {}, dispose() {} };
         }
@@ -311,14 +340,10 @@
             box(staticData,x,1.31,1.045,0.025,0.50,0.018,C.steel);
             box(staticData,x,1.31,2.395,0.025,0.50,0.018,C.steel);
         }
-        for(let x=-1.48;x<=0.10;x+=0.56) {
-            box(staticData,x,1.23,1.52,0.46,0.44,0.54,C.cargo);
-            box(staticData,x,1.23,1.52,0.48,0.025,0.56,C.steel);
-        }
         // Shore-power cabinet and a parked cable guide near the reefer container.
         box(staticData,1.65,0.56,1.38,0.58,1.00,0.46,C.shore);
-        box(staticData,1.65,0.57,1.145,0.34,0.34,0.025,[0.11,0.23,0.24]);
-        box(staticData,1.65,0.58,1.12,0.16,0.025,0.012,[0.30,0.86,0.68]);
+        box(staticData,1.65,0.57,1.625,0.34,0.34,0.025,[0.11,0.23,0.24]);
+        box(staticData,1.65,0.58,1.645,0.16,0.025,0.012,[0.30,0.86,0.68]);
         for(let x=-5.7;x<=5.8;x+=0.7) box(staticData,x,0.145,3.15,0.025,0.018,4.55,[0.25,0.33,0.37]);
         // Tunnel portal frames mark the two ends of the bidirectional simulated corridor.
         for(const x of [-4.7,4.2]) {
@@ -333,7 +358,7 @@
         const staticVertices = staticData.length/9;
         let dynamicBuffer=gl.createBuffer(),dynamicVertices=0,motionBuffer=gl.createBuffer(),motionVertices=0;
         let modelState=createSceneState("normal",{valid:false});
-        let yaw=0.70,pitch=0.48,distance=15.8,drag=null,raf=0,lastFrame=0,disposed=false,visible=true;
+        let view="overview",target=[...VIEW_PRESETS.overview.target],yaw=0.70,pitch=0.48,distance=15.8,drag=null,raf=0,lastFrame=0,disposed=false,visible=true;
         let apiRef=null;
         const isSmall=()=>window.innerWidth<700;
         const motionOkay=()=>!(reducedMotion&&reducedMotion.matches);
@@ -353,10 +378,16 @@
             const t=Math.max(0,Math.min(1,modelState.valid?(modelState.finalC-modelState.peakC+8)/16:0.5));
             box(dynamicData,-0.62,1.88,1.73,2.18,0.055,0.055,[0.035,0.12,0.15]);
             box(dynamicData,-1.71+1.09*t,1.88,1.69,2.18*t,0.075,0.075,tempColor);
-            if(modelState.scenario==="recovery"&&modelState.recoveryMinutes>0) {
+            // Visible cargo bodies, not just a decorative cap, follow the model reference state.
+            for(let x=-1.48;x<=0.10;x+=0.56) {
+                box(dynamicData,x,1.23,1.52,0.46,0.44,0.54,tempColor);
+                box(dynamicData,x,1.46,1.52,0.48,0.025,0.56,C.steel);
+            }
+            if(modelState.valid&&modelState.scenario==="recovery"&&modelState.recoveryMinutes>0) {
                 // Highlight the assumed shore-power lead; this does not indicate a connected real plug.
-                ribbon(dynamicData,[1.65,0.255,1.38],[0.76,0.255,1.38],0.09,[0.28,0.93,0.65]);
-                ribbon(dynamicData,[0.76,0.255,1.38],[0.76,0.255,1.70],0.09,[0.28,0.93,0.65]);
+                ribbon(dynamicData,[1.65,0.255,1.65],[1.65,0.255,2.60],0.09,[0.28,0.93,0.65]);
+                ribbon(dynamicData,[1.65,0.255,2.60],[0.76,0.255,2.60],0.09,[0.28,0.93,0.65]);
+                ribbon(dynamicData,[0.76,0.255,2.60],[0.76,0.255,2.26],0.09,[0.28,0.93,0.65]);
             }
             gl.bindBuffer(gl.ARRAY_BUFFER,dynamicBuffer);
             gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(dynamicData),gl.DYNAMIC_DRAW);
@@ -400,8 +431,10 @@
             if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
             gl.viewport(0,0,w,h);gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);
             gl.clearColor(0.018,0.055,0.083,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-            const target=[0,1.35,2.0],cp=Math.cos(pitch);
-            const eye=[target[0]+Math.sin(yaw)*distance*cp,target[1]+Math.sin(pitch)*distance,target[2]+Math.cos(yaw)*distance*cp];
+            const cp=Math.cos(pitch);
+            // Keep the whole cutaway and power cabinet in frame on narrow screens, too.
+            const framedDistance=distance*(view==="cutaway"?Math.max(1,1.45/(w/h)):1);
+            const eye=[target[0]+Math.sin(yaw)*framedDistance*cp,target[1]+Math.sin(pitch)*framedDistance,target[2]+Math.cos(yaw)*framedDistance*cp];
             const vp=multiply(perspective(0.72,w/h,0.1,60),lookAt(eye,target,[0,1,0]));
             updateFleetLabels(vp,rect);
             gl.useProgram(program);gl.uniformMatrix4fv(locations.viewProjection,false,vp);
@@ -430,12 +463,11 @@
             const fleetData=[];
             const timeSeconds=motionOkay()?now/1000:0;
             const heatColor=!modelState.valid?[0.52,0.57,0.55]:modelState.withinReference?[0.14,0.72,0.64]:[0.92,0.27,0.30];
-            for(let i=0;i<3;i++) box(motionData,-1.48+i*0.56,1.46,1.52,0.44,0.035,0.52,heatColor);
             // Static heat-ingress cues frame the cutaway; color follows the illustrative model only.
-            box(motionData,-2.12,1.30,1.06,0.36,0.035,0.035,heatColor);
-            triangle(motionData,[-1.92,1.30,1.06],[-1.78,1.39,1.06],[-1.78,1.21,1.06],[0,0,1],heatColor);
-            box(motionData,0.88,1.30,1.06,0.36,0.035,0.035,heatColor);
-            triangle(motionData,[0.68,1.30,1.06],[0.54,1.39,1.06],[0.54,1.21,1.06],[0,0,1],heatColor);
+            box(motionData,-2.12,1.30,2.42,0.36,0.035,0.035,heatColor);
+            triangle(motionData,[-1.78,1.30,2.42],[-1.96,1.39,2.42],[-1.96,1.21,2.42],[0,0,1],heatColor);
+            box(motionData,0.88,1.30,2.42,0.36,0.035,0.035,heatColor);
+            triangle(motionData,[0.54,1.30,2.42],[0.72,1.21,2.42],[0.72,1.39,2.42],[0,0,1],heatColor);
             for(const vehicle of demoFleet) {
                 const pose=getDemoFleetPose(vehicle,timeSeconds),{x,y,z:laneZ,progress,direction,heading}=pose;
                 const c=Math.cos(heading),s=Math.sin(heading);
@@ -468,29 +500,51 @@
         function onPointerDown(event){drag={x:event.clientX,y:event.clientY,id:event.pointerId};canvas.setPointerCapture(event.pointerId);}
         function onPointerMove(event){if(!drag||drag.id!==event.pointerId)return;const dx=event.clientX-drag.x,dy=event.clientY-drag.y;drag.x=event.clientX;drag.y=event.clientY;yaw-=dx*0.007;pitch=Math.max(0.12,Math.min(1.15,pitch+dy*0.006));if(!motionOkay())renderOnce();}
         function onPointerUp(){drag=null;}
-        function onWheel(event){event.preventDefault();distance=Math.max(10,Math.min(23,distance+event.deltaY*0.012));if(!motionOkay())renderOnce();}
-        function onKey(event){const step=0.10;if(event.key==="ArrowLeft")yaw-=step;else if(event.key==="ArrowRight")yaw+=step;else if(event.key==="ArrowUp")pitch=Math.min(1.15,pitch+step);else if(event.key==="ArrowDown")pitch=Math.max(0.12,pitch-step);else if(event.key==="+"||event.key==="=")distance=Math.max(10,distance-0.8);else if(event.key==="-")distance=Math.min(23,distance+0.8);else return;event.preventDefault();if(!motionOkay())renderOnce();}
+        function zoom(delta){const preset=VIEW_PRESETS[view];distance=Math.max(preset.minDistance,Math.min(preset.maxDistance,distance+delta));}
+        function setView(next){
+            if(disposed||!Object.prototype.hasOwnProperty.call(VIEW_PRESETS,next))return false;
+            const preset=VIEW_PRESETS[next];
+            view=next;target=[...preset.target];yaw=preset.yaw;pitch=preset.pitch;distance=preset.distance;drag=null;
+            if(typeof onViewChange==="function")onViewChange(view);
+            renderOnce();
+            return true;
+        }
+        function onWheel(event){event.preventDefault();zoom(event.deltaY*0.012);if(!motionOkay())renderOnce();}
+        function onKey(event){
+            if(event.altKey||event.ctrlKey||event.metaKey)return;
+            const step=0.10;
+            if(event.key==="1"||event.key==="Escape"){event.preventDefault();setView("overview");return;}
+            if(event.key==="2"){event.preventDefault();setView("cutaway");return;}
+            if(event.key==="ArrowLeft")yaw-=step;else if(event.key==="ArrowRight")yaw+=step;
+            else if(event.key==="ArrowUp")pitch=Math.min(1.15,pitch+step);else if(event.key==="ArrowDown")pitch=Math.max(0.12,pitch-step);
+            else if(event.key==="+"||event.key==="=")zoom(-0.8);else if(event.key==="-")zoom(0.8);else return;
+            event.preventDefault();if(!motionOkay())renderOnce();
+        }
         function renderOnce(){draw(performance.now()+40,true);}
-        function onMotionChange(event){if(event.matches){if(raf)cancelAnimationFrame(raf);raf=0;notifyFallback(false,"reduced-motion-static");renderOnce();}else{lastFrame=0;notifyFallback(false,"webgl-ready");if(visible)draw(performance.now());}}
+        function onMotionChange(event){if(disposed)return;if(event.matches){if(raf)cancelAnimationFrame(raf);raf=0;renderOnce();}else{lastFrame=0;if(visible)draw(performance.now());}}
         function onContextLost(event){event.preventDefault();disposed=true;if(apiRef)apiRef.available=false;if(raf)cancelAnimationFrame(raf);notifyFallback(true,"webgl-context-lost");}
         canvas.addEventListener("pointerdown",onPointerDown);canvas.addEventListener("pointermove",onPointerMove);canvas.addEventListener("pointerup",onPointerUp);canvas.addEventListener("pointercancel",onPointerUp);canvas.addEventListener("wheel",onWheel,{passive:false});canvas.addEventListener("keydown",onKey);canvas.addEventListener("webglcontextlost",onContextLost,false);
         const resizeObserver=window.ResizeObserver?new ResizeObserver(()=>{if(!motionOkay())renderOnce();}):null;
         if(resizeObserver&&canvas.parentElement)resizeObserver.observe(canvas.parentElement);
         window.addEventListener("resize",onResize);function onResize(){if(!motionOkay())renderOnce();}
         if(reducedMotion&&reducedMotion.addEventListener)reducedMotion.addEventListener("change",onMotionChange);
-        function update(next){if(disposed)return;modelState=createSceneState(next.scenario,next.result);updateDynamic();if(!motionOkay())renderOnce();}
+        function update(next){if(disposed)return;modelState=createSceneState(next.scenario,next.result,next.cargo);updateDynamic();if(!motionOkay())renderOnce();}
         update({scenario:"normal",result:{valid:false}});
         if(motionOkay())draw(performance.now());else renderOnce();
         apiRef={
             available:true,
             update,
+            setView,
+            getViewState(){return {view,target:[...target],yaw,pitch,distance};},
             setVisible(next){if(disposed)return;const nextVisible=Boolean(next);if(nextVisible===visible)return;visible=nextVisible;if(!visible&&raf){cancelAnimationFrame(raf);raf=0;}else if(visible){if(motionOkay())draw(performance.now());else renderOnce();}},
             dispose(){disposed=true;if(raf)cancelAnimationFrame(raf);if(resizeObserver)resizeObserver.disconnect();window.removeEventListener("resize",onResize);if(reducedMotion&&reducedMotion.removeEventListener)reducedMotion.removeEventListener("change",onMotionChange);canvas.removeEventListener("pointerdown",onPointerDown);canvas.removeEventListener("pointermove",onPointerMove);canvas.removeEventListener("pointerup",onPointerUp);canvas.removeEventListener("pointercancel",onPointerUp);canvas.removeEventListener("wheel",onWheel);canvas.removeEventListener("keydown",onKey);canvas.removeEventListener("webglcontextlost",onContextLost);if(labelOverlay.parentElement)labelOverlay.remove();gl.deleteBuffer(staticBuffer);gl.deleteBuffer(dynamicBuffer);gl.deleteBuffer(motionBuffer);gl.deleteProgram(program);notifyFallback(true,"disposed");}
         };
+        // Only announce 3D after shader/buffer setup and the initial draw have succeeded.
+        notifyFallback(false,motionOkay()?"webgl-ready":"reduced-motion-static");
         return apiRef;
     }
 
-    return { createSceneState, createDemoFleet, getDemoRoutePosition, getDemoFleetMotion, getDemoFleetPose, DEMO_ROUTE_POINTS, SCENE_MANIFEST, mount };
+    return { VIEW_PRESETS, createThermalReadout, createSceneState, createDemoFleet, getDemoRoutePosition, getDemoFleetMotion, getDemoFleetPose, DEMO_ROUTE_POINTS, SCENE_MANIFEST, mount };
 });
 
 // The readable/minified CrossRoute dashboard bundle stays byte-for-byte in sync.
@@ -505,6 +559,8 @@
 
     let renderer = null;
     let useFallback = false;
+    let focus = "overview";
+    const node = id => root.document.getElementById(id);
     const originalDrawMap = root.drawMap;
     const originalUpdatePhysics = root.updatePhysics;
     if (typeof originalDrawMap === "function") {
@@ -514,17 +570,36 @@
         };
     }
 
+    function syncFocus(next) {
+        focus = next;
+        for (const [id, mode] of [["btnPortOverview", "overview"], ["btnPortCutaway", "cutaway"]]) {
+            const button = node(id);
+            if (button) { button.setAttribute("aria-pressed", String(!useFallback && focus === mode)); button.disabled = useFallback; }
+        }
+        const viewport = node("portSceneViewport");
+        if (viewport) viewport.setAttribute("data-view", useFallback ? "2d" : focus);
+        const name = node("portFocusLabel");
+        if (name) name.textContent = focus === "cutaway" ? "Reefer cutaway · 冷藏櫃剖面" : "Port overview · 港區總覽";
+        if (!useFallback) node("portSceneStatus").textContent = `Illustrative 3D ${focus} active; no live port feed is connected.`;
+    }
+
     function setFallback(active, reason) {
         useFallback = Boolean(active);
         webglCanvas.hidden = useFallback;
         fallbackView.hidden = !useFallback;
         const fleetLabels=root.document.querySelector(".port-fleet-label-overlay");
         if(fleetLabels)fleetLabels.hidden=useFallback;
-        root.document.getElementById("btnPortView2D").setAttribute("aria-pressed", String(useFallback));
-        root.document.getElementById("btnPortView3D").setAttribute("aria-pressed", String(!useFallback));
-        root.document.getElementById("portSceneStatus").textContent = useFallback
-            ? `Illustrative 2D fallback active (${reason || "selected"}); simulated view only.`
-            : "Illustrative native WebGL scene active; no live port feed is connected.";
+        // Keep every legacy thermal DOM ID mounted: the dashboard still updates it.
+        for (const id of ["thermalFallbackIllustration", "thermalFallbackBadge", "thermalFallbackNote"]) {
+            const element = node(id); if (element) element.hidden = !useFallback;
+        }
+        for (const id of ["portThermalReadout", "thermal3dNote"]) {
+            const element = node(id); if (element) element.hidden = useFallback;
+        }
+        node("btnPortView2D").setAttribute("aria-pressed", String(useFallback));
+        node("btnPortView3D").setAttribute("aria-pressed", String(!useFallback));
+        syncFocus(focus);
+        if (useFallback) node("portSceneStatus").textContent = `Illustrative 2D fallback active (${reason || "selected"}); simulated view only.`;
         if (renderer && renderer.setVisible) renderer.setVisible(!useFallback);
         if (useFallback && typeof originalDrawMap === "function") {
             const query = root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)");
@@ -535,21 +610,34 @@
 
     root.showPortView = function (mode) {
         if (mode === "2d") { setFallback(true, "user selected"); return; }
-        if (!renderer || !renderer.available) { setFallback(true, "WebGL unavailable or reduced motion"); return; }
+        if (!renderer || !renderer.available) { setFallback(true, "WebGL unavailable"); return; }
         setFallback(false, "user selected");
     };
+    root.showPortFocus = function (mode) {
+        if (!renderer || !renderer.available || useFallback) return;
+        renderer.setView(mode);
+    };
 
+    function updateScene() {
+        let next;
+        try { next = { scenario: state.scenario, result: state.modelResult, cargo: typeof CARGO_DB !== "undefined" ? CARGO_DB[state.cargoKey] : null }; }
+        catch (_) { next = { scenario: "normal", result: { valid: false } }; }
+        renderer.update(next);
+        const snapshot = sceneApi.createSceneState(next.scenario, next.result, next.cargo);
+        const readout = sceneApi.createThermalReadout(snapshot);
+        for (const [key, id] of Object.entries({ cargo: "portCargoName", phase: "portThermalPhase", temperature: "portCargoTemp", peak: "portCargoPeak", reference: "portCargoReference", recovery: "portCargoRecovery", heat: "portCargoHeat", status: "portCargoStatus" })) {
+            const element = node(id); if (element) element.textContent = readout[key];
+        }
+    }
     const mountScene = function () {
-        renderer = sceneApi.mount(webglCanvas, fallbackCanvas, setFallback);
+        renderer = sceneApi.mount(webglCanvas, fallbackCanvas, setFallback, syncFocus);
         if (typeof originalUpdatePhysics === "function") {
             root.updatePhysics = function () {
                 const result = originalUpdatePhysics.apply(this, arguments);
-                try { renderer.update({ scenario: state.scenario, result: state.modelResult }); }
-                catch (_) { /* Keep the illustrative fallback available if model access fails. */ }
+                updateScene();
                 return result;
             };
-            try { renderer.update({ scenario: state.scenario, result: state.modelResult }); }
-            catch (_) { /* The dashboard's first updatePhysics call will retry after initialization. */ }
+            updateScene();
         } else {
             setFallback(true, "dashboard model unavailable");
         }

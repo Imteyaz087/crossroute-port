@@ -1,57 +1,18 @@
-# CrossRoute: Kaohsiung Smart Port AI Telematics & Zero-Genset Cold Corridor
-### 裕隆綠色移動生態圈之港口冷鏈「零發電機」AI 智慧調度引擎
+# CrossRoute cold-chain scenario demo
 
-[![Live Web Console](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-2ea44f?style=for-the-badge&logo=github)](https://imteyaz087.github.io/crossroute-port/)
-[![Competition Track](https://img.shields.io/badge/Track-15--M%20Yulon%20Group-0052cc?style=for-the-badge)](https://sustainabilityhackathon-tw.org/)
-[![License: Proprietary](https://img.shields.io/badge/License-Proprietary%20Evaluation-red.svg?style=for-the-badge)](LICENSE)
+CrossRoute is an interactive illustrative model for exploring refrigerated-container temperature scenarios. The GitHub Pages site is a product concept demo, not an operating dispatch service or a validated physical digital twin.
 
-> **2026 永續智慧創新黑客松競賽 (2026 Sustainability Smart Innovation Hackathon)**  
-> **參賽場次**：`15-M 裕隆集團 (智慧商業/永續社會 | AI 賦能未來：開創企業與社會永續新解方)`  
-> **團隊名稱**：CrossRoute 智慧綠能聯隊 (CrossRoute Telematics)  
-> **線上即時操控台**：[https://imteyaz087.github.io/crossroute-port/](https://imteyaz087.github.io/crossroute-port/)
+**示意情境展示 · Illustrative scenario demo.** Temperatures, cargo properties, energy, fuel, costs, savings, emissions, events, and CAN examples are assumptions or model estimates. They are not port, cargo, vehicle, customer, or driver observations. The interface does not issue dispatch authorization, regulatory/compliance findings, certificates, commercial offers, or guaranteed outcomes.
 
----
+The normal, delay, and recovery controls share one model state across the scenario readout, HUD, thermal explainer, and unsigned demo report. Recovery uses a clearly labeled 10 kW shore-power assumption. An optional user-triggered weather input may change ambient temperature; it is not port or vehicle telemetry. The thermal explainer is native SVG/2.5D, not Spline or a physical digital twin.
 
-## 💡 The Breakthrough: 25-Ton Thermal Battery
+## Run the checks
 
-Instead of adding heavy auxiliary diesel generators (1,200 kg) or expensive battery trailers, CrossRoute utilizes the massive **thermal inertia** of 20 tons of frozen cargo ($36\text{ MJ}/^\circ\text{C}$).
-
-```
-[Berth 78 Shore Power Pre-Chill (-19.5°C)]
-                   │
-                   ▼
-[20-Ton Frozen Cargo as 36 MJ/°C Cold Storage]
-                   │
-                   ▼
-[Dynamic Thermal Budgeting Engine (TDX Transit: 38 mins)]
-                   │
-                   ├── Core Temp Rise: +0.14°C (HACCP Limit: ±1.50°C)
-                   ├── Detach 1,200 kg Diesel Genset
-                   └── Net Savings: NT$ 1,610 / trip + Zero Urban Diesel Soot
+```sh
+node --test tests/*.test.js
+node --check crossroute.bundle.js
+node --check crossroute.min.js
+node --check thermal-model.js
 ```
 
----
-
-## 🚗 Yulon Group 3-Pillar Strategic Synergy
-
-1. **中華汽車 (China Motor - CMC)**: Light electric logistics vans (**ET35**) & heavy e-tractors operate without the 1,200 kg genset penalty, boosting commercial EV range by 22%.
-2. **格上租車 (Car Plus Mobility)**: Dynamic fleet telematics and intelligent berth-to-warehouse dispatch via AI Green Pass.
-3. **裕融企業 (TAC)**: Cold-Chain Mobility-as-a-Service (MaaS) green leasing bundled with ISO 14083 / CBAM carbon certificate verification.
-
----
-
-## 📊 Live Verification & Screenshots
-
-![CrossRoute Live Radar & Telemetry Proof](CrossRoute_Console_Live_Proof.png)
-
-* Verified live at Kaohsiung Port (Berths 63–66 & 77–81).
-* Tested with 50-truck synthetic fleet under ISO 14083 Tier-3 standards.
-
----
-
-## ⚖️ Intellectual Property & Defensive Publication Notice
-
-* **Copyright (c) 2026 CrossRoute Telematics (Imteyaz Ahmad, Imran Ahmad, Kamran Raza). All Rights Reserved.**
-* **Evaluation Only**: Granted strictly for the 2026 Taiwan Sustainability Hackathon jury and Yulon Group (Track 15-M) evaluation.
-* **Defensive Prior Art**: Published on October 21, 2026 under Taiwan Patent Act §22 (中華民國專利法第22條先前技術存證). Unauthorized commercial exploitation or patent filings by third parties will be contested and invalidated.
-* **Trade Secret Protection**: Production CAN-bus microcontroller firmware and SugarSense predictive vessel berthing models are proprietary trade secrets under the Taiwan Trade Secrets Act (營業秘密法).
+`crossroute.bundle.js` is the readable browser source; `crossroute.min.js` is its minified counterpart loaded by `index.html`. Rebuild the minified file with the repository's existing esbuild tool when changing the readable bundle.

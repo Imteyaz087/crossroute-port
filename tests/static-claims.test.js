@@ -7,6 +7,7 @@ const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const bundle = readFileSync(new URL("../crossroute.bundle.js", import.meta.url), "utf8");
 const minified = readFileSync(new URL("../crossroute.min.js", import.meta.url), "utf8");
 const thermalModel = readFileSync(new URL("../thermal-model.js", import.meta.url), "utf8");
+const readme = readFileSync(new URL("../README.md", import.meta.url), "utf8");
 
 test("operational HUD, commercial, health, and emissions claims stay out of shipped assets", () => {
     const shipped = `${html}\n${bundle}\n${minified}`;
@@ -32,6 +33,13 @@ test("operational HUD, commercial, health, and emissions claims stay out of ship
 });
 
 test("shipped state and user-facing data are explicitly illustrative and unverified", () => {
+    assert.match(readme, /not an operating dispatch service/i);
+    assert.match(readme, /not port, cargo, vehicle, customer, or driver observations/i);
+    assert.match(readme, /clearly labeled 10 kW shore-power assumption/i);
+    assert.doesNotMatch(readme, /Verified live at Kaohsiung Port/i);
+    assert.doesNotMatch(readme, /HACCP Limit/i);
+    assert.doesNotMatch(readme, /50-truck synthetic fleet/i);
+    assert.doesNotMatch(readme, /AI Green Pass/i);
     assert.match(html, /ILLUSTRATIVE MODEL STATE/);
     assert.match(html, /DEMO · NOT OPERATIONAL/);
     assert.match(html, /Synthetic planning assumptions only/);

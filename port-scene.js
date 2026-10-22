@@ -8,6 +8,9 @@
     "use strict";
 
     const SCENARIOS = new Set(["normal", "delay", "recovery"]);
+    const DEMO_ROUTE_POINTS=Object.freeze([[-5.25,2.78],[1.55,2.78],[1.90,2.75],[2.10,2.68],[2.25,2.58],[5.35,2.58]].map(point=>Object.freeze(point)));
+    const DEMO_ROUTE_LENGTHS=DEMO_ROUTE_POINTS.slice(1).map((point,index)=>Math.hypot(point[0]-DEMO_ROUTE_POINTS[index][0],point[1]-DEMO_ROUTE_POINTS[index][1]));
+    const DEMO_ROUTE_LENGTH=DEMO_ROUTE_LENGTHS.reduce((sum,length)=>sum+length,0);
 
     function createSceneState(scenario, result) {
         if (!SCENARIOS.has(scenario) || !result || result.valid !== true ||
@@ -29,16 +32,55 @@
 
     const SCENE_MANIFEST = Object.freeze([
         "harbor-water", "quay-and-road", "gantry-crane", "cold-warehouse", "container-stacks",
-        "refrigerated-truck", "container-cutaway-and-cargo", "shore-power-unit", "scenario-route"
+        "refrigerated-truck", "container-cutaway-and-cargo", "shore-power-unit", "scenario-route",
+        "illustrative-16-vehicle-fleet", "individual-vehicle-trails", "animated-tunnel-cues", "animated-crane-trolley",
+        "qijin-breakwater", "navigational-channel"
     ]);
+
+    // A reproducible illustration of the original radar's 16 vehicle slots, not a
+    // claim about live fleet size, identity, location, or dispatch state.
+    function createDemoFleet() {
+        return Array.from({ length: 16 }, (_, index) => ({
+            id: `CMC-ET35-${100 + index}`,
+            moving: index % 4 !== 0,
+            direction: index % 2 === 0 ? 1 : -1,
+            progress: ((index * 37) % 97) / 97,
+            lane: index % 4,
+            trailLength: 14
+        }));
+    }
+
+    function getDemoRoutePosition(progress,lane) {
+        let distance=Math.max(0,Math.min(1,progress))*DEMO_ROUTE_LENGTH;
+        for(let i=0;i<DEMO_ROUTE_LENGTHS.length;i++) {
+            const length=DEMO_ROUTE_LENGTHS[i];
+            if(distance<=length||i===DEMO_ROUTE_LENGTHS.length-1) {
+                const part=length?distance/length:0,a=DEMO_ROUTE_POINTS[i],b=DEMO_ROUTE_POINTS[i+1];
+                return [a[0]+(b[0]-a[0])*part,0.34,a[1]+(b[1]-a[1])*part+(lane-1.5)*0.07];
+            }
+            distance-=length;
+        }
+        return [DEMO_ROUTE_POINTS[0][0],0.34,DEMO_ROUTE_POINTS[0][1]];
+    }
+
+    function getDemoFleetMotion(vehicle,seconds) {
+        if(!vehicle.moving) return {progress:vehicle.progress,direction:vehicle.direction};
+        const phase=(((vehicle.progress+vehicle.direction*seconds*0.025)%2)+2)%2;
+        return {progress:phase<=1?phase:2-phase,direction:vehicle.direction*(phase<=1?1:-1)};
+    }
+
+    function getDemoFleetPose(vehicle,seconds) {
+        const motion=getDemoFleetMotion(vehicle,seconds),center=getDemoRoutePosition(motion.progress,vehicle.lane),ahead=getDemoRoutePosition(motion.progress+motion.direction*0.001,vehicle.lane);
+        return {x:center[0],y:center[1],z:center[2],progress:motion.progress,direction:motion.direction,heading:Math.atan2(-(ahead[2]-center[2]),ahead[0]-center[0])};
+    }
 
     function mount(canvas, fallbackCanvas, onFallback) {
         const reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)");
         const notifyFallback = (active, reason) => {
             if (typeof onFallback === "function") onFallback(active, reason);
         };
-        if (!canvas || !fallbackCanvas || (reducedMotion && reducedMotion.matches)) {
-            notifyFallback(true, "reduced-motion");
+        if (!canvas || !fallbackCanvas) {
+            notifyFallback(true, "canvas-unavailable");
             return { available: false, update() {}, dispose() {} };
         }
 
@@ -50,6 +92,45 @@
             return { available: false, update() {}, dispose() {} };
         }
         notifyFallback(false, "webgl-ready");
+        const labelOverlay=document.createElement("div");
+        labelOverlay.className="port-fleet-label-overlay";
+        labelOverlay.setAttribute("aria-hidden","true");
+        Object.assign(labelOverlay.style,{position:"absolute",inset:"0",pointerEvents:"none",overflow:"hidden"});
+        const fleetLabels=createDemoFleet().map(vehicle=>{
+            const label=document.createElement("span");
+            label.textContent=vehicle.id;
+            Object.assign(label.style,{position:"absolute",padding:"1px 3px",borderRadius:"3px",font:"8px ui-monospace,monospace",color:vehicle.moving?"#a7f3d0":"#7dd3fc",background:"rgba(5,17,28,.82)",whiteSpace:"nowrap",transform:"translate(-50%,-100%)"});
+            labelOverlay.appendChild(label);
+            return label;
+        });
+        const sceneTags=[
+            ["TERMINAL 4 · 63–66",[-4.6,0.45,1.80]],["TERMINAL 5 · 77–81",[-1.9,0.45,1.80]],
+            ["BERTH 78 · ACTIVE",[-2.2,0.58,1.80]],["WAN HAI 315",[-0.2,0.65,-2.25]],
+            ["QIANZHEN COLD HUB",[4.1,2.35,4.20]],["HARBOR TUNNEL",[0,0.65,3.35]]
+        ].map(([text,point])=>{
+            const label=document.createElement("span");label.textContent=text;
+            Object.assign(label.style,{position:"absolute",padding:"2px 4px",borderRadius:"3px",font:"700 8px ui-monospace,monospace",color:"#b6f5e4",background:"rgba(5,17,28,.84)",whiteSpace:"nowrap",transform:"translate(-50%,-50%)"});
+            labelOverlay.appendChild(label);return {label,point};
+        });
+        if(canvas.parentElement) canvas.parentElement.appendChild(labelOverlay);
+        function updateFleetLabels(vp,rect) {
+            const parentRect=canvas.parentElement?canvas.parentElement.getBoundingClientRect():rect;
+            function project(point) {
+                const clipX=vp[0]*point[0]+vp[4]*point[1]+vp[8]*point[2]+vp[12],clipY=vp[1]*point[0]+vp[5]*point[1]+vp[9]*point[2]+vp[13],clipW=vp[3]*point[0]+vp[7]*point[1]+vp[11]*point[2]+vp[15];
+                const visible=clipW>0&&Math.abs(clipX/clipW)<0.98&&Math.abs(clipY/clipW)<0.98;
+                return {visible,x:((clipX/clipW+1)/2)*parentRect.width,y:((1-clipY/clipW)/2)*parentRect.height};
+            }
+            demoFleet.forEach((vehicle,index)=>{
+                const pose=getDemoFleetPose(vehicle,motionOkay()?performance.now()/1000:0);
+                const position=project([pose.x,pose.y+0.30,pose.z]);
+                fleetLabels[index].hidden=!position.visible;
+                if(position.visible){fleetLabels[index].style.left=`${position.x}px`;fleetLabels[index].style.top=`${position.y}px`;}
+            });
+            for(const tag of sceneTags) {
+                const position=project(tag.point);tag.label.hidden=!position.visible;
+                if(position.visible){tag.label.style.left=`${position.x}px`;tag.label.style.top=`${position.y}px`;}
+            }
+        }
 
         const vertexSource = `
             attribute vec3 aPosition;
@@ -136,6 +217,33 @@
                 triangle(target,[x,y+depth/2,z],p2,p3,[0,1,0],color);
             }
         }
+        function wheel(target,x,y,z,radius,depth,color,sides) {
+            const count=sides||10;
+            for(let i=0;i<count;i++) {
+                const a=i*Math.PI*2/count,b=(i+1)*Math.PI*2/count;
+                const p0=[x+Math.cos(a)*radius,y+Math.sin(a)*radius,z-depth/2];
+                const p1=[x+Math.cos(b)*radius,y+Math.sin(b)*radius,z-depth/2];
+                const p2=[x+Math.cos(b)*radius,y+Math.sin(b)*radius,z+depth/2];
+                const p3=[x+Math.cos(a)*radius,y+Math.sin(a)*radius,z+depth/2];
+                const normal=[Math.cos((a+b)/2),Math.sin((a+b)/2),0];
+                quad(target,p0,p1,p2,p3,normal,color);
+                triangle(target,[x,y,z-depth/2],p0,p1,[0,0,-1],color);
+                triangle(target,[x,y,z+depth/2],p3,p2,[0,0,1],color);
+            }
+        }
+        function transformLocalGeometry(target,geometry,x,y,z,heading) {
+            const c=Math.cos(heading),s=Math.sin(heading);
+            for(let i=0;i<geometry.length;i+=9) {
+                const lx=geometry[i],ly=geometry[i+1],lz=geometry[i+2],nx=geometry[i+3],ny=geometry[i+4],nz=geometry[i+5];
+                target.push(x+lx*c+lz*s,y+ly,z-lx*s+lz*c,nx*c+nz*s,ny,-nx*s+nz*c,geometry[i+6],geometry[i+7],geometry[i+8]);
+            }
+        }
+        function orientedBox(target,x,y,z,sx,sy,sz,color,heading) {
+            const local=[];box(local,0,0,0,sx,sy,sz,color);transformLocalGeometry(target,local,x,y,z,heading);
+        }
+        function orientedWheel(target,x,y,z,radius,depth,color,sides,heading) {
+            const local=[];wheel(local,0,0,0,radius,depth,color,sides);transformLocalGeometry(target,local,x,y,z,heading);
+        }
         const C = {
             water:[0.025,0.16,0.23], waterLight:[0.04,0.29,0.38], quay:[0.20,0.27,0.32], road:[0.09,0.14,0.18],
             line:[0.22,0.43,0.49], steel:[0.40,0.62,0.68], crane:[0.80,0.56,0.20], craneDark:[0.34,0.30,0.23],
@@ -145,16 +253,32 @@
         };
         // Harbor basin, raised quay, service road, bollards and water-side edge.
         box(staticData,0,-0.32,-1.0,15,0.34,11,C.water);
+        // Qijin-side breakwater and a separate navigational fairway cue.
+        box(staticData,-6.95,0.18,-2.20,0.72,0.72,7.8,[0.16,0.23,0.29]);
+        ribbon(staticData,[-5.95,-0.105,-5.5],[-5.95,-0.105,0.72],0.11,[0.18,0.58,0.72]);
         box(staticData,0,-0.06,3.15,13,0.42,4.6,C.quay);
         box(staticData,0,0.18,1.02,12.8,0.08,0.12,C.waterLight);
-        box(staticData,0,0.17,4.55,12.4,0.06,1.25,C.road);
-        for (let x=-5.5;x<=5.5;x+=1.1) box(staticData,x,0.22,4.50,0.48,0.012,0.035,C.line);
+        box(staticData,0,0.17,2.78,12.4,0.06,0.42,C.road);
+        for (let x=-5.5;x<=5.5;x+=1.1) box(staticData,x,0.22,2.78,0.48,0.012,0.035,C.line);
         for (let x=-5.4;x<=5.4;x+=1.8) cylinderY(staticData,x,0.34,1.35,0.10,0.28,C.steel,10);
         // Warehouse, cold-room doors and container stacks.
-        box(staticData,4.25,1.08,4.05,3.7,2.15,2.05,C.warehouse);
-        box(staticData,4.25,2.19,4.05,3.86,0.12,2.18,C.warehouseRoof);
-        for (let x=2.95;x<=5.45;x+=0.84) box(staticData,x,0.75,2.995,0.62,1.15,0.045,C.window);
-        box(staticData,4.0,0.60,2.92,0.82,1.05,0.08,C.steel);
+        box(staticData,4.25,1.08,4.20,3.7,2.15,2.05,C.warehouse);
+        box(staticData,4.25,2.19,4.20,3.86,0.12,2.18,C.warehouseRoof);
+        for(let row=0;row<3;row++) for(let column=0;column<3;column++) {
+            box(staticData,3.05+column*0.78,0.52+row*0.50,3.145,0.55,0.36,0.045,C.window);
+        }
+        // Illustrative terminal berths, stationary WAN HAI 315 and its twelve deck boxes.
+        for(let i=0;i<9;i++) {
+            const x=i<4?-5.35+i*0.52:-2.75+(i-4)*0.52;
+            const berthColor=i===5?[0.12,0.70,0.48]:i<4?[0.24,0.34,0.39]:[0.21,0.38,0.39];
+            box(staticData,x,0.18,1.80,0.44,0.12,0.72,berthColor);
+        }
+        box(staticData,-0.25,-0.04,-2.25,5.4,0.34,1.35,[0.12,0.25,0.32]);
+        for(let i=0;i<12;i++) {
+            const x=-2.25+(i%6)*0.76,y=0.20+Math.floor(i/6)*0.28;
+            box(staticData,x,y,-2.25,0.68,0.22,0.54,C.containers[i%C.containers.length]);
+        }
+        box(staticData,2.16,0.24,-2.25,0.52,0.50,0.66,C.steel);
         [[5.95,0.52,2.55],[5.95,1.60,2.55],[6.95,0.52,2.55],[6.95,1.60,2.55],
             [5.9,0.52,3.35],[6.9,0.52,3.35]].forEach((p,i)=>{
             const c=C.containers[i%C.containers.length]; box(staticData,p[0],p[1],p[2],0.90,0.98,0.72,c);
@@ -170,15 +294,13 @@
         box(staticData,-1.35,0.22,0.42,1.0,0.18,0.72,C.steel);
         box(staticData,-3.15,0.22,5.15,1.0,0.18,0.72,C.steel);
         box(staticData,-1.35,0.22,5.15,1.0,0.18,0.72,C.steel);
-        box(staticData,-3.15,3.67,2.70,0.68,0.44,0.82,C.craneDark);
-        for(let x=-3.42;x<=-2.88;x+=0.54) box(staticData,x,3.36,2.70,0.035,0.62,0.035,C.steel);
-        box(staticData,-3.15,3.04,2.70,1.12,0.08,1.25,C.crane);
+        // Trolley, hoist and spreader are drawn dynamically below.
         // Tractor, reefer chassis, ribbed container cutaway and visible cargo.
         box(staticData,-0.95,0.38,1.72,3.80,0.18,0.92,C.steel);
         box(staticData,-2.65,0.69,1.72,0.95,0.68,0.82,C.truck);
         box(staticData,-2.88,1.02,1.72,0.46,0.25,0.84,C.cab);
         box(staticData,-2.64,0.72,2.145,0.40,0.26,0.018,C.window);
-        for(const x of [-2.45,-1.10,0.15]) for(const z of [1.18,2.26]) cylinderY(staticData,x,0.30,z,0.27,0.15,C.rubber,14);
+        for(const x of [-2.45,-1.10,0.15]) for(const z of [1.18,2.26]) wheel(staticData,x,0.30,z,0.27,0.15,C.rubber,14);
         // Container shell is intentionally open along the near side to show cargo inside.
         box(staticData,-0.62,0.95,1.72,2.55,0.11,1.18,[0.07,0.36,0.41]);
         box(staticData,-0.62,1.68,1.72,2.55,0.11,1.18,[0.08,0.44,0.48]);
@@ -198,6 +320,12 @@
         box(staticData,1.65,0.57,1.145,0.34,0.34,0.025,[0.11,0.23,0.24]);
         box(staticData,1.65,0.58,1.12,0.16,0.025,0.012,[0.30,0.86,0.68]);
         for(let x=-5.7;x<=5.8;x+=0.7) box(staticData,x,0.145,3.15,0.025,0.018,4.55,[0.25,0.33,0.37]);
+        // Tunnel portal frames mark the two ends of the bidirectional simulated corridor.
+        for(const x of [-4.7,4.2]) {
+            box(staticData,x-0.24,0.78,3.35,0.12,1.35,0.18,C.steel);
+            box(staticData,x+0.24,0.78,3.35,0.12,1.35,0.18,C.steel);
+            box(staticData,x,1.40,3.35,0.58,0.12,0.18,C.steel);
+        }
 
         const staticBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, staticBuffer);
@@ -217,7 +345,7 @@
         function updateDynamic() {
             dynamicData.length=0;
             const color=!modelState.valid?[0.75,0.53,0.38]:modelState.scenario==="delay"?[0.92,0.25,0.37]:modelState.scenario==="recovery"?[0.20,0.88,0.63]:[0.14,0.72,0.82];
-            const path=[[-5.2,0.235,1.72],[-3.0,0.235,1.72],[-0.9,0.235,1.72],[1.55,0.235,1.72],[3.4,0.235,2.4],[4.0,0.235,3.0]];
+            const path=routePoints.map(([x,z])=>[x,0.235,z]);
             for(let i=1;i<path.length;i++) ribbon(dynamicData,path[i-1],path[i],0.075,color);
             // Temperature indicator is explicitly a model estimate against the selected reference.
             const exceeds=modelState.valid&&!modelState.withinReference;
@@ -258,10 +386,12 @@
             gl.enableVertexAttribArray(locations.normal);gl.vertexAttribPointer(locations.normal,3,gl.FLOAT,false,stride,3*4);
             gl.enableVertexAttribArray(locations.color);gl.vertexAttribPointer(locations.color,3,gl.FLOAT,false,stride,6*4);
         }
+        const demoFleet=createDemoFleet();
+        const routePoints=DEMO_ROUTE_POINTS;
         function draw(now,force) {
             if(disposed||!visible||(!motionOkay()&&!force)) return;
             if(motionOkay()&&!force) raf=requestAnimationFrame(draw);
-            if(now-lastFrame<33) return;
+            if(!force&&now-lastFrame<33) return;
             lastFrame=now;
             const rect=canvas.getBoundingClientRect();
             if(rect.width<4||rect.height<4) return;
@@ -273,18 +403,67 @@
             const target=[0,1.35,2.0],cp=Math.cos(pitch);
             const eye=[target[0]+Math.sin(yaw)*distance*cp,target[1]+Math.sin(pitch)*distance,target[2]+Math.cos(yaw)*distance*cp];
             const vp=multiply(perspective(0.72,w/h,0.1,60),lookAt(eye,target,[0,1,0]));
+            updateFleetLabels(vp,rect);
             gl.useProgram(program);gl.uniformMatrix4fv(locations.viewProjection,false,vp);
             bindBuffer(staticBuffer);gl.drawArrays(gl.TRIANGLES,0,staticVertices);
             bindBuffer(dynamicBuffer);gl.drawArrays(gl.TRIANGLES,0,dynamicVertices);
             const motionData=[];
-            const progress=modelState.scenario==="delay" ? 0.48+Math.sin(now*0.0008)*0.018 : (now*0.00006)%1;
-            const markerX=-5.2+progress*10.2;
             const markerColor=!modelState.valid?[0.75,0.53,0.38]:modelState.scenario==="delay"?[0.96,0.28,0.39]:modelState.scenario==="recovery"?[0.25,0.95,0.68]:[0.18,0.78,0.93];
-            box(motionData,markerX,0.31,1.72,0.40,0.10,0.22,markerColor);
-            box(motionData,markerX-0.02,0.38,1.72,0.20,0.06,0.18,[0.78,0.91,0.89]);
+            const pathColor=modelState.scenario==="delay"?[0.92,0.25,0.37]:modelState.scenario==="recovery"?[0.20,0.88,0.63]:[0.14,0.72,0.82];
+            const tunnelA=[-4.7,0.25,3.35],tunnelB=[4.2,0.25,3.35];
+            if(motionOkay()) for(let k=0;k<3;k++) {
+                const forward=((now/(modelState.scenario==="delay"?4000:1600)+k/3)%1);
+                for(const direction of [1,-1]) {
+                    const progress=direction===1?forward:1-forward;
+                    const x=tunnelA[0]+(tunnelB[0]-tunnelA[0])*progress;
+                    box(motionData,x,0.30,3.35+(direction*0.16),0.10,0.08,0.08,pathColor);
+                }
+            }
+            // The original radar animated the crane trolley and sweep independently.
+            const trolleyX=-3.15+(motionOkay()?Math.sin(now/700)*0.78:0);
+            box(motionData,trolleyX,3.67,2.70,0.55,0.18,0.56,C.craneDark);
+            box(motionData,trolleyX,3.30,2.70,0.035,0.58,0.035,C.steel);
+            box(motionData,trolleyX,3.00,2.70,0.78,0.08,0.94,C.crane);
+            const sweepAngle=motionOkay()?((now*0.00035)% (Math.PI*2)):0;
+            const sweepEnd=[-4.6+Math.cos(sweepAngle)*1.4,0.24,4.45+Math.sin(sweepAngle)*1.4];
+            ribbon(motionData,[-4.6,0.24,4.45],sweepEnd,0.035,[0.16,0.66,0.72]);
+            const fleetData=[];
+            const timeSeconds=motionOkay()?now/1000:0;
+            const heatColor=!modelState.valid?[0.52,0.57,0.55]:modelState.withinReference?[0.14,0.72,0.64]:[0.92,0.27,0.30];
+            for(let i=0;i<3;i++) box(motionData,-1.48+i*0.56,1.46,1.52,0.44,0.035,0.52,heatColor);
+            // Static heat-ingress cues frame the cutaway; color follows the illustrative model only.
+            box(motionData,-2.12,1.30,1.06,0.36,0.035,0.035,heatColor);
+            triangle(motionData,[-1.92,1.30,1.06],[-1.78,1.39,1.06],[-1.78,1.21,1.06],[0,0,1],heatColor);
+            box(motionData,0.88,1.30,1.06,0.36,0.035,0.035,heatColor);
+            triangle(motionData,[0.68,1.30,1.06],[0.54,1.39,1.06],[0.54,1.21,1.06],[0,0,1],heatColor);
+            for(const vehicle of demoFleet) {
+                const pose=getDemoFleetPose(vehicle,timeSeconds),{x,y,z:laneZ,progress,direction,heading}=pose;
+                const c=Math.cos(heading),s=Math.sin(heading);
+                const local=(lx,ly,lz)=>[x+lx*c+lz*s,y+ly,laneZ-lx*s+lz*c];
+                const color=vehicle.moving?markerColor:[0.12,0.52,0.78];
+                // Each vehicle gets its own tractor, cab and refrigerated box.
+                orientedBox(fleetData,x,y,laneZ,0.72,0.12,0.27,color,heading);
+                const cab=local(0.25,0.14,0),reefer=local(-0.13,0.16,0);
+                orientedBox(fleetData,cab[0],cab[1],cab[2],0.22,0.18,0.25,[0.72,0.84,0.84],heading);
+                orientedBox(fleetData,reefer[0],reefer[1],reefer[2],0.39,0.25,0.25,vehicle.moving?[0.06,0.40,0.45]:[0.10,0.25,0.37],heading);
+                for(const wx of [-0.22,0.23]) for(const wz of [-0.15,0.15]) {
+                    const center=local(wx,-0.07,wz);orientedWheel(fleetData,center[0],center[1],center[2],0.075,0.045,C.rubber,8,heading);
+                }
+                if(vehicle.moving) {
+                    // Short route-tail segments are deterministic per vehicle and scenario colored.
+                    const tailSteps=vehicle.trailLength;
+                    for(let step=1;step<tailSteps;step++) {
+                        const p0=progress-direction*(step-1)*0.0032,p1=progress-direction*step*0.0032;
+                        const q0=getDemoRoutePosition(p0,vehicle.lane),q1=getDemoRoutePosition(p1,vehicle.lane);
+                        ribbon(fleetData,[q0[0],0.245,q0[2]],[q1[0],0.245,q1[2]],0.018,pathColor);
+                    }
+                }
+            }
             gl.bindBuffer(gl.ARRAY_BUFFER,motionBuffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(motionData),gl.DYNAMIC_DRAW);
             motionVertices=motionData.length/9;
             bindBuffer(motionBuffer);gl.drawArrays(gl.TRIANGLES,0,motionVertices);
+            gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(fleetData),gl.DYNAMIC_DRAW);
+            gl.drawArrays(gl.TRIANGLES,0,fleetData.length/9);
         }
         function onPointerDown(event){drag={x:event.clientX,y:event.clientY,id:event.pointerId};canvas.setPointerCapture(event.pointerId);}
         function onPointerMove(event){if(!drag||drag.id!==event.pointerId)return;const dx=event.clientX-drag.x,dy=event.clientY-drag.y;drag.x=event.clientX;drag.y=event.clientY;yaw-=dx*0.007;pitch=Math.max(0.12,Math.min(1.15,pitch+dy*0.006));if(!motionOkay())renderOnce();}
@@ -292,7 +471,7 @@
         function onWheel(event){event.preventDefault();distance=Math.max(10,Math.min(23,distance+event.deltaY*0.012));if(!motionOkay())renderOnce();}
         function onKey(event){const step=0.10;if(event.key==="ArrowLeft")yaw-=step;else if(event.key==="ArrowRight")yaw+=step;else if(event.key==="ArrowUp")pitch=Math.min(1.15,pitch+step);else if(event.key==="ArrowDown")pitch=Math.max(0.12,pitch-step);else if(event.key==="+"||event.key==="=")distance=Math.max(10,distance-0.8);else if(event.key==="-")distance=Math.min(23,distance+0.8);else return;event.preventDefault();if(!motionOkay())renderOnce();}
         function renderOnce(){draw(performance.now()+40,true);}
-        function onMotionChange(event){if(event.matches){if(raf)cancelAnimationFrame(raf);raf=0;notifyFallback(true,"reduced-motion");}else{lastFrame=0;notifyFallback(false,"webgl-ready");if(typeof onFallback!=="function")draw(performance.now());}}
+        function onMotionChange(event){if(event.matches){if(raf)cancelAnimationFrame(raf);raf=0;notifyFallback(false,"reduced-motion-static");renderOnce();}else{lastFrame=0;notifyFallback(false,"webgl-ready");if(visible)draw(performance.now());}}
         function onContextLost(event){event.preventDefault();disposed=true;if(apiRef)apiRef.available=false;if(raf)cancelAnimationFrame(raf);notifyFallback(true,"webgl-context-lost");}
         canvas.addEventListener("pointerdown",onPointerDown);canvas.addEventListener("pointermove",onPointerMove);canvas.addEventListener("pointerup",onPointerUp);canvas.addEventListener("pointercancel",onPointerUp);canvas.addEventListener("wheel",onWheel,{passive:false});canvas.addEventListener("keydown",onKey);canvas.addEventListener("webglcontextlost",onContextLost,false);
         const resizeObserver=window.ResizeObserver?new ResizeObserver(()=>{if(!motionOkay())renderOnce();}):null;
@@ -301,17 +480,17 @@
         if(reducedMotion&&reducedMotion.addEventListener)reducedMotion.addEventListener("change",onMotionChange);
         function update(next){if(disposed)return;modelState=createSceneState(next.scenario,next.result);updateDynamic();if(!motionOkay())renderOnce();}
         update({scenario:"normal",result:{valid:false}});
-        if(motionOkay())draw(performance.now());
+        if(motionOkay())draw(performance.now());else renderOnce();
         apiRef={
             available:true,
             update,
             setVisible(next){if(disposed)return;const nextVisible=Boolean(next);if(nextVisible===visible)return;visible=nextVisible;if(!visible&&raf){cancelAnimationFrame(raf);raf=0;}else if(visible){if(motionOkay())draw(performance.now());else renderOnce();}},
-            dispose(){disposed=true;if(raf)cancelAnimationFrame(raf);if(resizeObserver)resizeObserver.disconnect();window.removeEventListener("resize",onResize);if(reducedMotion&&reducedMotion.removeEventListener)reducedMotion.removeEventListener("change",onMotionChange);canvas.removeEventListener("pointerdown",onPointerDown);canvas.removeEventListener("pointermove",onPointerMove);canvas.removeEventListener("pointerup",onPointerUp);canvas.removeEventListener("pointercancel",onPointerUp);canvas.removeEventListener("wheel",onWheel);canvas.removeEventListener("keydown",onKey);canvas.removeEventListener("webglcontextlost",onContextLost);gl.deleteBuffer(staticBuffer);gl.deleteBuffer(dynamicBuffer);gl.deleteBuffer(motionBuffer);gl.deleteProgram(program);notifyFallback(true,"disposed");}
+            dispose(){disposed=true;if(raf)cancelAnimationFrame(raf);if(resizeObserver)resizeObserver.disconnect();window.removeEventListener("resize",onResize);if(reducedMotion&&reducedMotion.removeEventListener)reducedMotion.removeEventListener("change",onMotionChange);canvas.removeEventListener("pointerdown",onPointerDown);canvas.removeEventListener("pointermove",onPointerMove);canvas.removeEventListener("pointerup",onPointerUp);canvas.removeEventListener("pointercancel",onPointerUp);canvas.removeEventListener("wheel",onWheel);canvas.removeEventListener("keydown",onKey);canvas.removeEventListener("webglcontextlost",onContextLost);if(labelOverlay.parentElement)labelOverlay.remove();gl.deleteBuffer(staticBuffer);gl.deleteBuffer(dynamicBuffer);gl.deleteBuffer(motionBuffer);gl.deleteProgram(program);notifyFallback(true,"disposed");}
         };
         return apiRef;
     }
 
-    return { createSceneState, SCENE_MANIFEST, mount };
+    return { createSceneState, createDemoFleet, getDemoRoutePosition, getDemoFleetMotion, getDemoFleetPose, DEMO_ROUTE_POINTS, SCENE_MANIFEST, mount };
 });
 
 // The readable/minified CrossRoute dashboard bundle stays byte-for-byte in sync.
@@ -339,6 +518,8 @@
         useFallback = Boolean(active);
         webglCanvas.hidden = useFallback;
         fallbackView.hidden = !useFallback;
+        const fleetLabels=root.document.querySelector(".port-fleet-label-overlay");
+        if(fleetLabels)fleetLabels.hidden=useFallback;
         root.document.getElementById("btnPortView2D").setAttribute("aria-pressed", String(useFallback));
         root.document.getElementById("btnPortView3D").setAttribute("aria-pressed", String(!useFallback));
         root.document.getElementById("portSceneStatus").textContent = useFallback

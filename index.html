@@ -533,7 +533,7 @@
     }
 
     canvas#portWebGLCanvas, canvas#portCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
-    canvas#portCanvas[hidden] { display: none !important; }
+    canvas#portWebGLCanvas[hidden], canvas#portCanvas[hidden] { display: none !important; }
     .port-scene-controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 10px; }
     .port-scene-controls button { min-height: 36px; padding: 7px 11px; color: #dbeafe; background: rgba(7,19,34,.8); border: 1px solid rgba(56,189,248,.3); border-radius: 8px; font: 600 11px var(--font-mono); cursor: pointer; }
     .port-scene-controls button[aria-pressed="true"] { border-color: var(--electric-cyan); color: var(--electric-cyan); }
@@ -1348,7 +1348,7 @@
                     </div>
                 </div>
             </div>
-            <div class="model-note port-scene-note" id="portSceneInstructions"><strong>Illustrative native WebGL scene · 原生 3D 示意場景.</strong> Drag to orbit; use arrow keys to rotate and +/− to zoom. Scene motion/highlights represent the selected model scenario only; there is no live telemetry or dispatch connection. Recovery power is the model's illustrative 10 kW assumption. A 2D simulated view is available, and is selected automatically when WebGL is unavailable or reduced motion is preferred.</div>
+            <div class="model-note port-scene-note" id="portSceneInstructions"><strong>Illustrative native WebGL scene · 原生 3D 示意場景.</strong> Drag to orbit; use arrow keys to rotate and +/− to zoom. The 16 vehicles (CMC-ET35-100–115), two berth banks (63–66 and 77–81), stationary WAN HAI 315, Qianzhen cold hub and bidirectional tunnel are deterministic illustrations, not live fleet data. Scene motion/highlights represent the selected model scenario only; there is no live telemetry or dispatch connection. Recovery power is the model's illustrative 10 kW assumption. A 2D simulated view is available when WebGL is unavailable; reduced-motion preference keeps the 3D view static.</div>
             <div class="port-scene-hidden-status" id="portSceneStatus" role="status" aria-live="polite">3D illustrative model active.</div>
 
             <div class="thermal-explainer" aria-labelledby="thermalExplainerTitle">

@@ -1342,7 +1342,7 @@
                 <button type="button" id="btnPortView2D" aria-pressed="false" onclick="showPortView('2d')">2D fallback · 備援視圖</button>
             </div>
             <div class="port-scene-controls" role="group" aria-label="3D camera focus">
-                <button type="button" id="btnPortOverview" aria-pressed="true" aria-controls="portWebGLCanvas" onclick="showPortFocus('overview')">Overview · 港區總覽</button>
+                <button type="button" id="btnPortOverview" aria-pressed="true" aria-controls="portWebGLCanvas" onclick="showPortFocus('overview')">Bird’s-eye overview · 港區鳥瞰</button>
                 <button type="button" id="btnPortCutaway" aria-pressed="false" aria-controls="portWebGLCanvas" onclick="showPortFocus('cutaway')">Cutaway · 冷藏櫃剖面</button>
             </div>
             <div class="radar-canvas-wrap" id="portSceneViewport">
@@ -1368,7 +1368,7 @@
                 </div>
             </div>
             <section class="port-thermal-readout" id="portThermalReadout" aria-label="Shared illustrative thermal model readout" hidden>
-                <div class="thermal-readout-heading"><strong id="portFocusLabel">Port overview · 港區總覽</strong><span>MODEL ESTIMATE · NOT TELEMETRY</span></div>
+                <div class="thermal-readout-heading"><strong id="portFocusLabel">Bird’s-eye port overview · 港區鳥瞰</strong><span>MODEL ESTIMATE · NOT TELEMETRY</span></div>
                 <div class="thermal-readout-heading"><strong id="portCargoName">Selected cargo</strong><span id="portThermalPhase">Scenario unavailable</span></div>
                 <dl>
                     <div><dt>Final estimate · 貨溫</dt><dd id="portCargoTemp">—</dd></div>
@@ -1378,7 +1378,7 @@
                 <p><span id="portCargoStatus">No valid estimate</span> · <span id="portCargoHeat">Heat estimate unavailable</span></p>
                 <p>Recovery · 恢復: <span id="portCargoRecovery">Recovery unavailable</span></p>
             </section>
-            <div class="model-note port-scene-note" id="portSceneInstructions"><strong>Illustrative native WebGL scene · 原生 3D 示意場景.</strong> Choose Overview for the full port or Cutaway for cargo, heat ingress and recovery power. Drag to orbit; use arrow keys to rotate and +/− to zoom. With the canvas focused, press 1 for Overview, 2 for Cutaway, or Escape to reset Overview. Camera changes are immediate, without animated zoom. The 16 vehicles (CMC-ET35-100–115), two berth banks (63–66 and 77–81), stationary WAN HAI 315, Qianzhen cold hub and bidirectional tunnel are deterministic illustrations, not live fleet data. Scene motion/highlights represent the selected model scenario only; there is no live telemetry or dispatch connection. Recovery power is the model's illustrative 10 kW assumption. A 2D simulated view is available when WebGL is unavailable; reduced-motion preference keeps the 3D view static.</div>
+            <div class="model-note port-scene-note" id="portSceneInstructions"><strong>Illustrative native WebGL scene · 原生 3D 示意場景.</strong> Bird’s-eye Overview uses a stable north-oriented map view to show the harbor channel, both terminals, vessel, cold hub and full simulated fleet together. Choose Cutaway for cargo, heat ingress and recovery power. Drag to orbit; use arrow keys to rotate and +/− to zoom. With the canvas focused, press 1 for Overview, 2 for Cutaway, or Escape to reset Overview. Camera changes are immediate, without animated zoom. The 16 vehicles (CMC-ET35-100–115), two berth banks (63–66 and 77–81), stationary WAN HAI 315, Qianzhen cold hub and bidirectional tunnel are deterministic illustrations, not live fleet data. Scene motion/highlights represent the selected model scenario only; there is no live telemetry or dispatch connection. Recovery power is the model's illustrative 10 kW assumption. A 2D simulated view is available when WebGL is unavailable; reduced-motion preference keeps the 3D view static.</div>
             <div class="port-scene-hidden-status" id="portSceneStatus" role="status" aria-live="polite">3D illustrative model active.</div>
 
             <div class="thermal-explainer" aria-labelledby="thermalExplainerTitle">
@@ -1673,7 +1673,7 @@
     <!-- Copyright (c) 2026 Imteyaz Ahmad. All Rights Reserved. Taiwan Patent Pending. -->
     <script src="thermal-model.js"></script>
     <script src="crossroute.min.js"></script>
-    <script src="port-scene.js?v=37b227452900344bcf00b7d05f28f453f3e038ae8b3b4f088d1bd3de9c0fc1f7"></script>
+    <script src="port-scene.js?v=390968e83011318f9bd1a82ecbf05299f5716e2d336962e035f8f0886cdf14e3"></script>
 
     <!-- Unapproved pilot planning assumptions modal -->
     <div class="modal-overlay" id="pilotModal" onclick="if(event.target===this)closePilotModal()">

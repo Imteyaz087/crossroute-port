@@ -12,8 +12,11 @@
     const DEMO_ROUTE_LENGTHS=DEMO_ROUTE_POINTS.slice(1).map((point,index)=>Math.hypot(point[0]-DEMO_ROUTE_POINTS[index][0],point[1]-DEMO_ROUTE_POINTS[index][1]));
     const DEMO_ROUTE_LENGTH=DEMO_ROUTE_LENGTHS.reduce((sum,length)=>sum+length,0);
 
+    const OVERVIEW_CAMERA = Object.freeze({ target: Object.freeze([0, 1.0, -0.15]), yaw: 0, pitch: 1.34, distance: 15.8, minDistance: 12.6, maxDistance: 22, minFramedHeight: 12.4, framedWidth: 16.0, eyeDistance: 19.0 });
     const VIEW_PRESETS = Object.freeze({
-        overview: Object.freeze({ target: Object.freeze([0, 1.35, 2.0]), yaw: 0.70, pitch: 0.48, distance: 15.8, minDistance: 10, maxDistance: 23 }),
+        // North-oriented, near-overhead framing keeps both terminals, channel,
+        // vessel, cold hub and illustrative fleet legible together.
+        overview: OVERVIEW_CAMERA,
         cutaway: Object.freeze({ target: Object.freeze([-0.62, 1.25, 1.72]), yaw: 0.12, pitch: 0.16, distance: 7.2, minDistance: 5.2, maxDistance: 12 })
     });
 
@@ -358,7 +361,7 @@
         const staticVertices = staticData.length/9;
         let dynamicBuffer=gl.createBuffer(),dynamicVertices=0,motionBuffer=gl.createBuffer(),motionVertices=0;
         let modelState=createSceneState("normal",{valid:false});
-        let view="overview",target=[...VIEW_PRESETS.overview.target],yaw=0.70,pitch=0.48,distance=15.8,drag=null,raf=0,lastFrame=0,disposed=false,visible=true;
+        let view="overview",target=[...VIEW_PRESETS.overview.target],yaw=VIEW_PRESETS.overview.yaw,pitch=VIEW_PRESETS.overview.pitch,distance=VIEW_PRESETS.overview.distance,drag=null,raf=0,lastFrame=0,disposed=false,visible=true;
         let apiRef=null;
         const isSmall=()=>window.innerWidth<700;
         const motionOkay=()=>!(reducedMotion&&reducedMotion.matches);
@@ -397,6 +400,10 @@
             const f=1/Math.tan(fov/2),nf=1/(near-far);
             return new Float32Array([f/aspect,0,0,0,0,f,0,0,0,0,(far+near)*nf,-1,0,0,2*far*near*nf,0]);
         }
+        function orthographic(height,aspect,near,far) {
+            const halfHeight=height/2,halfWidth=halfHeight*aspect,lr=1/(2*halfWidth),bt=1/(2*halfHeight),nf=1/(near-far);
+            return new Float32Array([2*lr,0,0,0,0,2*bt,0,0,0,0,2*nf,0,0,0,(far+near)*nf,1]);
+        }
         function lookAt(eye,center,up) {
             let zx=eye[0]-center[0],zy=eye[1]-center[1],zz=eye[2]-center[2];
             let l=Math.hypot(zx,zy,zz)||1; zx/=l;zy/=l;zz/=l;
@@ -431,11 +438,14 @@
             if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
             gl.viewport(0,0,w,h);gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);
             gl.clearColor(0.018,0.055,0.083,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-            const cp=Math.cos(pitch);
-            // Keep the whole cutaway and power cabinet in frame on narrow screens, too.
-            const framedDistance=distance*(view==="cutaway"?Math.max(1,1.45/(w/h)):1);
+            const cp=Math.cos(pitch),aspect=w/h;
+            // Overview fits the harbor footprint on wide and portrait canvases.
+            // Its high-angle orbit remains short of a singular straight-down lookAt.
+            const overviewHeight=Math.max(OVERVIEW_CAMERA.minFramedHeight,OVERVIEW_CAMERA.framedWidth/aspect)*(distance/OVERVIEW_CAMERA.distance);
+            const framedDistance=view==="overview"?Math.max(OVERVIEW_CAMERA.eyeDistance,distance):distance*Math.max(1,1.45/aspect);
             const eye=[target[0]+Math.sin(yaw)*framedDistance*cp,target[1]+Math.sin(pitch)*framedDistance,target[2]+Math.cos(yaw)*framedDistance*cp];
-            const vp=multiply(perspective(0.72,w/h,0.1,60),lookAt(eye,target,[0,1,0]));
+            const projection=view==="overview"?orthographic(overviewHeight,aspect,0.1,60):perspective(0.72,aspect,0.1,60);
+            const vp=multiply(projection,lookAt(eye,target,[0,1,0]));
             updateFleetLabels(vp,rect);
             gl.useProgram(program);gl.uniformMatrix4fv(locations.viewProjection,false,vp);
             bindBuffer(staticBuffer);gl.drawArrays(gl.TRIANGLES,0,staticVertices);
@@ -498,7 +508,7 @@
             gl.drawArrays(gl.TRIANGLES,0,fleetData.length/9);
         }
         function onPointerDown(event){drag={x:event.clientX,y:event.clientY,id:event.pointerId};canvas.setPointerCapture(event.pointerId);}
-        function onPointerMove(event){if(!drag||drag.id!==event.pointerId)return;const dx=event.clientX-drag.x,dy=event.clientY-drag.y;drag.x=event.clientX;drag.y=event.clientY;yaw-=dx*0.007;pitch=Math.max(0.12,Math.min(1.15,pitch+dy*0.006));if(!motionOkay())renderOnce();}
+        function onPointerMove(event){if(!drag||drag.id!==event.pointerId)return;const dx=event.clientX-drag.x,dy=event.clientY-drag.y;drag.x=event.clientX;drag.y=event.clientY;yaw-=dx*0.007;pitch=Math.max(0.12,Math.min(1.42,pitch+dy*0.006));if(!motionOkay())renderOnce();}
         function onPointerUp(){drag=null;}
         function zoom(delta){const preset=VIEW_PRESETS[view];distance=Math.max(preset.minDistance,Math.min(preset.maxDistance,distance+delta));}
         function setView(next){
@@ -516,7 +526,7 @@
             if(event.key==="1"||event.key==="Escape"){event.preventDefault();setView("overview");return;}
             if(event.key==="2"){event.preventDefault();setView("cutaway");return;}
             if(event.key==="ArrowLeft")yaw-=step;else if(event.key==="ArrowRight")yaw+=step;
-            else if(event.key==="ArrowUp")pitch=Math.min(1.15,pitch+step);else if(event.key==="ArrowDown")pitch=Math.max(0.12,pitch-step);
+            else if(event.key==="ArrowUp")pitch=Math.min(1.42,pitch+step);else if(event.key==="ArrowDown")pitch=Math.max(0.12,pitch-step);
             else if(event.key==="+"||event.key==="=")zoom(-0.8);else if(event.key==="-")zoom(0.8);else return;
             event.preventDefault();if(!motionOkay())renderOnce();
         }
@@ -579,7 +589,7 @@
         const viewport = node("portSceneViewport");
         if (viewport) viewport.setAttribute("data-view", useFallback ? "2d" : focus);
         const name = node("portFocusLabel");
-        if (name) name.textContent = focus === "cutaway" ? "Reefer cutaway · 冷藏櫃剖面" : "Port overview · 港區總覽";
+        if (name) name.textContent = focus === "cutaway" ? "Reefer cutaway · 冷藏櫃剖面" : "Bird’s-eye port overview · 港區鳥瞰";
         if (!useFallback) node("portSceneStatus").textContent = `Illustrative 3D ${focus} active; no live port feed is connected.`;
     }
 

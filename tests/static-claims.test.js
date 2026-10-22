@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
@@ -48,4 +49,17 @@ test("shipped state and user-facing data are explicitly illustrative and unverif
     assert.match(html, /Recovery uses an explicitly illustrative 10 kW shore-power assumption/);
     assert.doesNotMatch(bundle, /Auto fetch weather on load/);
     assert.match(bundle, /Optional user-triggered Open-Meteo input/);
+});
+
+test("outdated proposal PDFs with operational or commercial guarantees are not shipped", () => {
+    const removedArtifacts = [
+        "Asia_New_Bay_Area_Smart_Mobility_Proposal.pdf",
+        "COMMERCIAL_PILOT_ORDER_FORM.pdf",
+        "CrossRoute_90Day_Commercial_Pilot_Agreement.pdf",
+        "CrossRoute_Yulon_Official_Proposal_Deck.pdf",
+        "FITI_2027_1_Executive_Application_Plan.pdf"
+    ];
+    for (const artifact of removedArtifacts) {
+        assert.throws(() => execFileSync("git", ["ls-files", "--error-unmatch", "--", artifact], { stdio: "ignore" }));
+    }
 });

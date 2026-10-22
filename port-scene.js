@@ -109,7 +109,7 @@
     // Deterministic screen-space decluttering. Widths use the fixed 8px monospace
     // label styles below, so layout never measures DOM nodes or forces reflow.
     function layoutSceneLabels(proposals,width,height) {
-        const gap=4, priority={essential:0,context:1,vehicle:2};
+        const gap=4, priority={essential:0,context:1,vehicle:2},maxDisplacement={essential:40,context:32,vehicle:24};
         const ordered=proposals.map((proposal,index)=>({proposal,index})).sort((a,b)=>(priority[a.proposal.kind]??3)-(priority[b.proposal.kind]??3)||a.index-b.index);
         const placed=[];
         function overlaps(a,b) {
@@ -117,11 +117,12 @@
         }
         for(const {proposal} of ordered) {
             if(proposal.visible===false) continue;
-            const w=proposal.width,h=proposal.height,x=proposal.x,y=proposal.y,offsets=[[0,0]];
-            for(let ring=1;ring<=3;ring++) {
-                const dx=(w+gap)*ring,dy=(h+gap)*ring;
-                offsets.push([0,-dy],[0,dy],[-dx,0],[dx,0],[-dx,-dy],[dx,-dy],[-dx,dy],[dx,dy]);
+            const w=proposal.width,h=proposal.height,x=proposal.x,y=proposal.y,limit=maxDisplacement[proposal.kind]??24,offsets=[[0,0]],candidates=[];
+            for(let oy=-limit;oy<=limit;oy+=8) for(let ox=-limit;ox<=limit;ox+=8) {
+                if((ox!==0||oy!==0)&&Math.hypot(ox,oy)<=limit)candidates.push([ox,oy]);
             }
+            candidates.sort((a,b)=>Math.hypot(a[0],a[1])-Math.hypot(b[0],b[1])||(a[0]===0?0:1)-(b[0]===0?0:1)||Math.abs(a[1])-Math.abs(b[1])||a[1]-b[1]||a[0]-b[0]);
+            offsets.push(...candidates);
             let result=null;
             for(const [ox,oy] of offsets) {
                 const cx=x+ox,cy=y+oy,left=cx-w/2,top=cy-h/2;
@@ -134,8 +135,8 @@
         const byId=new Map(placed.map(item=>[item.proposal.id,item]));
         return proposals.map(proposal=>{
             const item=byId.get(proposal.id);
-            return item?{id:proposal.id,visible:true,x:item.x,y:item.y,width:item.width,height:item.height}:
-                {id:proposal.id,visible:false,x:null,y:null,width:proposal.width,height:proposal.height};
+            return item?{id:proposal.id,kind:proposal.kind,visible:true,x:item.x,y:item.y,width:item.width,height:item.height,displacement:Math.hypot(item.x-proposal.x,item.y-proposal.y)}:
+                {id:proposal.id,kind:proposal.kind,visible:false,x:null,y:null,width:proposal.width,height:proposal.height,displacement:null};
         });
     }
 

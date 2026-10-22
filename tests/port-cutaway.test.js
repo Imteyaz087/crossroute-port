@@ -138,3 +138,35 @@ test('shipped scene script URL resolves to this exact renderer byte hash and fol
     assert.ok(srcs.indexOf(sceneSrc) > srcs.indexOf('crossroute.min.js'));
     assert.ok(html.includes('.thermal-explainer [hidden] { display: none !important; }'));
 });
+
+
+test('fallback layout contract fills the viewport and production fitHiDPICanvas sizes from its noncollapsed wrapper', async () => {
+    const { default: vm } = await import('node:vm');
+    const bundle = readFileSync(new URL('../crossroute.bundle.js', import.meta.url), 'utf8');
+    const rule = html.match(/\.port-scene-layer\s*\{([^}]+)\}/)?.[1];
+    assert.ok(rule, 'fallback wrapper has its own layout rule');
+    const declarations = Object.fromEntries(rule.split(';').filter(part => part.includes(':')).map(part => part.split(':').map(value => value.trim())));
+    assert.equal(declarations.position, 'absolute');
+    assert.equal(declarations.inset, '0', 'all four edges fill the positioned viewport');
+    assert.match(html, /\.port-scene-layer\[hidden\][^{]*\{\s*display:\s*none !important;/);
+    const start = bundle.indexOf('        function fitHiDPICanvas(c) {');
+    const end = bundle.indexOf('        function resizeCanvases()', start);
+    assert.ok(start >= 0 && end > start);
+    const context = vm.createContext({ window: { devicePixelRatio: 2 } });
+    vm.runInContext(bundle.slice(start, end), context);
+    // This is a CSS layout-contract test, not a browser layout engine. Given the
+    // absolute/inset contract above, exercise the real production sizing helper
+    // with the wrapper's filled dimensions, including hidden -> shown recovery.
+    for (const [width, height] of [[900, 520], [320, 390]]) {
+        let hidden = true;
+        const canvas = { width: 0, height: 0, parentElement: { getBoundingClientRect() { return hidden ? { width: 0, height: 0 } : { width, height }; } } };
+        context.fitHiDPICanvas(canvas);
+        assert.equal(canvas.height, 2, 'hidden parent reproduces the tiny backing-store failure');
+        hidden = false;
+        const fitted = context.fitHiDPICanvas(canvas);
+        assert.deepEqual(plain(fitted), { w: width, h: height, dpr: 2 });
+        assert.equal(canvas.width, width * 2);
+        assert.equal(canvas.height, height * 2);
+        assert.ok(fitted.w >= 40 && fitted.h >= 40, 'original drawMap no longer takes its undersized-canvas early return');
+    }
+});

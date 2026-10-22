@@ -532,7 +532,15 @@
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
     }
 
-    canvas#portCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
+    canvas#portWebGLCanvas, canvas#portCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
+    canvas#portCanvas[hidden] { display: none !important; }
+    .port-scene-controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 10px; }
+    .port-scene-controls button { min-height: 36px; padding: 7px 11px; color: #dbeafe; background: rgba(7,19,34,.8); border: 1px solid rgba(56,189,248,.3); border-radius: 8px; font: 600 11px var(--font-mono); cursor: pointer; }
+    .port-scene-controls button[aria-pressed="true"] { border-color: var(--electric-cyan); color: var(--electric-cyan); }
+    .port-scene-note { margin: 8px 2px 12px; }
+    .port-scene-note strong { color: var(--electric-cyan); }
+    .port-scene-hidden-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    .port-scene-layer[hidden] { display: none !important; }
 
     .radar-hud-pill {
         position: absolute;
@@ -1153,6 +1161,7 @@
         .hud-countdown { font-size: 64px; }
         .hud-big-badge { font-size: 32px; }
     }
+    @media (max-width: 600px) { .radar-canvas-wrap { height: 390px; } }
 
     /* ───────── Motion / print ───────── */
     @media (prefers-reduced-motion: reduce) {
@@ -1306,33 +1315,41 @@
             <p class="model-note">示意模型 · Illustrative model only. Values depend on displayed assumptions and are not operational measurements, validated limits, or a compliance finding.</p>
         </section>
 
-        <!-- Column 2: Live Radar & Harbor Map -->
+        <!-- Column 2: Interactive WebGL Harbor Scene + 2D Fallback -->
         <section class="glass-card">
             <div class="card-header">
-                <h2>高雄港集疏運示意雷達 · Port drayage visualization</h2>
-                <span class="badge" id="radarStatusBadge">SIMULATED PORT VIEW · 示意港區視圖</span>
+                <h2>港區 3D 示意模型 · Interactive port scene</h2>
+                <span class="badge" id="radarStatusBadge">ILLUSTRATIVE MODEL · 示意模型</span>
             </div>
 
-            <div class="radar-canvas-wrap">
-                <canvas id="portCanvas"></canvas>
+            <div class="port-scene-controls" role="group" aria-label="Port visualization view controls">
+                <button type="button" id="btnPortView3D" aria-pressed="true" onclick="showPortView('3d')">3D model · 立體示意</button>
+                <button type="button" id="btnPortView2D" aria-pressed="false" onclick="showPortView('2d')">2D fallback · 備援視圖</button>
+            </div>
+            <div class="radar-canvas-wrap" id="portSceneViewport">
+                <canvas id="portWebGLCanvas" role="img" tabindex="0" aria-label="Illustrative three-dimensional harbor model with quay, gantry crane, cold warehouse, containers, refrigerated truck cutaway, shore-power unit and scenario route" aria-describedby="portSceneInstructions"></canvas>
+                <div class="port-scene-layer" id="port2dView" hidden>
+                    <canvas id="portCanvas" role="img" aria-label="Illustrative 2D port radar fallback with simulated routes and vehicles"></canvas>
+                </div>
                 <div class="radar-hud-pill">
                     <div class="hud-row hud-row-main">
-                        <span class="hud-live"></span>
-                        <span class="val">DEMO SHIP LABEL</span>
+                        <span class="val">ILLUSTRATIVE MODEL</span>
                         <span class="hud-sep">·</span>
-                        <span>BERTH DEMO</span>
+                        <span>DEMO QUAY</span>
                         <span class="hud-sep">·</span>
-                        <span>MODEL VIEW</span>
+                        <span>PRECHILL ASSUMPTION</span>
                         <span class="hud-sep">·</span>
-                        <span class="val" id="hudPrechill">-19.5 °C (平準鎖定)</span>
+                        <span class="val" id="hudPrechill">-19.5 °C (示意假設)</span>
                     </div>
                     <div class="hud-row">
-                        <span>SugarSense ±14分</span>
+                        <span>NO LIVE PORT FEED · 無即時港區資料</span>
                         <span class="hud-sep">·</span>
                         <span id="hudSafetyStatus" class="val" style="color: var(--text-secondary);">Demo model · 示意模型</span>
                     </div>
                 </div>
             </div>
+            <div class="model-note port-scene-note" id="portSceneInstructions"><strong>Illustrative native WebGL scene · 原生 3D 示意場景.</strong> Drag to orbit; use arrow keys to rotate and +/− to zoom. Scene motion/highlights represent the selected model scenario only; there is no live telemetry or dispatch connection. Recovery power is the model's illustrative 10 kW assumption. A 2D simulated view is available, and is selected automatically when WebGL is unavailable or reduced motion is preferred.</div>
+            <div class="port-scene-hidden-status" id="portSceneStatus" role="status" aria-live="polite">3D illustrative model active.</div>
 
             <div class="thermal-explainer" aria-labelledby="thermalExplainerTitle">
                 <div class="card-header">
@@ -1625,6 +1642,7 @@
     <!-- Copyright (c) 2026 Imteyaz Ahmad. All Rights Reserved. Taiwan Patent Pending. -->
     <script src="thermal-model.js"></script>
     <script src="crossroute.min.js"></script>
+    <script src="port-scene.js"></script>
 
     <!-- Unapproved pilot planning assumptions modal -->
     <div class="modal-overlay" id="pilotModal" onclick="if(event.target===this)closePilotModal()">

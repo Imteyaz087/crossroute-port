@@ -1378,7 +1378,7 @@
                 <p><span id="portCargoStatus">No valid estimate</span> · <span id="portCargoHeat">Heat estimate unavailable</span></p>
                 <p>Recovery · 恢復: <span id="portCargoRecovery">Recovery unavailable</span></p>
             </section>
-            <div class="model-note port-scene-note" id="portSceneInstructions"><strong>Illustrative native WebGL scene · 原生 3D 示意場景.</strong> Bird’s-eye Overview uses a stable north-oriented map view to show the harbor channel, both terminals, vessel, cold hub and full simulated fleet together. Choose Cutaway for cargo, heat ingress and recovery power. Drag to orbit; use arrow keys to rotate and +/− to zoom. With the canvas focused, press 1 for Overview, 2 for Cutaway, or Escape to reset Overview. Camera changes are immediate, without animated zoom. The 16 vehicles (CMC-ET35-100–115), two berth banks (63–66 and 77–81), stationary WAN HAI 315, Qianzhen cold hub and bidirectional tunnel are deterministic illustrations, not live fleet data. Scene motion/highlights represent the selected model scenario only; there is no live telemetry or dispatch connection. Recovery power is the model's illustrative 10 kW assumption. A 2D simulated view is available when WebGL is unavailable; reduced-motion preference keeps the 3D view static.</div>
+            <div class="model-note port-scene-note" id="portSceneInstructions"><strong>Illustrative native WebGL scene · 原生 3D 示意場景.</strong> Bird’s-eye Overview uses a stable north-oriented map view to show the harbor channel, both terminals, vessel, cold hub and full simulated fleet together. Choose Cutaway for cargo, heat ingress and recovery power. Drag to orbit; use arrow keys to rotate and +/− to zoom. With the canvas focused, press 1 for Overview, 2 for Cutaway, or Escape to reset Overview. Camera changes are immediate, without animated zoom. The 16 vehicles (CMC-ET35-100–115), two berth banks (63–66 and 77–81), stationary WAN HAI 315, Qianzhen cold hub and bidirectional tunnel are deterministic illustrations, not live fleet data. At crowded sizes, labels prioritize harbor landmarks and hide colliding fleet IDs while keeping every vehicle visible. Scene motion/highlights represent the selected model scenario only; there is no live telemetry or dispatch connection. Recovery power is the model's illustrative 10 kW assumption. A 2D simulated view is available when WebGL is unavailable; reduced-motion preference keeps the 3D view static.</div>
             <div class="port-scene-hidden-status" id="portSceneStatus" role="status" aria-live="polite">3D illustrative model active.</div>
 
             <div class="thermal-explainer" aria-labelledby="thermalExplainerTitle">
@@ -1673,7 +1673,7 @@
     <!-- Copyright (c) 2026 Imteyaz Ahmad. All Rights Reserved. Taiwan Patent Pending. -->
     <script src="thermal-model.js"></script>
     <script src="crossroute.min.js"></script>
-    <script src="port-scene.js?v=390968e83011318f9bd1a82ecbf05299f5716e2d336962e035f8f0886cdf14e3"></script>
+    <script src="port-scene.js?v=9b8aaf7d904254761d2727a1f486209ff266d1ca3f1f98f55046ff8e66b9e673"></script>
 
     <!-- Unapproved pilot planning assumptions modal -->
     <div class="modal-overlay" id="pilotModal" onclick="if(event.target===this)closePilotModal()">

@@ -106,6 +106,39 @@
         return {x:center[0],y:center[1],z:center[2],progress:motion.progress,direction:motion.direction,heading:Math.atan2(-(ahead[2]-center[2]),ahead[0]-center[0])};
     }
 
+    // Deterministic screen-space decluttering. Widths use the fixed 8px monospace
+    // label styles below, so layout never measures DOM nodes or forces reflow.
+    function layoutSceneLabels(proposals,width,height) {
+        const gap=4, priority={essential:0,context:1,vehicle:2};
+        const ordered=proposals.map((proposal,index)=>({proposal,index})).sort((a,b)=>(priority[a.proposal.kind]??3)-(priority[b.proposal.kind]??3)||a.index-b.index);
+        const placed=[];
+        function overlaps(a,b) {
+            return a.left< b.right+gap&&a.right+gap>b.left&&a.top<b.bottom+gap&&a.bottom+gap>b.top;
+        }
+        for(const {proposal} of ordered) {
+            if(proposal.visible===false) continue;
+            const w=proposal.width,h=proposal.height,x=proposal.x,y=proposal.y,offsets=[[0,0]];
+            for(let ring=1;ring<=3;ring++) {
+                const dx=(w+gap)*ring,dy=(h+gap)*ring;
+                offsets.push([0,-dy],[0,dy],[-dx,0],[dx,0],[-dx,-dy],[dx,-dy],[-dx,dy],[dx,dy]);
+            }
+            let result=null;
+            for(const [ox,oy] of offsets) {
+                const cx=x+ox,cy=y+oy,left=cx-w/2,top=cy-h/2;
+                const rect={left,top,right:left+w,bottom:top+h};
+                if(left<2||top<2||rect.right>width-2||rect.bottom>height-2||placed.some(other=>overlaps(rect,other.rect))) continue;
+                result={proposal,x:cx,y:cy,width:w,height:h,rect};break;
+            }
+            if(result) placed.push(result);
+        }
+        const byId=new Map(placed.map(item=>[item.proposal.id,item]));
+        return proposals.map(proposal=>{
+            const item=byId.get(proposal.id);
+            return item?{id:proposal.id,visible:true,x:item.x,y:item.y,width:item.width,height:item.height}:
+                {id:proposal.id,visible:false,x:null,y:null,width:proposal.width,height:proposal.height};
+        });
+    }
+
     function mount(canvas, fallbackCanvas, onFallback, onViewChange) {
         const reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)");
         const notifyFallback = (active, reason) => {
@@ -130,7 +163,7 @@
         const fleetLabels=createDemoFleet().map(vehicle=>{
             const label=document.createElement("span");
             label.textContent=vehicle.id;
-            Object.assign(label.style,{position:"absolute",padding:"1px 3px",borderRadius:"3px",font:"8px ui-monospace,monospace",color:vehicle.moving?"#a7f3d0":"#7dd3fc",background:"rgba(5,17,28,.82)",whiteSpace:"nowrap",transform:"translate(-50%,-100%)"});
+            Object.assign(label.style,{position:"absolute",padding:"1px 3px",borderRadius:"3px",font:"8px ui-monospace,monospace",color:vehicle.moving?"#a7f3d0":"#7dd3fc",background:"rgba(5,17,28,.82)",whiteSpace:"nowrap",transform:"translate(-50%,-50%)"});
             labelOverlay.appendChild(label);
             return label;
         });
@@ -138,29 +171,41 @@
             ["TERMINAL 4 · 63–66",[-4.6,0.45,1.80]],["TERMINAL 5 · 77–81",[-1.9,0.45,1.80]],
             ["BERTH 78 · ACTIVE",[-2.2,0.58,1.80]],["WAN HAI 315",[-0.2,0.65,-2.25]],
             ["QIANZHEN COLD HUB",[4.1,2.35,4.20]],["HARBOR TUNNEL",[0,0.65,3.35]]
-        ].map(([text,point])=>{
+        ].map(([text,point],index)=>{
             const label=document.createElement("span");label.textContent=text;
             Object.assign(label.style,{position:"absolute",padding:"2px 4px",borderRadius:"3px",font:"700 8px ui-monospace,monospace",color:"#b6f5e4",background:"rgba(5,17,28,.84)",whiteSpace:"nowrap",transform:"translate(-50%,-50%)"});
-            labelOverlay.appendChild(label);return {label,point};
+            labelOverlay.appendChild(label);return {id:`tag-${index}`,kind:index<5?"essential":"context",label,point,text};
         });
         if(canvas.parentElement) canvas.parentElement.appendChild(labelOverlay);
-        function updateFleetLabels(vp,rect) {
+        const labelWidth=(text,kind)=>Math.ceil([...text].length*4.82+(kind==="vehicle"?6:8));
+        function updateFleetLabels(vp,rect,now) {
             const parentRect=canvas.parentElement?canvas.parentElement.getBoundingClientRect():rect;
             function project(point) {
                 const clipX=vp[0]*point[0]+vp[4]*point[1]+vp[8]*point[2]+vp[12],clipY=vp[1]*point[0]+vp[5]*point[1]+vp[9]*point[2]+vp[13],clipW=vp[3]*point[0]+vp[7]*point[1]+vp[11]*point[2]+vp[15];
                 const visible=clipW>0&&Math.abs(clipX/clipW)<0.98&&Math.abs(clipY/clipW)<0.98;
                 return {visible,x:((clipX/clipW+1)/2)*parentRect.width,y:((1-clipY/clipW)/2)*parentRect.height};
             }
-            demoFleet.forEach((vehicle,index)=>{
-                const pose=getDemoFleetPose(vehicle,motionOkay()?performance.now()/1000:0);
-                const position=project([pose.x,pose.y+0.30,pose.z]);
-                fleetLabels[index].hidden=view!=="overview"||!position.visible;
-                if(position.visible){fleetLabels[index].style.left=`${position.x}px`;fleetLabels[index].style.top=`${position.y}px`;}
-            });
+            const proposals=[];
             for(const tag of sceneTags) {
-                const position=project(tag.point);tag.label.hidden=view!=="overview"||!position.visible;
-                if(position.visible){tag.label.style.left=`${position.x}px`;tag.label.style.top=`${position.y}px`;}
+                const position=project(tag.point),size={width:labelWidth(tag.text,tag.kind),height:14};
+                proposals.push({id:tag.id,kind:tag.kind,x:position.x,y:position.y,...size,visible:position.visible});
             }
+            const seconds=motionOkay()?now/1000:0;
+            demoFleet.forEach((vehicle,index)=>{
+                const pose=getDemoFleetPose(vehicle,seconds),position=project([pose.x,pose.y+0.30,pose.z]);
+                proposals.push({id:vehicle.id,kind:"vehicle",x:position.x,y:position.y-6,width:labelWidth(vehicle.id,"vehicle"),height:12,visible:position.visible});
+            });
+            const layouts=layoutSceneLabels(proposals,parentRect.width,parentRect.height),byId=new Map(layouts.map(layout=>[layout.id,layout]));
+            const apply=(label,layout)=>{
+                const hidden=view!=="overview"||!layout.visible;
+                if(label.hidden!==hidden)label.hidden=hidden;
+                if(hidden)return;
+                const left=`${layout.x}px`,top=`${layout.y}px`;
+                if(label.style.left!==left)label.style.left=left;
+                if(label.style.top!==top)label.style.top=top;
+            };
+            sceneTags.forEach(tag=>apply(tag.label,byId.get(tag.id)));
+            demoFleet.forEach((vehicle,index)=>apply(fleetLabels[index],byId.get(vehicle.id)));
         }
 
         const vertexSource = `
@@ -446,7 +491,7 @@
             const eye=[target[0]+Math.sin(yaw)*framedDistance*cp,target[1]+Math.sin(pitch)*framedDistance,target[2]+Math.cos(yaw)*framedDistance*cp];
             const projection=view==="overview"?orthographic(overviewHeight,aspect,0.1,60):perspective(0.72,aspect,0.1,60);
             const vp=multiply(projection,lookAt(eye,target,[0,1,0]));
-            updateFleetLabels(vp,rect);
+            updateFleetLabels(vp,rect,now);
             gl.useProgram(program);gl.uniformMatrix4fv(locations.viewProjection,false,vp);
             bindBuffer(staticBuffer);gl.drawArrays(gl.TRIANGLES,0,staticVertices);
             bindBuffer(dynamicBuffer);gl.drawArrays(gl.TRIANGLES,0,dynamicVertices);
@@ -554,7 +599,7 @@
         return apiRef;
     }
 
-    return { VIEW_PRESETS, createThermalReadout, createSceneState, createDemoFleet, getDemoRoutePosition, getDemoFleetMotion, getDemoFleetPose, DEMO_ROUTE_POINTS, SCENE_MANIFEST, mount };
+    return { VIEW_PRESETS, createThermalReadout, createSceneState, createDemoFleet, getDemoRoutePosition, getDemoFleetMotion, getDemoFleetPose, layoutSceneLabels, DEMO_ROUTE_POINTS, SCENE_MANIFEST, mount };
 });
 
 // The readable/minified CrossRoute dashboard bundle stays byte-for-byte in sync.

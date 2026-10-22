@@ -50,6 +50,60 @@ test('default Overview is a north-oriented orthographic bird’s-eye view framin
     assert.match(html,/Bird’s-eye port overview · 港區鳥瞰/);
 });
 
+test('screen-space label layout preserves essential map tags, avoids collisions, and admits more stable-order fleet IDs when space allows', () => {
+    const h=harness({reduced:true}),layout=h.scene.layoutSceneLabels;
+    const proposals=[
+        {id:'terminal-4',kind:'essential',x:50,y:50,width:100,height:14},
+        {id:'terminal-5',kind:'essential',x:95,y:50,width:100,height:14},
+        {id:'berth-78',kind:'essential',x:75,y:58,width:105,height:14},
+        {id:'ship',kind:'essential',x:140,y:150,width:80,height:14},
+        {id:'cold-hub',kind:'essential',x:235,y:80,width:110,height:14},
+        {id:'tunnel',kind:'context',x:80,y:300,width:80,height:14},
+        ...Array.from({length:16},(_,index)=>({id:`CMC-ET35-${100+index}`,kind:'vehicle',x:160,y:210,width:64,height:12}))
+    ];
+    const ids=proposals.map(item=>item.id),essential=ids.slice(0,5);
+    let desktopFleetVertexCount=0;
+    for(const [width,height] of [[900,520],[320,390]]) {
+        const result=layout(proposals,width,height),again=layout(proposals,width,height);
+        assert.deepEqual(result,again,'same ordered inputs always produce the same placements');
+        const byId=new Map(result.map(item=>[item.id,item]));
+        for(const id of essential)assert.equal(byId.get(id).visible,true,`${id} remains prioritized`);
+        assert.equal(byId.get('tunnel').visible,true,'secondary harbor context follows required tags');
+        const visible=result.filter(item=>item.visible);
+        for(let i=0;i<visible.length;i++)for(let j=i+1;j<visible.length;j++) {
+            const a=visible[i],b=visible[j];
+            const separated=Math.abs(a.x-b.x)>=(a.width+b.width)/2+4||Math.abs(a.y-b.y)>=(a.height+b.height)/2+4;
+            assert.ok(separated,`${a.id} and ${b.id} overlap at ${width}x${height}`);
+        }
+        const fleetVisible=result.filter(item=>item.id.startsWith('CMC-ET35-')&&item.visible).length;
+        if(width===320)assert.ok(fleetVisible>0&&fleetVisible<16,'dense mobile labels hide only labels without room');
+        if(width===900)assert.equal(fleetVisible,16,'all stable-order labels return when the screen has room');
+        assert.equal(h.scene.createDemoFleet().length,16,'decluttering affects labels only, never the 16 vehicle meshes');
+        const mounted=harness({reduced:true,width,height}),overlay=mounted.parent.children.find(element=>element.className==='port-fleet-label-overlay');
+        assert.equal(overlay.children.length,22,'all map tags and all vehicle label nodes stay mounted');
+        const fleetVertexCount=mounted.draws.at(-1).count;
+        assert.ok(fleetVertexCount>0,'all vehicle geometry is submitted independently from its labels');
+        if(width===900)desktopFleetVertexCount=fleetVertexCount;
+        else assert.equal(fleetVertexCount,desktopFleetVertexCount,'portrait label decluttering never removes or changes vehicle meshes');
+        const mountedLabels=overlay.children.filter(label=>!label.hidden).map(label=>{
+            const vehicle=label.textContent.startsWith('CMC-ET35-');
+            const w=Math.ceil([...label.textContent].length*4.82+(vehicle?6:8)),heightPx=vehicle?12:14;
+            const x=parseFloat(label.style.left),y=parseFloat(label.style.top);
+            return {id:label.textContent,x,y,w,height:heightPx};
+        });
+        for(const id of ['TERMINAL 4 · 63–66','TERMINAL 5 · 77–81','BERTH 78 · ACTIVE','WAN HAI 315','QIANZHEN COLD HUB']) {
+            assert.ok(mountedLabels.some(label=>label.id===id),`${id} is retained in the mounted viewport`);
+        }
+        for(let i=0;i<mountedLabels.length;i++)for(let j=i+1;j<mountedLabels.length;j++) {
+            const a=mountedLabels[i],b=mountedLabels[j];
+            const separated=Math.abs(a.x-b.x)>=(a.w+b.w)/2+4||Math.abs(a.y-b.y)>=(a.height+b.height)/2+4;
+            assert.ok(separated,`mounted labels ${a.id} and ${b.id} do not overlap at ${width}x${height}`);
+        }
+        mounted.api.dispose();
+    }
+    h.api.dispose();
+});
+
 test('cutaway changes the actual camera matrix/target, supports keyboard/reset and view-specific zoom without RAF in reduced motion', () => {
     const h = harness({ reduced: true });
     const overview = h.matrices.at(-1);

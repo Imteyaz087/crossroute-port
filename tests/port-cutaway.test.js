@@ -28,12 +28,11 @@ test('default Overview is a north-oriented orthographic bird’s-eye view framin
         const north=project(matrix,[0,0,-1]),south=project(matrix,[0,0,1]);
         assert.ok(west.x<east.x,'east-west map axis stays horizontal');
         assert.ok(north.y>south.y,'north-like negative Z stays at the top of the screen');
-        for(const point of [
-            [-7.31,0.2,-2.2],[-5.95,0.2,-5.5],[-5.35,0.2,1.8],[-0.25,0.3,-2.25],
-            [5.95,0.5,2.55],[7.4,0.5,2.55],[-5.25,0.34,2.78],[5.35,0.34,2.58],
-            [-3.15,4.17,2.8],[0,0.2,5.45],[-4.6,0.45,1.8],[-1.9,0.45,1.8],
-            [-2.2,0.58,1.8],[-0.2,0.65,-2.25],[4.1,2.35,4.2],[0,0.65,3.35]
-        ]) {
+        const L=h.scene.OVERVIEW_LAYOUT;
+        const points=[...L.channel.map(([x,z])=>[x,.28,z]),...L.terminal4.berths.map(b=>[b.x,.8,b.z]),...L.terminal5.berths.map(b=>[b.x,.5,b.z]),
+            ...L.hub.bays.map(b=>[b.x,1.2,b.z]),L.vessel.label,L.terminal4.label,L.terminal5.label,L.hub.label,
+            ...L.routes.flatMap(route=>route.points.map(([x,z])=>[x,.39,z]))];
+        for(const point of points) {
             const p=project(matrix,point);
             assert.ok(p.w>0&&Math.abs(p.x)<0.96&&Math.abs(p.y)<0.96,`${width}x${height} harbor point ${point} remains framed: ${JSON.stringify(p)}`);
         }
@@ -92,7 +91,7 @@ test('label decluttering preserves landmark priority, stays near anchors, and hi
         else assert.ok(fleetVisible>0&&fleetVisible<=16,'portrait layout keeps only fleet IDs that fit nearby');
         assert.equal(h.scene.createDemoFleet().length,16,'decluttering affects labels only, never the 16 vehicle meshes');
         const mounted=harness({reduced:true,width,height}),overlay=mounted.parent.children.find(element=>element.className==='port-fleet-label-overlay');
-        assert.equal(overlay.children.length,22,'all map tags and all vehicle label nodes stay mounted');
+        assert.equal(overlay.children.length,30,'all 9 berth tags, landmark tags and 16 vehicle label nodes stay mounted');
         const fleetVertexCount=mounted.draws.at(-1).count;
         assert.ok(fleetVertexCount>0,'all vehicle geometry is submitted independently from its labels');
         if(width===900)desktopFleetVertexCount=fleetVertexCount;
@@ -181,7 +180,7 @@ test('real shared-model dashboard updates feed docked scene-panel cargo/temp/ref
 });
 
 test('cargo geometry is model-colored and recovery lead appears only for valid modeled recovery', () => {
-    const h = harness({ reduced: true });
+    const h = harness({ reduced: true }); h.api.setView('cutaway');
     const cargoColor = () => {
         const data = h.draws.at(-3).data;
         for (let i = 0; i < data.length; i += 9) if (Math.abs(data[i] + 1.71) < .001 && Math.abs(data[i+1] - 1.01) < .001 && Math.abs(data[i+2] - 1.79) < .001) return data.slice(i+6, i+9);

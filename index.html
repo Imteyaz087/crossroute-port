@@ -540,6 +540,7 @@
     .port-scene-note { margin: 8px 2px 12px; }
     .port-scene-note strong { color: var(--electric-cyan); }
     .port-scene-hidden-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    #portSceneViewport[data-view="overview"] .radar-hud-pill, #portSceneViewport[data-view="cutaway"] .radar-hud-pill { display: none; }
     .port-scene-layer { position: absolute; inset: 0; }
     .port-scene-layer[hidden], .port-thermal-readout[hidden], .thermal-explainer [hidden] { display: none !important; }
     .port-scene-controls button:disabled { opacity: .45; cursor: not-allowed; }
@@ -1378,7 +1379,7 @@
                 <p><span id="portCargoStatus">No valid estimate</span> · <span id="portCargoHeat">Heat estimate unavailable</span></p>
                 <p>Recovery · 恢復: <span id="portCargoRecovery">Recovery unavailable</span></p>
             </section>
-            <div class="model-note port-scene-note" id="portSceneInstructions"><strong>Illustrative native WebGL scene · 原生 3D 示意場景.</strong> Bird’s-eye Overview uses a stable north-oriented map view to show the harbor channel, both terminals, vessel, cold hub and full simulated fleet together. Choose Cutaway for cargo, heat ingress and recovery power. Drag to orbit; use arrow keys to rotate and +/− to zoom. With the canvas focused, press 1 for Overview, 2 for Cutaway, or Escape to reset Overview. Camera changes are immediate, without animated zoom. The 16 vehicles (CMC-ET35-100–115), two berth banks (63–66 and 77–81), stationary WAN HAI 315, Qianzhen cold hub and bidirectional tunnel are deterministic illustrations, not live fleet data. At crowded sizes, labels prioritize harbor landmarks and hide colliding fleet IDs while keeping every vehicle visible. Scene motion/highlights represent the selected model scenario only; there is no live telemetry or dispatch connection. Recovery power is the model's illustrative 10 kW assumption. A 2D simulated view is available when WebGL is unavailable; reduced-motion preference keeps the 3D view static.</div>
+            <div class="model-note port-scene-note" id="portSceneInstructions"><strong>Illustrative native WebGL scene · 原生 3D 示意場景.</strong> Bird’s-eye Overview uses a stable north-oriented map view to show the full radar-map composition: vertical harbor channel, four upper Terminal 4 berths, five stacked Terminal 5 berths, berthed vessel and crane, nine roof bays at the cold hub, and 16 simulated trucks on four separated routes. The detailed Cutaway is a separate view of the same illustrative thermal state. Choose Cutaway for cargo, heat ingress and recovery power. Drag to orbit; use arrow keys to rotate and +/− to zoom. With the canvas focused, press 1 for Overview, 2 for Cutaway, or Escape to reset Overview. Camera changes are immediate, without animated zoom. The 16 vehicles (CMC-ET35-100–115), two berth banks (63–66 and 77–81), stationary WAN HAI 315, Qianzhen cold hub and bidirectional tunnel are deterministic illustrations, not live fleet data. At crowded sizes, labels prioritize harbor landmarks and hide colliding fleet IDs while keeping every vehicle visible. Scene motion/highlights represent the selected model scenario only; there is no live telemetry or dispatch connection. Recovery power is the model's illustrative 10 kW assumption. A 2D simulated view is available when WebGL is unavailable; reduced-motion preference keeps the 3D view static.</div>
             <div class="port-scene-hidden-status" id="portSceneStatus" role="status" aria-live="polite">3D illustrative model active.</div>
 
             <div class="thermal-explainer" aria-labelledby="thermalExplainerTitle">
@@ -1673,7 +1674,7 @@
     <!-- Copyright (c) 2026 Imteyaz Ahmad. All Rights Reserved. Taiwan Patent Pending. -->
     <script src="thermal-model.js"></script>
     <script src="crossroute.min.js"></script>
-    <script src="port-scene.js?v=7e853cc9f737e42a53c7692220f4f0adca6b57dcbfc1521b69055c6402e01ced"></script>
+    <script src="port-scene.js?v=ec24e537fa5a0174f9ce343ea090db6fd20297cfcbb58d988582182b068ce179"></script>
 
     <!-- Unapproved pilot planning assumptions modal -->
     <div class="modal-overlay" id="pilotModal" onclick="if(event.target===this)closePilotModal()">

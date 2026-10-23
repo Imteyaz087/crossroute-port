@@ -57,10 +57,10 @@ test("3D parity keeps 16 reproducible per-vehicle instances, original IDs, state
     assert.match(renderer, /for\(const direction of \[1,-1\]\)/);
     assert.match(renderer, /const timeSeconds=motionOkay\(\)\?now\/1000:0/);
     assert.match(renderer, /modelState\.scenario==="delay"\?4000:1600/);
-    assert.match(renderer, /const path=routePoints\.map\(\(\[x,z\]\)=>\[x,0\.235,z\]\)/);
-    assert.match(renderer, /const routePoints=DEMO_ROUTE_POINTS/);
+    assert.match(renderer, /const path=route\.points\.map/);
+    assert.equal(scene.OVERVIEW_LAYOUT.routes.length,4);
     assert.match(renderer, /orientedBox\(fleetData,[\s\S]*?heading\)/);
-    assert.match(renderer, /ahead=getDemoRoutePosition\(motion\.progress\+motion\.direction\*0\.001/);
+    assert.match(renderer, /ahead=getDemoRoutePosition\(motion\.progress\+0\.0001/);
     assert.match(renderer, /for\(let i=0;i<12;i\+\+\)/);
     assert.match(renderer, /for\(let i=0;i<9;i\+\+\)/);
     assert.match(renderer, /heatColor=!modelState\.valid/);
@@ -70,7 +70,8 @@ test("3D parity keeps 16 reproducible per-vehicle instances, original IDs, state
 
 test("shared illustrative route stays outside the cold-store footprint and turns vehicles with its tangent", () => {
     const fleet=scene.createDemoFleet();
-    const warehouse={minX:2.4,maxX:6.1,minZ:3.175,maxZ:5.225};
+    const hub=scene.OVERVIEW_LAYOUT.hub;
+    const warehouse={minX:hub.x-hub.width/2,maxX:hub.x+hub.width/2,minZ:hub.z-hub.depth/2,maxZ:hub.z+hub.depth/2};
     for(const seconds of [0,3,20,60]) for(const vehicle of fleet) {
         const pose=scene.getDemoFleetPose(vehicle,seconds);
         const halfX=Math.abs(Math.cos(pose.heading))*0.36+Math.abs(Math.sin(pose.heading))*0.135;
@@ -78,7 +79,7 @@ test("shared illustrative route stays outside the cold-store footprint and turns
         const overlaps=pose.x+halfX>=warehouse.minX&&pose.x-halfX<=warehouse.maxX&&pose.z+halfZ>=warehouse.minZ&&pose.z-halfZ<=warehouse.maxZ;
         assert.equal(overlaps,false,`${vehicle.id} intersects the illustrative warehouse at t=${seconds}s`);
     }
-    const atBend=scene.getDemoFleetPose({moving:false,progress:0.70,lane:1,direction:1},0);
+    const atBend=scene.getDemoFleetPose({moving:false,progress:0.70,lane:1,routeId:3,direction:1},0);
     assert.ok(Math.abs(atBend.heading)>0.1,"vehicle heading follows the bent route tangent");
     assert.match(renderer,/function orientedBox\(/);
     assert.match(renderer,/function orientedWheel\(/);
@@ -87,8 +88,8 @@ test("shared illustrative route stays outside the cold-store footprint and turns
 test("model updates force a reduced-motion redraw and radar sweep clears quay and road surfaces", () => {
     assert.match(renderer,/if\(!force&&now-lastFrame<33\) return/);
     assert.match(renderer,/function renderOnce\(\)\{draw\(performance\.now\(\)\+40,true\);\}/);
-    assert.match(renderer,/sweepEnd=\[-4\.6\+Math\.cos\(sweepAngle\)\*1\.4,0\.24,/);
-    assert.match(renderer,/ribbon\(motionData,\[-4\.6,0\.24,4\.45\]/);
+    assert.match(renderer,/L\.radar\.x,\.315,L\.radar\.z/);
+    assert.match(renderer,/L\.radar\.radius,\.315/);
     assert.match(renderer,/wheel\(staticData,x,0\.30,z,0\.27,0\.15,C\.rubber,14\)/);
 });
 

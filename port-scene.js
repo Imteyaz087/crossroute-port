@@ -167,12 +167,12 @@
             const isHero = index === 0;
             Object.assign(label.style,{
                 position:"absolute",
-                padding: isHero ? "2px 6px" : "1px 3px",
-                borderRadius:"4px",
-                font: isHero ? "700 8.5px ui-monospace,monospace" : "8px ui-monospace,monospace",
-                color: isHero ? "#10b981" : vehicle.moving ? "#38bdf8" : "#94a3b8",
-                background: isHero ? "rgba(15,23,42,.92)" : "rgba(15,23,42,.85)",
-                border: isHero ? "1px solid #10b981" : "1px solid rgba(255,255,255,0.12)",
+                padding: isHero ? "2px 5px" : "1px 3px",
+                borderRadius:"3px",
+                font: isHero ? "700 8.5px ui-monospace,monospace" : "7.5px ui-monospace,monospace",
+                color: isHero ? "#34d399" : "#64748b",
+                background: isHero ? "rgba(15,23,42,.85)" : "rgba(15,23,42,.40)",
+                border: isHero ? "1px solid #10b981" : "1px solid rgba(148,163,184,0.10)",
                 boxShadow: isHero ? "0 0 6px rgba(16,185,129,0.3)" : "none",
                 whiteSpace:"nowrap",
                 transform:"translate(-50%,-50%)"
@@ -189,12 +189,12 @@
             Object.assign(label.style,{
                 position:"absolute",
                 padding:"2px 5px",
-                borderRadius:"4px",
-                font:"700 8.5px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
-                color: index === 2 ? "#38bdf8" : "#f8fafc",
-                background:"rgba(15,23,42,.88)",
-                border: index === 2 ? "1px solid #38bdf8" : "1px solid rgba(255,255,255,0.18)",
-                boxShadow:"0 2px 4px rgba(0,0,0,0.25)",
+                borderRadius:"3px",
+                font:"600 8px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
+                color: index === 2 ? "#38bdf8" : "#cbd5e1",
+                background:"rgba(15,23,42,.75)",
+                border: index === 2 ? "1px solid #0284c7" : "1px solid rgba(255,255,255,0.12)",
+                boxShadow:"0 2px 4px rgba(0,0,0,0.20)",
                 whiteSpace:"nowrap",
                 transform:"translate(-50%,-50%)"
             });
@@ -353,22 +353,27 @@
             const local=[];wheel(local,0,0,0,radius,depth,color,sides);transformLocalGeometry(target,local,x,y,z,heading);
         }
         const C = {
-            water:[0.10,0.36,0.52], waterLight:[0.18,0.52,0.68], quay:[0.70,0.72,0.74], road:[0.25,0.27,0.30],
-            line:[0.95,0.95,0.92], steel:[0.58,0.62,0.66], crane:[0.92,0.68,0.14], craneDark:[0.22,0.24,0.27],
-            warehouse:[0.65,0.69,0.73], warehouseRoof:[0.46,0.50,0.55], window:[0.30,0.58,0.72],
-            containers:[[0.18,0.42,0.62],[0.14,0.48,0.34],[0.70,0.25,0.20],[0.82,0.45,0.15]],
-            truck:[0.18,0.22,0.28], cab:[0.92,0.94,0.96], rubber:[0.08,0.08,0.09], cargo:[0.18,0.68,0.58], shore:[0.94,0.70,0.10],
+            water:[0.12,0.24,0.32], waterLight:[0.18,0.36,0.46], quay:[0.62,0.64,0.66], road:[0.22,0.23,0.25],
+            line:[0.92,0.92,0.90], steel:[0.55,0.58,0.62], crane:[0.92,0.68,0.14], craneDark:[0.20,0.22,0.24],
+            warehouse:[0.58,0.62,0.66], warehouseRoof:[0.42,0.45,0.49], window:[0.28,0.50,0.62],
+            containers:[[0.18,0.38,0.55],[0.14,0.44,0.32],[0.65,0.24,0.20],[0.78,0.42,0.15]],
+            truck:[0.18,0.22,0.28], cab:[0.92,0.94,0.96], rubber:[0.08,0.08,0.09], cargo:[0.18,0.68,0.58], shore:[0.92,0.68,0.10],
             pallet:[0.76,0.56,0.34], palletBlock:[0.65,0.48,0.28], reeferWhite:[0.94,0.95,0.96]
         };
-        // Harbor basin, raised quay, service road, bollards and water-side edge.
-        box(staticData,0,-0.32,-1.0,15,0.34,11,C.water);
+        // Harbor basin: vast deep ocean extending past all viewport edges
+        box(staticData,0,-0.32,-25.0,240,0.34,180,C.water);
+        // Container terminal apron extending far south and east/west
+        box(staticData,0,-0.09,24.0,240,0.38,44.0,C.quay);
+        // Raised working quay apron
+        box(staticData,0,-0.06,3.15,240,0.42,4.6,C.quay);
         // Qijin-side breakwater and a separate navigational fairway cue.
         box(staticData,-6.95,0.18,-2.20,0.72,0.72,7.8,[0.16,0.23,0.29]);
         ribbon(staticData,[-5.95,-0.105,-5.5],[-5.95,-0.105,0.72],0.11,[0.18,0.58,0.72]);
-        box(staticData,0,-0.06,3.15,13,0.42,4.6,C.quay);
-        box(staticData,0,0.18,1.02,12.8,0.08,0.12,C.waterLight);
-        box(staticData,0,0.17,2.78,12.4,0.06,0.42,C.road);
-        for (let x=-5.5;x<=5.5;x+=1.1) box(staticData,x,0.22,2.78,0.48,0.012,0.035,C.line);
+        // Continuous water-side edge safety curb
+        box(staticData,0,0.18,1.02,240,0.08,0.12,C.waterLight);
+        // Continuous terminal service road
+        box(staticData,0,0.17,2.78,240,0.06,0.42,C.road);
+        for (let x=-12.5;x<=12.5;x+=1.1) box(staticData,x,0.22,2.78,0.48,0.012,0.035,C.line);
         for (let x=-5.4;x<=5.4;x+=1.8) cylinderY(staticData,x,0.34,1.35,0.10,0.28,C.steel,10);
         // Warehouse, cold-room doors and container stacks.
         box(staticData,4.25,1.08,4.20,3.7,2.15,2.05,C.warehouse);
@@ -528,7 +533,7 @@
             const w=Math.round(rect.width*dpr),h=Math.round(rect.height*dpr);
             if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
             gl.viewport(0,0,w,h);gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);
-            gl.clearColor(0.80,0.86,0.91,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+            gl.clearColor(0.72,0.78,0.83,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
             const cp=Math.cos(pitch),aspect=w/h;
             // Overview fits the harbor footprint on wide and portrait canvases.
             // Its high-angle orbit remains short of a singular straight-down lookAt.

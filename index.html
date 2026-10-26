@@ -1427,12 +1427,15 @@
                 <p class="model-note" style="margin: 0;">點選資產查看經 NVIDIA OpenUSD 物理參數封裝之數位孿生規格（含質量、摩擦係數 μ、熱傳導係數與 6-DoF 語意標籤）。 · Inspect physics-baked parameters from NVIDIA SimReady datasets.</p>
 
                 <!-- Asset Selection Pills -->
-                <div class="port-scene-controls" style="margin: 0; gap: 6px;" role="group" aria-label="SimReady Asset Selector">
+                <div class="port-scene-controls" style="margin: 0; gap: 6px; align-items: center;" role="group" aria-label="SimReady Asset Selector">
                     <button type="button" id="btnAssetReefer" class="simready-btn active" onclick="selectSimReadyAsset('reefer_40hc')" style="border-color: #38bdf8; color: #38bdf8; background: rgba(56,189,248,0.15);">🧊 40ft HC Reefer</button>
                     <button type="button" id="btnAssetShorePower" class="simready-btn" onclick="selectSimReadyAsset('shore_power')">⚡ 岸電基座 (IEC 60309)</button>
                     <button type="button" id="btnAssetChassis" class="simready-btn" onclick="selectSimReadyAsset('chassis_cmc')">🚚 CMC ET35 電能底盤</button>
                     <button type="button" id="btnAssetPallet" class="simready-btn" onclick="selectSimReadyAsset('pallet_frozen')">📦 標準冷凍食品棧板</button>
                     <button type="button" id="btnAssetRacks" class="simready-btn" onclick="selectSimReadyAsset('cold_rack')">🏢 前鎮立體保稅冷鏈貨架</button>
+                    <a rel="ar" id="btnArQuickLook" href="assets/reefer_40hc.usdz" class="capsule highlight" style="text-decoration: none; border-color: #38bdf8; background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; margin-left: auto;">
+                        <span>📱 3D AR 實境投影 (iOS QuickLook)</span>
+                    </a>
                 </div>
 
                 <!-- Live Physics Property Inspector HUD -->
@@ -1459,24 +1462,24 @@
                 <div style="background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: var(--r-sm); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-size: 11.5px; font-weight: 700; color: #fff;">🔥 DTBE 3D 空間熱傳導張量解算 (Volumetric Inferno Heatmap)</span>
-                        <span style="font-family: var(--font-mono); font-size: 10px; color: var(--electric-cyan);">24×6×6 SPATIAL TENSOR</span>
+                        <span style="font-family: var(--font-mono); font-size: 10px; color: var(--electric-cyan);">24×6×6 SPATIAL TENSOR · DYNAMIC SOLVER</span>
                     </div>
                     
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center;">
                         <div style="background: rgba(14, 165, 233, 0.08); border: 1px solid rgba(14, 165, 233, 0.25); padding: 8px 6px; border-radius: 6px;">
                             <div style="font-size: 10px; color: var(--text-secondary);">深層核心溫升 (Core Bulk)</div>
-                            <div style="font-size: 14px; font-weight: 800; font-family: var(--font-mono); color: #38bdf8; margin-top: 2px;">-19.32 °C</div>
-                            <div style="font-size: 9.5px; color: var(--cyber-emerald); margin-top: 1px;">僅升溫 +0.18 °C (36 MJ/°C)</div>
+                            <div id="simreadyCoreTemp" style="font-size: 14px; font-weight: 800; font-family: var(--font-mono); color: #38bdf8; margin-top: 2px;">-19.32 °C</div>
+                            <div id="simreadyCoreRise" style="font-size: 9.5px; color: var(--cyber-emerald); margin-top: 1px;">僅升溫 +0.18 °C (36 MJ/°C)</div>
                         </div>
                         <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); padding: 8px 6px; border-radius: 6px;">
                             <div style="font-size: 10px; color: var(--text-secondary);">🚪 靠門外緣表面 (Worst-Case)</div>
-                            <div style="font-size: 14px; font-weight: 800; font-family: var(--font-mono); color: #fbbf24; margin-top: 2px;">-14.69 °C</div>
-                            <div style="font-size: 9.5px; color: #34d399; margin-top: 1px;">安全餘裕: +0.31 °C (優於 -15°C)</div>
+                            <div id="simreadyDoorTemp" style="font-size: 14px; font-weight: 800; font-family: var(--font-mono); color: #fbbf24; margin-top: 2px;">-14.69 °C</div>
+                            <div id="simreadyMargin" style="font-size: 9.5px; color: #34d399; margin-top: 1px;">安全餘裕: +0.31 °C (優於 -15°C)</div>
                         </div>
                         <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); padding: 8px 6px; border-radius: 6px;">
                             <div style="font-size: 10px; color: var(--text-secondary);">冷能蓄電池餘量 (Thermal SoC)</div>
-                            <div style="font-size: 14px; font-weight: 800; font-family: var(--font-mono); color: var(--cyber-emerald); margin-top: 2px;">88 %</div>
-                            <div style="font-size: 9.5px; color: var(--text-secondary); margin-top: 1px;">過港隧道 60分 嚴重壅塞仍安全</div>
+                            <div id="simreadySoc" style="font-size: 14px; font-weight: 800; font-family: var(--font-mono); color: var(--cyber-emerald); margin-top: 2px;">88 %</div>
+                            <div id="simreadySocSub" style="font-size: 9.5px; color: var(--text-secondary); margin-top: 1px;">過港隧道 60分 嚴重壅塞仍安全</div>
                         </div>
                     </div>
                 </div>
@@ -2093,6 +2096,77 @@
                 window.setTourStep(currentTourStep - 1);
             }
         };
+
+        // Live Physical AI Dynamic Thermal HUD calculation
+        function updateSimReadyThermalHud() {
+            const tempEl = document.getElementById('sliderTemp');
+            const payloadEl = document.getElementById('sliderPayload');
+            const durationEl = document.getElementById('sliderDuration');
+            if (!tempEl || !payloadEl || !durationEl) return;
+            
+            const amb = parseFloat(tempEl.value) || 32;
+            const payload = parseFloat(payloadEl.value) || 20;
+            const dur = parseFloat(durationEl.value) || 38;
+            
+            let coreTemp = -19.5;
+            const cargoTempEl = document.getElementById('portCargoTemp');
+            if (cargoTempEl && cargoTempEl.textContent && !cargoTempEl.textContent.includes('—')) {
+                const parsed = parseFloat(cargoTempEl.textContent);
+                if (Number.isFinite(parsed)) coreTemp = parsed;
+            }
+            
+            // Dynamic Fourier boundary layer heat penetration
+            const deltaT = amb - coreTemp;
+            const boundaryRise = deltaT * 0.082 * Math.pow(dur / 45, 0.65);
+            const doorTemp = coreTemp + boundaryRise;
+            const critLimit = -15.0; // HACCP critical threshold
+            const margin = critLimit - doorTemp;
+            const soc = Math.max(0, Math.min(100, Math.round(100 - (dur / 120) * 32)));
+            
+            const coreNode = document.getElementById('simreadyCoreTemp');
+            const coreRiseNode = document.getElementById('simreadyCoreRise');
+            const doorNode = document.getElementById('simreadyDoorTemp');
+            const marginNode = document.getElementById('simreadyMargin');
+            const socNode = document.getElementById('simreadySoc');
+            const socSubNode = document.getElementById('simreadySocSub');
+            
+            if (coreNode) coreNode.textContent = `${coreTemp.toFixed(2)} °C`;
+            if (coreRiseNode) coreRiseNode.textContent = `深層蓄冷容積 (36 MJ/°C)`;
+            if (doorNode) {
+                doorNode.textContent = `${doorTemp.toFixed(2)} °C`;
+                doorNode.style.color = doorTemp <= critLimit ? '#fbbf24' : '#f87171';
+            }
+            if (marginNode) {
+                if (margin >= 0) {
+                    marginNode.textContent = `安全餘裕: +${margin.toFixed(2)} °C (優於 -15°C)`;
+                    marginNode.style.color = '#34d399';
+                } else {
+                    marginNode.textContent = `⚠️ 超標警訊: ${margin.toFixed(2)} °C (需啟動岸電)`;
+                    marginNode.style.color = '#f87171';
+                }
+            }
+            if (socNode) {
+                socNode.textContent = `${soc} %`;
+                socNode.style.color = soc > 50 ? 'var(--cyber-emerald)' : '#f59e0b';
+            }
+            if (socSubNode) {
+                socSubNode.textContent = dur > 60 ? `長程延滯情境 (${dur.toFixed(0)}分) 仍維持防護` : `過港隧道 60分 嚴重壅塞仍安全`;
+            }
+        }
+
+        // Hook into updatePhysics so every slider adjustment live-updates the HUD
+        const origUpdate = window.updatePhysics;
+        window.updatePhysics = function() {
+            const ret = typeof origUpdate === 'function' ? origUpdate.apply(this, arguments) : undefined;
+            try { updateSimReadyThermalHud(); } catch(e) {}
+            return ret;
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => setTimeout(updateSimReadyThermalHud, 300));
+        } else {
+            setTimeout(updateSimReadyThermalHud, 300);
+        }
     })();
     </script>
 

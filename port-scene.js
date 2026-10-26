@@ -161,10 +161,22 @@
         labelOverlay.className="port-fleet-label-overlay";
         labelOverlay.setAttribute("aria-hidden","true");
         Object.assign(labelOverlay.style,{position:"absolute",inset:"0",pointerEvents:"none",overflow:"hidden"});
-        const fleetLabels=createDemoFleet().map(vehicle=>{
+        const fleetLabels=createDemoFleet().map((vehicle, index)=>{
             const label=document.createElement("span");
             label.textContent=vehicle.id;
-            Object.assign(label.style,{position:"absolute",padding:"1px 3px",borderRadius:"3px",font:"8px ui-monospace,monospace",color:vehicle.moving?"#a7f3d0":"#7dd3fc",background:"rgba(5,17,28,.82)",whiteSpace:"nowrap",transform:"translate(-50%,-50%)"});
+            const isHero = index === 0;
+            Object.assign(label.style,{
+                position:"absolute",
+                padding: isHero ? "2px 6px" : "1px 3px",
+                borderRadius:"4px",
+                font: isHero ? "700 8.5px ui-monospace,monospace" : "8px ui-monospace,monospace",
+                color: isHero ? "#10b981" : vehicle.moving ? "#38bdf8" : "#94a3b8",
+                background: isHero ? "rgba(15,23,42,.92)" : "rgba(15,23,42,.85)",
+                border: isHero ? "1px solid #10b981" : "1px solid rgba(255,255,255,0.12)",
+                boxShadow: isHero ? "0 0 6px rgba(16,185,129,0.3)" : "none",
+                whiteSpace:"nowrap",
+                transform:"translate(-50%,-50%)"
+            });
             labelOverlay.appendChild(label);
             return label;
         });
@@ -174,7 +186,18 @@
             ["QIANZHEN COLD HUB",[4.1,2.35,4.20]],["HARBOR TUNNEL",[0,0.65,3.35]]
         ].map(([text,point],index)=>{
             const label=document.createElement("span");label.textContent=text;
-            Object.assign(label.style,{position:"absolute",padding:"2px 4px",borderRadius:"3px",font:"700 8px ui-monospace,monospace",color:"#b6f5e4",background:"rgba(5,17,28,.84)",whiteSpace:"nowrap",transform:"translate(-50%,-50%)"});
+            Object.assign(label.style,{
+                position:"absolute",
+                padding:"2px 5px",
+                borderRadius:"4px",
+                font:"700 8.5px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
+                color: index === 2 ? "#38bdf8" : "#f8fafc",
+                background:"rgba(15,23,42,.88)",
+                border: index === 2 ? "1px solid #38bdf8" : "1px solid rgba(255,255,255,0.18)",
+                boxShadow:"0 2px 4px rgba(0,0,0,0.25)",
+                whiteSpace:"nowrap",
+                transform:"translate(-50%,-50%)"
+            });
             labelOverlay.appendChild(label);return {id:`tag-${index}`,kind:index<5?"essential":"context",label,point,text};
         });
         if(canvas.parentElement) canvas.parentElement.appendChild(labelOverlay);
@@ -218,15 +241,22 @@
             varying float vLight;
             void main() {
                 gl_Position = uViewProjection * vec4(aPosition, 1.0);
-                vec3 light = normalize(vec3(-0.45, 0.84, 0.38));
-                vLight = 0.38 + 0.62 * max(dot(normalize(aNormal), light), 0.0);
+                vec3 n = normalize(aNormal);
+                vec3 sun = normalize(vec3(0.52, 0.86, 0.38));
+                float nDotL = max(dot(n, sun), 0.0);
+                float hemi = 0.55 + 0.35 * n.y;
+                vLight = clamp(hemi + 0.55 * nDotL, 0.28, 1.35);
                 vColor = aColor;
             }`;
         const fragmentSource = `
             precision mediump float;
             varying vec3 vColor;
             varying float vLight;
-            void main() { gl_FragColor = vec4(vColor * vLight, 1.0); }`;
+            void main() { 
+                vec3 linear = vColor * vLight;
+                vec3 mapped = linear / (linear + vec3(0.16)) * 1.16;
+                gl_FragColor = vec4(mapped, 1.0); 
+            }`;
 
         function compile(type, source) {
             const shader = gl.createShader(type);
@@ -323,11 +353,12 @@
             const local=[];wheel(local,0,0,0,radius,depth,color,sides);transformLocalGeometry(target,local,x,y,z,heading);
         }
         const C = {
-            water:[0.025,0.16,0.23], waterLight:[0.04,0.29,0.38], quay:[0.20,0.27,0.32], road:[0.09,0.14,0.18],
-            line:[0.22,0.43,0.49], steel:[0.40,0.62,0.68], crane:[0.80,0.56,0.20], craneDark:[0.34,0.30,0.23],
-            warehouse:[0.16,0.28,0.34], warehouseRoof:[0.25,0.42,0.46], window:[0.12,0.65,0.74],
-            containers:[[0.04,0.48,0.50],[0.08,0.31,0.46],[0.46,0.36,0.23],[0.13,0.43,0.36]],
-            truck:[0.10,0.58,0.57], cab:[0.72,0.81,0.79], rubber:[0.035,0.055,0.065], cargo:[0.19,0.70,0.69], shore:[0.08,0.48,0.42]
+            water:[0.10,0.36,0.52], waterLight:[0.18,0.52,0.68], quay:[0.70,0.72,0.74], road:[0.25,0.27,0.30],
+            line:[0.95,0.95,0.92], steel:[0.58,0.62,0.66], crane:[0.92,0.68,0.14], craneDark:[0.22,0.24,0.27],
+            warehouse:[0.65,0.69,0.73], warehouseRoof:[0.46,0.50,0.55], window:[0.30,0.58,0.72],
+            containers:[[0.18,0.42,0.62],[0.14,0.48,0.34],[0.70,0.25,0.20],[0.82,0.45,0.15]],
+            truck:[0.18,0.22,0.28], cab:[0.92,0.94,0.96], rubber:[0.08,0.08,0.09], cargo:[0.18,0.68,0.58], shore:[0.94,0.70,0.10],
+            pallet:[0.76,0.56,0.34], palletBlock:[0.65,0.48,0.28], reeferWhite:[0.94,0.95,0.96]
         };
         // Harbor basin, raised quay, service road, bollards and water-side edge.
         box(staticData,0,-0.32,-1.0,15,0.34,11,C.water);
@@ -380,19 +411,32 @@
         box(staticData,-2.64,0.72,2.145,0.40,0.26,0.018,C.window);
         for(const x of [-2.45,-1.10,0.15]) for(const z of [1.18,2.26]) wheel(staticData,x,0.30,z,0.27,0.15,C.rubber,14);
         // Container shell is intentionally open along the near side to show cargo inside.
-        box(staticData,-0.62,0.95,1.72,2.55,0.11,1.18,[0.07,0.36,0.41]);
-        box(staticData,-0.62,1.68,1.72,2.55,0.11,1.18,[0.08,0.44,0.48]);
-        box(staticData,-0.62,1.31,1.10,2.55,0.68,0.10,[0.06,0.34,0.39]);
+        box(staticData,-0.62,0.95,1.72,2.55,0.11,1.18,C.reeferWhite);
+        box(staticData,-0.62,1.68,1.72,2.55,0.11,1.18,[0.90,0.92,0.94]);
+        box(staticData,-0.62,1.31,1.10,2.55,0.68,0.10,[0.92,0.93,0.95]);
         box(staticData,-1.90,1.31,1.72,0.11,0.68,1.18,C.steel);
         box(staticData,0.66,1.31,1.72,0.11,0.68,1.18,C.steel);
         for(let x=-1.68;x<=0.43;x+=0.28) {
             box(staticData,x,1.31,1.045,0.025,0.50,0.018,C.steel);
             box(staticData,x,1.31,2.395,0.025,0.50,0.018,C.steel);
         }
+        // Carrier / Thermo King nose refrigeration machinery unit
+        box(staticData,0.69,1.31,1.72,0.07,0.58,1.02,[0.22,0.24,0.27]);
+        box(staticData,0.73,1.48,1.72,0.03,0.20,0.82,[0.14,0.16,0.18]);
+        box(staticData,0.73,1.20,1.45,0.03,0.10,0.22,[0.08,0.88,0.72]);
+        // Rear double doors locking rods & rubber perimeter gasket
+        box(staticData,-1.94,1.31,1.72,0.03,0.64,1.14,[0.14,0.15,0.17]);
+        cylinderY(staticData,-1.96,1.31,1.45,0.016,0.62,[0.72,0.75,0.78],8);
+        cylinderY(staticData,-1.96,1.31,1.95,0.016,0.62,[0.72,0.75,0.78],8);
+        // SimReady wooden pallets underneath cargo inside reefer
+        for(let px=-1.48;px<=0.10;px+=0.56) {
+            box(staticData,px,0.98,1.52,0.50,0.035,0.56,C.pallet);
+            box(staticData,px,0.95,1.52,0.46,0.035,0.50,C.palletBlock);
+        }
         // Shore-power cabinet and a parked cable guide near the reefer container.
         box(staticData,1.65,0.56,1.38,0.58,1.00,0.46,C.shore);
-        box(staticData,1.65,0.57,1.625,0.34,0.34,0.025,[0.11,0.23,0.24]);
-        box(staticData,1.65,0.58,1.645,0.16,0.025,0.012,[0.30,0.86,0.68]);
+        box(staticData,1.65,0.57,1.625,0.34,0.34,0.025,[0.18,0.20,0.22]);
+        box(staticData,1.65,0.58,1.645,0.16,0.025,0.012,[0.15,0.95,0.55]);
         for(let x=-5.7;x<=5.8;x+=0.7) box(staticData,x,0.145,3.15,0.025,0.018,4.55,[0.25,0.33,0.37]);
         // Tunnel portal frames mark the two ends of the bidirectional simulated corridor.
         for(const x of [-4.7,4.2]) {
@@ -407,7 +451,8 @@
         const staticVertices = staticData.length/9;
         let dynamicBuffer=gl.createBuffer(),dynamicVertices=0,motionBuffer=gl.createBuffer(),motionVertices=0;
         let modelState=createSceneState("normal",{valid:false});
-        let view="overview",target=[...VIEW_PRESETS.overview.target],yaw=VIEW_PRESETS.overview.yaw,pitch=VIEW_PRESETS.overview.pitch,distance=VIEW_PRESETS.overview.distance,drag=null,raf=0,lastFrame=0,disposed=false,visible=true;
+        let initialView=(typeof window!=="undefined"&&window.location&&window.location.hash==="#cutaway")?"cutaway":"overview";
+        let view=initialView,target=[...VIEW_PRESETS[initialView].target],yaw=VIEW_PRESETS[initialView].yaw,pitch=VIEW_PRESETS[initialView].pitch,distance=VIEW_PRESETS[initialView].distance,drag=null,raf=0,lastFrame=0,disposed=false,visible=true;
         let apiRef=null;
         const isSmall=()=>window.innerWidth<700;
         const motionOkay=()=>!(reducedMotion&&reducedMotion.matches);
@@ -483,7 +528,7 @@
             const w=Math.round(rect.width*dpr),h=Math.round(rect.height*dpr);
             if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
             gl.viewport(0,0,w,h);gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);
-            gl.clearColor(0.018,0.055,0.083,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+            gl.clearColor(0.80,0.86,0.91,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
             const cp=Math.cos(pitch),aspect=w/h;
             // Overview fits the harbor footprint on wide and portrait canvases.
             // Its high-angle orbit remains short of a singular straight-down lookAt.
@@ -532,8 +577,8 @@
                 // Each vehicle gets its own tractor, cab and refrigerated box.
                 orientedBox(fleetData,x,y,laneZ,0.72,0.12,0.27,color,heading);
                 const cab=local(0.25,0.14,0),reefer=local(-0.13,0.16,0);
-                orientedBox(fleetData,cab[0],cab[1],cab[2],0.22,0.18,0.25,[0.72,0.84,0.84],heading);
-                orientedBox(fleetData,reefer[0],reefer[1],reefer[2],0.39,0.25,0.25,vehicle.moving?[0.06,0.40,0.45]:[0.10,0.25,0.37],heading);
+                orientedBox(fleetData,cab[0],cab[1],cab[2],0.22,0.18,0.25,[0.92,0.94,0.96],heading);
+                orientedBox(fleetData,reefer[0],reefer[1],reefer[2],0.39,0.25,0.25,vehicle.moving?[0.92,0.94,0.96]:[0.78,0.82,0.86],heading);
                 for(const wx of [-0.22,0.23]) for(const wz of [-0.15,0.15]) {
                     const center=local(wx,-0.07,wz);orientedWheel(fleetData,center[0],center[1],center[2],0.075,0.045,C.rubber,8,heading);
                 }

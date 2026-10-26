@@ -1,0 +1,87 @@
+{
+  "reefer_40hc": {
+    "asset_id": "reefer_40hc_simready_01",
+    "name": "ISO 40ft High-Cube Marine Refrigerated Container",
+    "category": "Intermodal Freight Container",
+    "tare_mass_kg": 4680.0,
+    "max_payload_kg": 29320.0,
+    "friction_coefficient": 0.55,
+    "thermal_conductance_w_k": 45.2,
+    "dimensions_m": {
+      "length": 12.192,
+      "width": 2.438,
+      "height": 2.896
+    },
+    "semantic_class": "reefer_container",
+    "simready_profile": "Robotics-Prop-Industrial-v1",
+    "source_dataset": "nvidia/simready-central-library"
+  },
+  "chassis_skeletal_40": {
+    "asset_id": "chassis_gooseneck_40_01",
+    "name": "40ft Container Chassis Semi-Trailer",
+    "category": "Heavy Drayage Trailer",
+    "tare_mass_kg": 3850.0,
+    "max_payload_kg": 35000.0,
+    "friction_coefficient": 0.7,
+    "thermal_conductance_w_k": 0.0,
+    "dimensions_m": {
+      "length": 12.35,
+      "width": 2.48,
+      "height": 1.45
+    },
+    "semantic_class": "drayage_chassis",
+    "simready_profile": "Robotics-Articulated-Vehicle-v1",
+    "source_dataset": "nvidia/simready-assets"
+  },
+  "pallet_euro_industrial": {
+    "asset_id": "pallet_wood_standard_01",
+    "name": "Heavy-Duty Industrial Cargo Pallet (1200x1000mm)",
+    "category": "Logistics Handling",
+    "tare_mass_kg": 28.5,
+    "max_payload_kg": 1500.0,
+    "friction_coefficient": 0.48,
+    "thermal_conductance_w_k": 0.14,
+    "dimensions_m": {
+      "length": 1.2,
+      "width": 1.0,
+      "height": 0.144
+    },
+    "semantic_class": "cargo_pallet",
+    "simready_profile": "Robotics-Prop-Pallet-v1",
+    "source_dataset": "nvidia/PhysicalAI-SimReady-Warehouse-01"
+  },
+  "shore_power_dock_plug": {
+    "asset_id": "shore_power_socket_box_01",
+    "name": "Marine Shore Power IEC 60309 480V/32A Receptacle Box",
+    "category": "Port Electrical Infrastructure",
+    "tare_mass_kg": 45.0,
+    "max_payload_kg": 0.0,
+    "friction_coefficient": 0.35,
+    "thermal_conductance_w_k": 0.0,
+    "dimensions_m": {
+      "length": 0.45,
+      "width": 0.38,
+      "height": 0.62
+    },
+    "semantic_class": "shore_power_socket",
+    "simready_profile": "Robotics-Prop-Stationary-v1",
+    "source_dataset": "TraneTechnologies/simready-assets"
+  },
+  "cold_store_rack_bay": {
+    "asset_id": "cold_store_rack_selective_01",
+    "name": "Structural Steel Selective Pallet Racking (Bay 4-Tier)",
+    "category": "Cold Storage Logistics",
+    "tare_mass_kg": 840.0,
+    "max_payload_kg": 12000.0,
+    "friction_coefficient": 0.5,
+    "thermal_conductance_w_k": 48.0,
+    "dimensions_m": {
+      "length": 3.6,
+      "width": 1.1,
+      "height": 6.5
+    },
+    "semantic_class": "warehouse_rack",
+    "simready_profile": "Robotics-Prop-Warehouse-v1",
+    "source_dataset": "nvidia/PhysicalAI-SimReady-Warehouse-01"
+  }
+}

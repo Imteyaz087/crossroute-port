@@ -11,8 +11,8 @@ export function createStage(canvas) {
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   const scene = new THREE.Scene();
-  scene.background = null;                          // CSS radial slate gradient shows through
-  scene.fog = new THREE.Fog(0x0b0c10, 40, 90);
+  scene.background = null;                          // CSS radial warm graphite/carbon gradient shows through
+  scene.fog = new THREE.Fog(0x0e0d0c, 35, 100);
 
   // Neutral PBR reflections: no HDR file needed
   const pmrem = new THREE.PMREMGenerator(renderer);
@@ -22,8 +22,8 @@ export function createStage(canvas) {
   const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 200);
   camera.position.set(15, 7.0, 24);
 
-  // Key / fill / rim studio lights
-  const key = new THREE.DirectionalLight(0xfff4e8, 2.4);
+  // Key / fill / rim studio lights (Zero-Blue Industrial Studio: R >= G >= B)
+  const key = new THREE.DirectionalLight(0xfff4e6, 2.4);
   key.position.set(10, 16, 8);
   key.castShadow = true;
   key.shadow.mapSize.set(2048, 2048);
@@ -31,8 +31,8 @@ export function createStage(canvas) {
   key.shadow.bias = -0.0004;
   key.shadow.normalBias = 0.02;
   key.shadow.radius = 6;
-  const fill = new THREE.HemisphereLight(0xc9d2e3, 0x0b0c10, 0.45);
-  const rim  = new THREE.DirectionalLight(0xbfd0ff, 1.6);
+  const fill = new THREE.HemisphereLight(0xf2efe9, 0x1f1d1b, 0.45);
+  const rim  = new THREE.DirectionalLight(0xf5f1ea, 1.4);
   rim.position.set(-12, 6, -14);
   scene.add(key, fill, rim);
 

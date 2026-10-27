@@ -132,10 +132,10 @@ export function buildTwin() {
   }
   anchors.core = marker(box, 0.6, 0.4, 0.3);      // core temperature probe in cargo mass
 
-  // Cold-air volume tint (shows thermal state)
+  // Cold-air volume tint (shows thermal state: Silver Frost 0xece9e4, Zero-Blue)
   fx.airTint = new THREE.Mesh(
     new THREE.BoxGeometry(L - 0.4, H - 0.4, W - 0.4),
-    new THREE.MeshBasicMaterial({ color: 0x5fb3ff, transparent: true, opacity: 0.06, depthWrite: false })
+    new THREE.MeshBasicMaterial({ color: 0xece9e4, transparent: true, opacity: 0.06, depthWrite: false })
   );
   box.add(fx.airTint);
 

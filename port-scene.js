@@ -161,8 +161,8 @@ function updateHUD(s) {
   }
 }
 
-// ---- Visual bindings: telemetry → twin ----
-const cold = new THREE.Color(0x38bdf8);
+// ---- Visual bindings: telemetry → twin (Zero-Blue Industrial Studio: Silver Frost) ----
+const cold = new THREE.Color(0xece9e4);
 const amber = new THREE.Color(0xf59e0b);
 const crimson = new THREE.Color(0xef4444);
 let cut = 0;

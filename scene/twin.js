@@ -33,9 +33,21 @@ export function buildTwin() {
   frame.position.set(-0.6, 0.95, 0);
   tractor.add(frame);
 
-  const cab = rbox(2.3, 2.6, 2.45, 0.18, M.cabPaint);
+  const cabMat = M.cabPaint.clone();
+  cabMat.transparent = true;
+  const cab = rbox(2.3, 2.6, 2.45, 0.18, cabMat);
   cab.position.set(1.4, 2.55, 0);
   tractor.add(cab);
+  fx.cab = cab;
+
+  // Powertrain & Inverter (revealed in X-Ray mode)
+  const inverter = rbox(0.9, 0.55, 0.8, 0.04, M.battery);
+  inverter.position.set(1.2, 1.45, 0);
+  tractor.add(inverter);
+  const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.8, 24), M.rim);
+  motor.rotation.z = Math.PI / 2;
+  motor.position.set(0.1, 0.6, 0);
+  tractor.add(motor);
 
   const wind = rbox(0.08, 1.05, 2.1, 0.04, M.glass);
   wind.position.set(2.56, 3.1, 0);
@@ -138,6 +150,37 @@ export function buildTwin() {
     new THREE.MeshBasicMaterial({ color: 0xece9e4, transparent: true, opacity: 0.06, depthWrite: false })
   );
   box.add(fx.airTint);
+
+  // Cold Frost & Dry-Ice Vapor Particle Stream (revealed during cutaway & door open)
+  const pCount = 90;
+  const pGeo = new THREE.BufferGeometry();
+  const pPos = new Float32Array(pCount * 3);
+  const pVel = [];
+  for (let k = 0; k < pCount; k++) {
+    pPos[k * 3]     = -L / 2 + Math.random() * 2.0;
+    pPos[k * 3 + 1] = -H / 2 + Math.random() * (H * 0.7);
+    pPos[k * 3 + 2] = (Math.random() - 0.5) * (W * 0.7);
+    pVel.push({
+      x0: -L / 2 + Math.random() * 1.5,
+      y0: -H / 2 + Math.random() * (H * 0.7),
+      z0: (Math.random() - 0.5) * (W * 0.7),
+      vx: -(0.25 + Math.random() * 0.5),   // spills backwards out rear doors
+      vy: -(0.08 + Math.random() * 0.22),  // heavy cold air sinks to pavement
+      vz: (Math.random() - 0.5) * 0.3,
+      life: Math.random()
+    });
+  }
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+  const pMat = new THREE.PointsMaterial({
+    color: 0xece9e4,
+    size: 0.16,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false
+  });
+  fx.frost = new THREE.Points(pGeo, pMat);
+  fx.frostVel = pVel;
+  box.add(fx.frost);
 
   // Carrier Transicold unit on front face (+X end)
   const unit = new THREE.Group();

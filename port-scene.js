@@ -215,6 +215,37 @@ function bindVisuals(s, dt, t) {
   fx.cutaway.position.y = cut * 3.2;
   fx.cutaway.material.opacity = 1 - cut * 0.85;
 
+  // Animate Cold Frost Vapor Particles (revealed during cutaway & open reefer)
+  if (fx.frost && fx.frostVel) {
+    const pos = fx.frost.geometry.attributes.position.array;
+    const isColdOpen = cut > 0.05 && s.temp <= -10;
+    fx.frost.material.opacity = isColdOpen ? THREE.MathUtils.clamp(cut * 0.45, 0, 0.45) : 0;
+    if (isColdOpen) {
+      for (let k = 0; k < fx.frostVel.length; k++) {
+        const v = fx.frostVel[k];
+        v.life += dt * 0.55;
+        if (v.life > 1.0) {
+          v.life = 0;
+          pos[k * 3]     = v.x0;
+          pos[k * 3 + 1] = v.y0;
+          pos[k * 3 + 2] = v.z0;
+        } else {
+          pos[k * 3]     += v.vx * dt;
+          pos[k * 3 + 1] += v.vy * dt;
+          pos[k * 3 + 2] += v.vz * dt;
+        }
+      }
+      fx.frost.geometry.attributes.position.needsUpdate = true;
+    }
+  }
+
+  // Powertrain X-Ray Ghosting (Scenario 2: Yard Staging & Smart Tug)
+  if (fx.cab) {
+    const isXray = idx === 1; // Scenario 2 reveals Yulon EV motor, inverter & battery
+    const targetCabOpacity = isXray ? 0.35 : 1.0;
+    fx.cab.material.opacity += (targetCabOpacity - fx.cab.material.opacity) * (1 - Math.exp(-dt * 5));
+  }
+
   // 3D Thermal Slice Gradient across all 20 Pallet Stacks
   if (fx.palletLoads) {
     const isPowerOff = s.unitMode.startsWith('OFF');

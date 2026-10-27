@@ -448,6 +448,31 @@ html, body {
   gap: 10px;
 }
 
+.btn-tour {
+  background: var(--surface-3);
+  color: var(--gold-500);
+  border: 1px solid rgba(212, 182, 122, 0.4);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1.2;
+}
+
+.btn-tour:hover {
+  background: var(--surface-2);
+  border-color: var(--gold-500);
+  box-shadow: 0 0 14px var(--gold-glow);
+}
+
+.btn-tour.active {
+  background: var(--gold-500);
+  color: var(--text-inverse);
+  border-color: transparent;
+  box-shadow: 0 0 16px var(--gold-glow);
+}
+
 button {
   flex: 1;
   padding: 10px 14px;

@@ -48,6 +48,37 @@ if ($('s-steps')) {
 if ($('prev')) $('prev').onclick = () => go(idx - 1);
 if ($('next')) $('next').onclick = () => go(idx + 1);
 
+// ---- Auto-Tour Orchestration for Judges & Evaluators ----
+let tourTimer = null;
+let isTourRunning = false;
+
+function toggleTour() {
+  const btn = $('btnTour');
+  if (isTourRunning) {
+    clearInterval(tourTimer);
+    tourTimer = null;
+    isTourRunning = false;
+    if (btn) {
+      btn.textContent = '▶ 自動導覽 (Auto Tour)';
+      btn.classList.remove('active');
+    }
+  } else {
+    isTourRunning = true;
+    if (btn) {
+      btn.textContent = '⏸ 暫停導覽 (Pause)';
+      btn.classList.add('active');
+    }
+    // If at the end, wrap to start
+    if (idx >= SCENARIOS.length - 1) go(0);
+    tourTimer = setInterval(() => {
+      const nextIdx = (idx + 1) % SCENARIOS.length;
+      go(nextIdx);
+    }, 5500);
+  }
+}
+
+if ($('btnTour')) $('btnTour').onclick = toggleTour;
+
 window.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') go(idx + 1);
   if (e.key === 'ArrowLeft') go(idx - 1);

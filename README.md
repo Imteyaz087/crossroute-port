@@ -31,6 +31,22 @@ CrossRoute Zero-Genset Corridor:
 
 ---
 
+## 🕹️ Judge & Evaluator Interactive Quick-Start Guide
+
+For evaluation panels, hackathon juries, and Yulon Motor / TIPC technical reviewers, the digital twin can be evaluated directly in any modern desktop or mobile browser without installation:
+
+1. **Auto-Tour (自動導覽)**: Click **`▶ 自動導覽 (Auto Tour)`** in the scenario drawer to watch the 5 port transit stages animate automatically with smooth camera interpolations every 5.5s.
+2. **Camera Controls**:
+   - **Rotate / Orbit**: Left-click and drag across the viewport.
+   - **WASD / Pan**: Right-click drag or use `W`, `A`, `S`, `D` keys to fly through the terminal.
+   - **Zoom**: Scroll wheel or pinch.
+   - **Reset**: Press `R` or double-click to re-center the truck.
+3. **Clickable Parts (Interactive Pins)**: Click on floating telemetry badges (`Carrier Transicold`, `VoltEdge CAN Node`, `Battery Pack`, `RFID E-Seal`) to auto-frame the component.
+4. **Commodity & Ambient Sliders**: Switch between **Imported Frozen Meat** (-18.5°C), **Sashimi Tuna** (-55.0°C), **Pharma Vaccines** (4.0°C), and **Fresh Produce** (12.0°C) and adjust port ambient temperature from 25°C to 42°C to watch the thermodynamic heat-ingress and CFO ticker update in real time.
+5. **ISO 14083 ESG Audit Modal**: Click **`📜 ISO 14083 稽核證明`** in the top header to inspect the Well-to-Wheel carbon abatement calculation and cryptographic SHA-256 audit seal.
+
+---
+
 ## 2. Core Capabilities at a Glance
 
 | Module | Core Capability | Engineering Metric |

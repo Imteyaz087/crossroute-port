@@ -117,13 +117,18 @@ export function buildTwin() {
 
   const cargo = new THREE.Group();
   box.add(cargo);
-  for (let k = 0; k < 10; k++) for (const z of [-0.55, 0.55]) {
-    const pal = rbox(1.0, 0.14, 1.0, 0.01, M.pallet);
-    pal.position.set(-5.2 + k * 1.1, -H / 2 + 0.15, z);
-    const load = rbox(0.95, 1.4, 0.95, 0.03, M.cargo);
-    load.position.set(0, 0.78, 0);
-    pal.add(load);
-    cargo.add(pal);
+  fx.palletLoads = [];
+  for (let k = 0; k < 10; k++) {
+    for (const z of [-0.55, 0.55]) {
+      const pal = rbox(1.0, 0.14, 1.0, 0.01, M.pallet);
+      pal.position.set(-5.2 + k * 1.1, -H / 2 + 0.15, z);
+      const loadMat = M.cargo.clone();
+      const load = rbox(0.95, 1.4, 0.95, 0.03, loadMat);
+      load.position.set(0, 0.78, 0);
+      pal.add(load);
+      cargo.add(pal);
+      fx.palletLoads.push({ mesh: load, material: loadMat, col: k, zPos: z, xPos: -5.2 + k * 1.1 });
+    }
   }
   anchors.core = marker(box, 0.6, 0.4, 0.3);      // core temperature probe in cargo mass
 

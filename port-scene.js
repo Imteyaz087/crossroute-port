@@ -4,7 +4,7 @@ import { buildTwin } from './scene/twin.js';
 import { createPins } from './scene/pins.js';
 import { createNav } from './scene/nav.js';
 import { SCENARIOS } from './scene/scenarios.js';
-import { createTelemetry } from './scene/telemetry.js';
+import { createTelemetry, CARGO_CATALOG } from './scene/telemetry.js';
 
 const canvas = document.getElementById('stage') || document.getElementById('portWebGLCanvas');
 const { renderer, scene, camera } = createStage(canvas);
@@ -88,7 +88,50 @@ function go(i) {
   }
 }
 
-// ---- HUD Updates ----
+// ---- Commodity & Ambient Slider Dock ----
+if ($('cargoSelect')) {
+  $('cargoSelect').onchange = e => {
+    tel.setCargo(e.target.value);
+    if ($('cargoDesc')) $('cargoDesc').textContent = tel.state.cargo.desc;
+    updateHUD(tel.state);
+  };
+}
+
+if ($('ambientSlider')) {
+  $('ambientSlider').oninput = e => {
+    const degC = parseFloat(e.target.value);
+    tel.setAmbient(degC);
+    if ($('ambientVal')) $('ambientVal').textContent = `${degC.toFixed(0)}°C`;
+    updateHUD(tel.state);
+  };
+}
+
+// ---- ISO 14083 Modal Orchestration ----
+if ($('btnExportIso')) {
+  $('btnExportIso').onclick = () => {
+    if ($('isoModal')) $('isoModal').classList.add('open');
+    updateIsoModalData(tel.state);
+  };
+}
+
+if ($('btnCloseModal')) {
+  $('btnCloseModal').onclick = () => {
+    if ($('isoModal')) $('isoModal').classList.remove('open');
+  };
+}
+
+function updateIsoModalData(s) {
+  if ($('m-cargo')) $('m-cargo').textContent = `${s.cargo.name} (${s.cargo.payloadTon} Ton)`;
+  if ($('m-temp')) $('m-temp').textContent = `${s.temp.toFixed(2)} °C (HACCP Limit: ${s.cargo.critical}°C)`;
+  if ($('m-status')) {
+    $('m-status').textContent = s.withinRef ? 'VERIFIED · IN SPEC' : 'BREACH · ATTENTION';
+    $('m-status').className = s.withinRef ? 'ok' : 'crit';
+  }
+  if ($('m-carbon')) $('m-carbon').textContent = `${s.co2eAvoidedKg.toFixed(1)} kgCO₂e Saved (−78% vs Diesel)`;
+  if ($('m-roi')) $('m-roi').textContent = `NT$ ${s.spoilageAvoidedTWD.toLocaleString()} Spoilage Avoided`;
+}
+
+// ---- HUD & CFO Ticker Updates ----
 function updateHUD(s) {
   if ($('k-temp')) $('k-temp').textContent = `${s.temp.toFixed(1)}°C`;
   if ($('k-soc')) $('k-soc').textContent = `${s.soc.toFixed(0)}%`;
@@ -97,29 +140,78 @@ function updateHUD(s) {
     $('k-status').className = lvl;
     $('k-status').textContent = { ok: 'NOMINAL', warn: 'ADVISORY', crit: 'CRITICAL' }[lvl];
   }
+
+  // CFO Financial Ticker
+  if ($('k-spoilage')) {
+    if (s.withinRef) {
+      $('k-spoilage').textContent = `NT$ ${s.spoilageAvoidedTWD.toLocaleString()}`;
+      $('k-spoilage').className = 'val ok';
+    } else {
+      $('k-spoilage').textContent = `NT$ ${s.spoilageAtRiskTWD.toLocaleString()} AT RISK`;
+      $('k-spoilage').className = 'val crit';
+    }
+  }
+
+  if ($('k-demurrage')) {
+    $('k-demurrage').textContent = `NT$ ${s.demurrageAvoidedTWD.toLocaleString()}`;
+  }
+
+  if ($('k-ingress')) {
+    $('k-ingress').textContent = `${s.heatIngressKw.toFixed(2)} kW`;
+  }
 }
 
 // ---- Visual bindings: telemetry → twin ----
-const cold = new THREE.Color(0x5fb3ff);
-const warm = new THREE.Color(0xff7a45);
+const cold = new THREE.Color(0x38bdf8);
+const amber = new THREE.Color(0xf59e0b);
+const crimson = new THREE.Color(0xef4444);
 let cut = 0;
 
 function bindVisuals(s, dt, t) {
   const { fx } = twin;
-  const warmth = THREE.MathUtils.clamp((s.temp + 18.5) / 6.5, 0, 1);       // 0 at setpoint → 1 at -12°C
-  fx.airTint.material.color.copy(cold).lerp(warm, warmth);
-  fx.airTint.material.opacity = 0.05 + warmth * 0.12;
+  const cargo = s.cargo;
+  const crit = cargo.critical;
+  const pre = cargo.prechill;
 
-  cut += (propsState.cutaway - cut) * (1 - Math.exp(-dt * 4));             // cutaway slide + fade
+  // Air Volume Tint
+  const warmth = THREE.MathUtils.clamp((s.temp - pre) / Math.max(1, crit - pre + 2), 0, 1);
+  const currentTint = cold.clone().lerp(crimson, warmth);
+  fx.airTint.material.color.copy(currentTint);
+  fx.airTint.material.opacity = 0.04 + warmth * 0.14;
+
+  // Cutaway Panel Slide
+  cut += (propsState.cutaway - cut) * (1 - Math.exp(-dt * 4));
   fx.cutaway.position.y = cut * 3.2;
   fx.cutaway.material.opacity = 1 - cut * 0.85;
+
+  // 3D Thermal Slice Gradient across all 20 Pallet Stacks
+  if (fx.palletLoads) {
+    const isPowerOff = s.unitMode.startsWith('OFF');
+    fx.palletLoads.forEach(p => {
+      // Physical stratification: pallets near rear door (col 0..2) warm up fastest
+      // Pallets near Carrier evaporator (col 8..9) stay coldest
+      const distFromFront = (9 - p.col) / 9.0;
+      const localWarmthDelta = isPowerOff ? distFromFront * 2.8 : distFromFront * 0.35;
+      const palletTemp = s.temp + localWarmthDelta;
+
+      let targetColor;
+      if (palletTemp >= crit) {
+        targetColor = crimson;
+      } else if (palletTemp >= crit - 1.5) {
+        targetColor = amber;
+      } else {
+        targetColor = cold;
+      }
+      p.material.color.lerp(targetColor, Math.min(1.0, dt * 3.0));
+    });
+  }
 
   const fanSpeed = s.unitMode.startsWith('OFF') ? 0 : s.unitMode.startsWith('PULL') ? 22 : 9;
   fx.fan.rotation.x += fanSpeed * dt;
   fx.wheels.forEach(w => (w.rotation.z -= s.drive * 3 * dt));
   fx.nodeLed.material.emissiveIntensity = 1 + Math.sin(t * s.canHz * 0.25) * 1.2;
   const arm = fx.gate.userData.arm;
-  if (arm) arm.rotation.x = 0;          // closed during congestion
+  if (arm) arm.rotation.x = 0;
 }
 
 // ---- Animation Loop ----

@@ -29,9 +29,39 @@
       <div class="kpi"><label>Core Temp</label><b id="k-temp">-18.5°C</b></div>
       <div class="kpi"><label>Tractor SoC</label><b id="k-soc">82%</b></div>
       <div class="kpi"><label>Status</label><b id="k-status" class="ok">NOMINAL</b></div>
+      
+      <!-- CFO Real-Time Value Ticker -->
+      <div class="kpi kpi-cfo"><label>貨物防損價值 (Protected)</label><b id="k-spoilage" class="ok">NT$ 3,800,000</b></div>
+      <div class="kpi"><label>滯期費預防 (Demurrage)</label><b id="k-demurrage">NT$ 3,500</b></div>
+      <div class="kpi"><label>熱滲透率 (Heat Load)</label><b id="k-ingress">4.85 kW</b></div>
+
+      <button id="btnExportIso" class="btn-cert">📜 ISO 14083 稽核證明</button>
     </div>
   </header>
 
+  <!-- Interactive Commodity & Climate Dock -->
+  <aside class="control-dock">
+    <div class="dock-row">
+      <span class="dock-label">貨物類別 (Commodity Selection)</span>
+      <select id="cargoSelect" class="dock-select">
+        <option value="frozen_meat">進口冷凍牛豬肉 (-18.5°C · NT$3.8M)</option>
+        <option value="sashimi_tuna">遠洋超低溫黑鮪魚 (-55.0°C · NT$12.5M)</option>
+        <option value="pharma_vaccine">醫藥生技疫苗製劑 (4.0°C · NT$28.0M)</option>
+        <option value="fresh_produce">外銷頂級鮮果 (12.0°C · NT$1.2M)</option>
+      </select>
+      <span id="cargoDesc" class="dock-desc">標準進口肉品 · HACCP 規定核心不得高於 -15°C</span>
+    </div>
+
+    <div class="dock-row">
+      <div class="dock-label">
+        <span>高雄港環境氣溫 (Port Ambient)</span>
+        <b id="ambientVal">32°C</b>
+      </div>
+      <input type="range" id="ambientSlider" class="dock-slider" min="25" max="42" step="1" value="32" />
+    </div>
+  </aside>
+
+  <!-- Guided 5-Step Scenario Drawer -->
   <aside id="drawer" class="drawer">
     <div class="drawer-head">
       <span class="eyebrow">情境切換 SCENARIO <i id="s-idx">1</i>/5</span>
@@ -47,6 +77,36 @@
   </aside>
 
   <div class="hint">滑鼠拖曳旋轉 · 右鍵或 WASD 平移 · 滾輪縮放 · 點擊標籤聚焦部件 · 按 <kbd>R</kbd> 重設視角</div>
+
+  <!-- ISO 14083 ESG Audit Certificate Modal -->
+  <div id="isoModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow">國際認證規範 VERIFIED CERTIFICATE</span>
+          <h3>ISO 14083:2023 綠色冷鏈稽核證明</h3>
+        </div>
+        <button id="btnCloseModal" class="modal-close">✕</button>
+      </div>
+
+      <table class="modal-table">
+        <tr><td class="k">車輛識別 (Fleet Asset):</td><td class="v">Yulon CMC-ET35-104 (EV 曳引車)</td></tr>
+        <tr><td class="k">溫控貨櫃 (Reefer Box):</td><td class="v">40ft HC · Carrier Transicold Eco</td></tr>
+        <tr><td class="k">運載貨品 (Cargo Batch):</td><td class="v" id="m-cargo">進口冷凍牛豬肉 (20.0 Ton)</td></tr>
+        <tr><td class="k">核心即時溫控 (Core Temp):</td><td class="v" id="m-temp">-18.50 °C (HACCP 限值 -15°C)</td></tr>
+        <tr><td class="k">冷鏈合規狀態 (HACCP Status):</td><td class="v ok" id="m-status">VERIFIED · IN SPEC</td></tr>
+        <tr><td class="k">碳排強度 (Carbon Intensity):</td><td class="v">0.21 kgCO₂e / TEU-km</td></tr>
+        <tr><td class="k">範疇三減碳 (Scope 3 Saved):</td><td class="v ok" id="m-carbon">42.8 kgCO₂e Saved (−78% vs 柴油車)</td></tr>
+        <tr><td class="k">財務防損效益 (CFO ROI):</td><td class="v ok" id="m-roi">NT$ 3,800,000 Spoilage Avoided</td></tr>
+        <tr><td class="k">密碼學鏈上簽章 (Audit Hash):</td><td class="v" style="font-size:10px; color:#8a90a2;">SHA256: 8f4a7c1b...e92d043f</td></tr>
+      </table>
+
+      <div class="modal-foot">
+        <button class="primary" onclick="alert('已下載 ISO 14083 認證 PDF 報告！')">下載 PDF 官方稽核報告</button>
+        <button onclick="document.getElementById('isoModal').classList.remove('open')">關閉</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="./port-scene.js"></script>
 </body>

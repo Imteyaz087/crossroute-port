@@ -1,44 +1,48 @@
 import * as THREE from 'three';
+import { sceneQuality, configureShaderErrorBoundary } from './observatory-model.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 export function createStage(canvas) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  configureShaderErrorBoundary(renderer);
+  renderer.setPixelRatio(sceneQuality(canvas.clientWidth || window.innerWidth, window.devicePixelRatio || 1).pixelRatio);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.95;
-  renderer.shadowMap.enabled = true;
+  renderer.toneMappingExposure = 1;
+  renderer.shadowMap.enabled = canvas.clientWidth >= 700;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   const scene = new THREE.Scene();
   scene.background = null;                          // CSS radial warm graphite/carbon gradient shows through
-  scene.fog = new THREE.Fog(0x0e0d0c, 35, 100);
+  scene.fog = new THREE.Fog(0x0e0d0c, 100, 250);
 
   // Neutral PBR reflections: no HDR file needed
   const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  scene.environmentIntensity = 0.55;
+  const room=new RoomEnvironment();
+  scene.environment = pmrem.fromScene(room, 0.04).texture;
+  room.dispose();
+  scene.environmentIntensity = 0.65;
 
-  const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 200);
+  const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 350);
   camera.position.set(15, 7.0, 24);
 
   // Key / fill / rim studio lights (Zero-Blue Industrial Studio: R >= G >= B)
-  const key = new THREE.DirectionalLight(0xfff4e6, 2.4);
-  key.position.set(10, 16, 8);
+  const key = new THREE.DirectionalLight(0xfff4e6, 2.1);
+  key.position.set(8, 13, 10);
   key.castShadow = true;
-  key.shadow.mapSize.set(2048, 2048);
+  key.shadow.mapSize.set(1024, 1024);
   Object.assign(key.shadow.camera, { left: -14, right: 14, top: 10, bottom: -10, near: 1, far: 50 });
   key.shadow.bias = -0.0004;
   key.shadow.normalBias = 0.02;
   key.shadow.radius = 6;
-  const fill = new THREE.HemisphereLight(0xf2efe9, 0x1f1d1b, 0.45);
-  const rim  = new THREE.DirectionalLight(0xf5f1ea, 1.4);
-  rim.position.set(-12, 6, -14);
+  const fill = new THREE.HemisphereLight(0xf2efe9, 0x1f1d1b, 0.6);
+  const rim  = new THREE.DirectionalLight(0xf5f1ea, 1.5);
+  rim.position.set(-10, 8, -9);
   scene.add(key, fill, rim);
 
   // Ground: shadow catcher + soft radial contact blob
   const ground = new THREE.Mesh(
-    new THREE.CircleGeometry(40, 64),
+    new THREE.CircleGeometry(70, 64),
     new THREE.ShadowMaterial({ opacity: 0.42 })
   );
   ground.rotation.x = -Math.PI / 2;
@@ -46,15 +50,16 @@ export function createStage(canvas) {
   scene.add(ground, makeContactBlob());
 
   const resize = () => {
-    const { innerWidth: w, innerHeight: h } = window;
+    const r=canvas.getBoundingClientRect(),w=Math.max(2,r.width),h=Math.max(2,r.height);
+    const quality=sceneQuality(w,window.devicePixelRatio||1);renderer.setPixelRatio(quality.pixelRatio);renderer.shadowMap.enabled=quality.shadows;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
   };
-  window.addEventListener('resize', resize);
+  const observer=new ResizeObserver(resize);observer.observe(canvas);
   resize();
 
-  return { renderer, scene, camera, key };
+  return { renderer, scene, camera, key, dispose(){observer.disconnect();scene.environment?.dispose();pmrem.dispose();renderer.dispose();} };
 }
 
 function makeContactBlob() {

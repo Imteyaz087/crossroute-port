@@ -1,122 +1,72 @@
 <!doctype html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CrossRoute · 高雄港冷鏈數位孿生平台 (Yulon CMC-ET35 Digital Twin)</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css" />
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
-    }
-  }
-  </script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#171b17">
+<title>CrossRoute · Port Observatory / 高雄港冷鏈模擬</title>
+<link rel="stylesheet" href="./styles.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
 </head>
 <body>
-  <canvas id="stage" aria-label="Interactive 3D Digital Twin Stage. Drag or WASD to pan, scroll to zoom."></canvas>
-  <div id="pins" aria-live="polite"></div>
-
-  <header class="hud-top">
-    <div class="brand">
-      CROSSROUTE <span>/ 高雄港冷鏈數位孿生系統</span>
-      <div class="disclaimer-pill" title="Synthetic planning assumptions only · 參考草案未核准 · 沒有健康資料 · 不作排放或氣喘成效主張">
-        <span class="tag">ILLUSTRATIVE MODEL STATE</span>
-        <span class="subtag">DEMO · NOT OPERATIONAL</span>
-      </div>
-    </div>
-    <div class="kpis">
-      <div class="kpi"><label>Core Temp</label><b id="k-temp">-18.5°C</b></div>
-      <div class="kpi"><label>Tractor SoC</label><b id="k-soc">82%</b></div>
-      <div class="kpi"><label>Status</label><b id="k-status" class="ok">NOMINAL</b></div>
-      
-      <!-- CFO Real-Time Value Ticker -->
-      <div class="kpi kpi-cfo"><label>貨物防損價值 (Protected)</label><b id="k-spoilage" class="ok">NT$ 3,800,000</b></div>
-      <div class="kpi"><label>滯期費預防 (Demurrage)</label><b id="k-demurrage">NT$ 3,500</b></div>
-      <div class="kpi"><label>熱滲透率 (Heat Load)</label><b id="k-ingress">4.85 kW</b></div>
-
-      <button id="btnExportIso" class="btn-cert">📜 ISO 14083 稽核證明</button>
-    </div>
-  </header>
-
-  <footer class="legal-notice-bar" aria-label="Governance & Model Disclaimer">
-    <span>Synthetic planning assumptions only · 參考草案未核准 · 沒有健康資料 · 不作排放或氣喘成效主張 · Recovery uses an explicitly illustrative 10 kW shore-power assumption · Visual architecture inspired by Dilum Sanjaya WebGL vehicle design standard</span>
-  </footer>
-
-  <!-- Interactive Commodity & Climate Dock -->
-  <aside class="control-dock">
-    <div class="dock-row">
-      <span class="dock-label">貨物類別 (Commodity Selection)</span>
-      <select id="cargoSelect" class="dock-select">
-        <option value="frozen_meat">進口冷凍牛豬肉 (-18.5°C · NT$3.8M)</option>
-        <option value="sashimi_tuna">遠洋超低溫黑鮪魚 (-55.0°C · NT$12.5M)</option>
-        <option value="pharma_vaccine">醫藥生技疫苗製劑 (4.0°C · NT$28.0M)</option>
-        <option value="fresh_produce">外銷頂級鮮果 (12.0°C · NT$1.2M)</option>
-      </select>
-      <span id="cargoDesc" class="dock-desc">標準進口肉品 · HACCP 規定核心不得高於 -15°C</span>
-    </div>
-
-    <div class="dock-row">
-      <div class="dock-label">
-        <span>高雄港環境氣溫 (Port Ambient)</span>
-        <b id="ambientVal">32°C</b>
-      </div>
-      <input type="range" id="ambientSlider" class="dock-slider" min="25" max="42" step="1" value="32" />
-    </div>
-  </aside>
-
-  <!-- Guided 5-Step Scenario Drawer -->
-  <aside id="drawer" class="drawer">
-    <div class="drawer-head">
-      <span class="eyebrow">情境切換 SCENARIO <i id="s-idx">1</i>/5</span>
-      <h2 id="s-title"></h2>
-    </div>
-    <p id="s-body"></p>
-    <ul id="s-events" class="events"></ul>
-    <ol id="s-steps" class="steps"></ol>
-    <div class="drawer-nav">
-      <button id="prev">← 上一個情境</button>
-      <button id="btnTour" class="btn-tour" title="自動連續播放 5 個港口情境導覽">▶ 自動導覽 (Auto Tour)</button>
-      <button id="next" class="primary">下一個情境 →</button>
-    </div>
-  </aside>
-
-  <div class="hint">滑鼠拖曳旋轉 · 右鍵或 WASD 平移 · 滾輪縮放 · 點擊標籤聚焦部件 · 按 <kbd>R</kbd> 重設視角</div>
-
-  <!-- ISO 14083 ESG Audit Certificate Modal -->
-  <div id="isoModal" class="modal-overlay">
-    <div class="modal-card">
-      <div class="modal-head">
-        <div>
-          <span class="eyebrow">國際認證規範 VERIFIED CERTIFICATE</span>
-          <h3>ISO 14083:2023 綠色冷鏈稽核證明</h3>
-        </div>
-        <button id="btnCloseModal" class="modal-close">✕</button>
-      </div>
-
-      <table class="modal-table">
-        <tr><td class="k">車輛識別 (Fleet Asset):</td><td class="v">Yulon CMC-ET35-104 (EV 曳引車)</td></tr>
-        <tr><td class="k">溫控貨櫃 (Reefer Box):</td><td class="v">40ft HC · Carrier Transicold Eco</td></tr>
-        <tr><td class="k">運載貨品 (Cargo Batch):</td><td class="v" id="m-cargo">進口冷凍牛豬肉 (20.0 Ton)</td></tr>
-        <tr><td class="k">核心即時溫控 (Core Temp):</td><td class="v" id="m-temp">-18.50 °C (HACCP 限值 -15°C)</td></tr>
-        <tr><td class="k">冷鏈合規狀態 (HACCP Status):</td><td class="v ok" id="m-status">VERIFIED · IN SPEC</td></tr>
-        <tr><td class="k">碳排強度 (Carbon Intensity):</td><td class="v">0.21 kgCO₂e / TEU-km</td></tr>
-        <tr><td class="k">範疇三減碳 (Scope 3 Saved):</td><td class="v ok" id="m-carbon">42.8 kgCO₂e Saved (−78% vs 柴油車)</td></tr>
-        <tr><td class="k">財務防損效益 (CFO ROI):</td><td class="v ok" id="m-roi">NT$ 3,800,000 Spoilage Avoided</td></tr>
-        <tr><td class="k">密碼學鏈上簽章 (Audit Hash):</td><td class="v" style="font-size:10px; color:#8a90a2;">SHA256: 8f4a7c1b...e92d043f</td></tr>
-      </table>
-
-      <div class="modal-foot">
-        <button class="primary" onclick="alert('已下載 ISO 14083 認證 PDF 報告！')">下載 PDF 官方稽核報告</button>
-        <button onclick="document.getElementById('isoModal').classList.remove('open')">關閉</button>
-      </div>
-    </div>
+<a class="skip" href="#workspace">Skip to port controls</a>
+<header class="topbar">
+  <a class="brand" href="./" aria-label="CrossRoute home"><span class="brand-symbol">╳</span> CROSSROUTE<span class="brand-divider"></span><span class="brand-sub">PORT OBSERVATORY</span></a>
+  <div class="top-right"><span class="demo-chip"><i></i> SYNTHETIC DEMO</span><button id="btnExportIso" class="quiet">Model record <span aria-hidden="true">↗</span></button></div>
+</header>
+<main id="workspace">
+<section class="intro"><div><p class="eyebrow">KAOHSIUNG · 高雄港冷鏈 / CONCEPT TERMINAL</p><h1>A clearer view of the cold chain.</h1></div><p class="intro-note">One port. Five what-ifs.<br>Explore the system, not just the numbers.</p></section>
+<section class="metrics" aria-label="Illustrative model readings">
+  <div class="metric"><span>CORE TEMPERATURE</span><strong id="k-temp">−18.5°C</strong><small id="margin-readout">3.5°C to reference upper limit</small></div>
+  <div class="metric"><span>TRACTOR BATTERY</span><strong id="k-soc">82%</strong><small>Scripted SoC target · not telemetry</small></div>
+  <div class="metric"><span>THERMAL LOAD</span><strong id="k-ingress">— kW</strong><small>Modeled ingress · not measured</small></div>
+  <div class="metric"><span>MODEL STATE</span><strong id="k-status" class="ok">NOMINAL</strong><small id="mode-readout">ECO · ON</small></div>
+</section>
+<div class="workbench">
+<aside class="console" aria-label="Simulation controls">
+  <div class="panel-title"><span class="eyebrow">01 / CONFIGURE</span><span class="micro">ILLUSTRATIVE INPUTS</span></div>
+  <label for="cargoSelect">Cargo profile <span>貨物類別</span></label>
+  <select id="cargoSelect"><option value="frozen_meat">Frozen meat · −18.5°C</option><option value="sashimi_tuna">Sashimi tuna · −55°C</option><option value="pharma_vaccine">Biologics · 4°C</option><option value="fresh_produce">Fresh produce · 12°C</option></select>
+  <p id="cargoDesc" class="muted">Illustrative cargo properties, not validated operating limits.</p>
+  <div class="range-label"><label for="ambientSlider">Ambient temperature</label><output id="ambientVal" for="ambientSlider">32°C</output></div>
+  <input id="ambientSlider" type="range" min="25" max="42" value="32" step="1"><div class="range-ends"><span>25°C</span><span>42°C</span></div>
+  <div class="divider"></div>
+  <div class="panel-title"><span class="eyebrow">02 / INSPECT</span><span class="micro">SELECT A COMPONENT</span></div>
+  <div class="component-grid" aria-label="Vehicle component views">
+    <button data-component="core" aria-pressed="true"><span>◎</span> Cargo core</button><button data-component="carrier" aria-pressed="false"><span>❄</span> Reefer unit</button><button data-component="battery" aria-pressed="false"><span>▰</span> Battery</button><button data-component="canbus" aria-pressed="false"><span>⌁</span> CAN node</button><button data-component="seal" aria-pressed="false"><span>◇</span> E-seal</button>
   </div>
-
-  <script type="module" src="./port-scene.js"></script>
+  <div class="inspection"><span class="micro" id="inspect-label">CARGO CORE / PROBE</span><strong id="inspect-value">−18.5°C</strong><p id="inspect-desc">Core estimate from a lumped heat-capacity model. The thermal cutaway colors are illustrative, not individual sensor readings.</p></div>
+  <button id="btnReset" class="reset">↺ Reset simulation</button>
+</aside>
+<section class="scene-panel" aria-label="Interactive port scene">
+  <div class="scene-toolbar"><div class="view-tabs" role="group" aria-label="Camera view"><button data-view="port" aria-pressed="true">Port</button><button data-view="vehicle" aria-pressed="false">Vehicle</button><button data-view="thermal" aria-pressed="false">Thermal</button></div><span id="renderer-mode" role="status">Starting software 3D…</span></div>
+  <div class="viewport" id="portSceneViewport">
+    <canvas id="software-stage" tabindex="0" aria-label="Interactive software 3D port. Drag to orbit, scroll to zoom. Arrow keys rotate; plus and minus zoom; R resets."></canvas>
+    <canvas id="stage" hidden tabindex="0" aria-label="Interactive WebGL 3D port. Drag to orbit, scroll to zoom; W A S D pan; R resets."></canvas>
+    <div class="scene-caption"><span class="scene-kicker">CROSSROUTE / SYSTEM VIEW</span><span id="view-title">A terminal, connected.</span><small id="view-caption">Schematic geometry · no live port connection</small></div>
+    <div class="scene-compass" aria-hidden="true">N<span>↗</span><small>SCHEMATIC</small></div>
+    <div class="scene-help">DRAG TO ORBIT <span>·</span> SCROLL TO ZOOM <button id="btnCameraReset" aria-label="Reset camera">↺</button></div>
+    <div id="pins"></div>
+  </div>
+  <div class="zone-strip" aria-label="Inspect port zones"><button data-zone="quay">01 <span>Quayside</span></button><button data-zone="vehicle">02 <span>Vehicle</span></button><button data-zone="gate">03 <span>Gate queue</span></button><button data-zone="shore">04 <span>Shore power</span></button></div>
+  <p id="zone-readout" class="zone-readout">Explore a zone or switch to Vehicle and Thermal for a closer look.</p>
+</section>
+</div>
+<aside id="drawer" class="scenario-panel" aria-label="Guided five-step scenarios">
+  <div class="scenario-heading"><div><p class="eyebrow">03 / EXPLORE A SCENARIO <span id="s-idx">1</span><span>/5</span></p><h2 id="s-title">Green-channel transit</h2></div><div class="playback"><span id="sim-clock">00:00</span><span class="micro">MODEL MIN:SEC · 120×</span><button id="btnPause" aria-pressed="false">Ⅱ Pause model</button><button id="btnTour" aria-pressed="false">▷ Auto tour</button></div></div>
+  <ol id="s-steps" class="steps"></ol>
+  <div class="scenario-detail"><p id="s-body">Follow a pre-chilled container through an illustrative terminal.</p><ul id="s-events"></ul><div class="drawer-nav"><button id="prev" disabled aria-label="Previous scenario">←</button><button id="next" aria-label="Next scenario">→</button></div></div>
+</aside>
+<section class="assumptions"><div><span class="eyebrow">THE NUMBERS ARE A MODEL, NOT A PROMISE.</span><p>ILLUSTRATIVE MODEL STATE · DEMO · NOT OPERATIONAL. Synthetic planning assumptions only. No safety, compliance, avoided-loss or emissions outcome is established.</p></div><div class="assumption-values"><span>Assumed cargo value <b id="k-spoilage">NT$3,800,000</b></span><span>Scenario detention amount <b id="k-demurrage">NT$3,500</b></span></div></section>
+<footer class="legal-notice-bar">參考草案未核准 · 沒有健康資料 · 不作排放或氣喘成效主張<br>Recovery uses an explicitly illustrative 10 kW shore-power assumption. This denotes assumed thermal removal, not electrical input; no COP model is applied. Geometry and events are schematic. Not an operational digital twin.</footer>
+</main>
+<div id="isoModal" class="modal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="record-title">
+ <div class="modal-card"><div class="modal-head"><div><p class="eyebrow">UNSIGNED / SYNTHETIC SNAPSHOT</p><h2 id="record-title">Model record</h2></div><button id="btnCloseModal" aria-label="Close model record">×</button></div>
+ <p class="record-warning">This is not an ISO 14083 certificate, compliance finding or operational authorization. No sensor or emissions data was verified.</p>
+ <dl class="record-grid"><dt>Cargo profile</dt><dd id="m-cargo"></dd><dt>Core estimate</dt><dd id="m-temp"></dd><dt>Reference comparison</dt><dd id="m-status"></dd><dt>Carbon result</dt><dd id="m-carbon">Not calculated or verified</dd><dt>Assumed cargo value</dt><dd id="m-roi"></dd></dl>
+ <p class="muted">The download contains inputs, model outputs, selected scenario, assumptions and provenance labels. It is not signed, audited or certified.</p><div class="modal-foot"><button id="btnDownload" class="primary">↓ Download synthetic JSON</button><button id="btnCloseRecord">Close</button></div>
+ </div>
+</div>
+<noscript><p class="no-script">JavaScript is needed for this simulation. The values above are illustrative defaults, not live measurements.</p></noscript>
+<script type="module" src="./app.js"></script>
 </body>
 </html>

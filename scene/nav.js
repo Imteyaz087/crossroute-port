@@ -9,7 +9,7 @@ export function createNav(camera, dom) {
     enableDamping: true,
     dampingFactor: 0.07,
     minDistance: 5,
-    maxDistance: 42,
+    maxDistance: 350,
     maxPolarAngle: Math.PI * 0.48,
     screenSpacePanning: true,
     zoomSpeed: 0.8,
@@ -18,11 +18,14 @@ export function createNav(camera, dom) {
   const home = { pos: camera.position.clone(), tgt: controls.target.clone() };
 
   const keys = new Set();
-  window.addEventListener('keydown', e => {
+  const keydown=e=>{
+    if(e.target!==dom)return;
     keys.add(e.key.toLowerCase());
-    if (e.key === 'r') focus(home.tgt, home.pos);
-  });
-  window.addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+    if (e.key.toLowerCase() === 'r') focus(home.tgt, home.pos);
+  };
+  const keyup=e=>keys.delete(e.key.toLowerCase());
+  const blur=()=>keys.clear();
+  window.addEventListener('keydown',keydown);window.addEventListener('keyup',keyup);window.addEventListener('blur',blur);
 
   let tween = null;
   function focus(target, camPos, dur = 1.1) {
@@ -77,5 +80,5 @@ export function createNav(camera, dom) {
   }
 
   controls.addEventListener('start', () => (tween = null));      // user input cancels tween
-  return { controls, update, focus, focusObject, home };
+  return { controls, update, focus, focusObject, home, dispose(){controls.dispose();window.removeEventListener('keydown',keydown);window.removeEventListener('keyup',keyup);window.removeEventListener('blur',blur);} };
 }

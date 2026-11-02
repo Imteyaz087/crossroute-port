@@ -1,252 +1,103 @@
 import * as THREE from 'three';
-import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { M } from './materials.js';
+import { TRUCK, truckStructure } from './truck-design.js';
+import { meshFactory } from './truck-mesh.js';
 
 export const SPEC = {
-  truck: 'Yulon CMC-ET35 (EV drayage tractor)',
+  truck: 'Illustrative electric drayage tractor — not manufacturer CAD',
   batteryKWh: 350,
-  reefer: '40ft High-Cube Reefer',
-  unit: 'Carrier Transicold (Eco mode)',
+  reefer: '40ft High-Cube Reefer (schematic)',
+  unit: 'Illustrative refrigeration unit',
   setpoint: -18.5,
-  telematics: 'VoltEdge CAN-bus node',
-  seal: 'RFID E-Seal',
-};
-
-const rbox = (w, h, d, r, mat) => {
-  const m = new THREE.Mesh(new RoundedBoxGeometry(w, h, d, 4, r), mat);
-  m.castShadow = m.receiveShadow = true;
-  return m;
+  telematics: 'Illustrative CAN-bus node',
+  seal: 'Illustrative RFID E-Seal',
 };
 
 export function buildTwin() {
-  const root = new THREE.Group();
-  root.name = 'twin';
-  const anchors = {};            // id -> Object3D (pin + focus target)
-  const fx = {};                 // animated parts
-
-  // ---------- TRACTOR (+X is forward) ----------
-  const tractor = new THREE.Group();
-  tractor.position.set(7.2, 0, 0);
-  root.add(tractor);
-
-  const frame = rbox(6.2, 0.35, 1.1, 0.05, M.chassis);
-  frame.position.set(-0.6, 0.95, 0);
-  tractor.add(frame);
-
-  const cabMat = M.cabPaint.clone();
-  cabMat.transparent = true;
-  const cab = rbox(2.3, 2.6, 2.45, 0.18, cabMat);
-  cab.position.set(1.4, 2.55, 0);
-  tractor.add(cab);
-  fx.cab = cab;
-
-  // Powertrain & Inverter (revealed in X-Ray mode)
-  const inverter = rbox(0.9, 0.55, 0.8, 0.04, M.battery);
-  inverter.position.set(1.2, 1.45, 0);
-  tractor.add(inverter);
-  const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.8, 24), M.rim);
-  motor.rotation.z = Math.PI / 2;
-  motor.position.set(0.1, 0.6, 0);
-  tractor.add(motor);
-
-  const wind = rbox(0.08, 1.05, 2.1, 0.04, M.glass);
-  wind.position.set(2.56, 3.1, 0);
-  wind.rotation.z = -0.06;
-  tractor.add(wind);
-
-  const bumper = rbox(0.25, 0.55, 2.4, 0.08, M.cabAccent);
-  bumper.position.set(2.6, 1.15, 0);
-  tractor.add(bumper);
-
-  const stripe = rbox(2.32, 0.12, 2.47, 0.02, M.cabAccent);
-  stripe.position.set(1.4, 1.9, 0);
-  tractor.add(stripe);
-
-  // Battery packs either side of frame
-  const battery = new THREE.Group();
-  tractor.add(battery);
-  [-1, 1].forEach(s => {
-    const p = rbox(2.4, 0.9, 0.45, 0.06, M.battery);
-    p.position.set(-0.6, 1.0, s * 0.82);
-    battery.add(p);
-  });
-  anchors.battery = marker(tractor, -0.6, 1.6, 1.15);
-
-  // Fifth wheel
-  const fifth = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.12, 32), M.chassis);
-  fifth.position.set(-2.6, 1.2, 0);
-  tractor.add(fifth);
-
-  // Wheels
-  fx.wheels = [];
-  [[1.5], [-2.1], [-3.3]].forEach(([x]) => [-1, 1].forEach(s => {
-    const w = wheel();
-    w.position.set(x, 0.52, s * 1.05);
-    tractor.add(w);
-    fx.wheels.push(w);
-  }));
-
-  // ---------- REEFER CONTAINER (40ft HC ≈ 12.19 × 2.90 × 2.44 m) ----------
-  const L = 12.19, H = 2.9, W = 2.44;
-  const box = new THREE.Group();
-  box.position.set(-1.5, 1.35 + H / 2, 0);
-  root.add(box);
-
-  // Shell with cutaway: build 5 panels; near-side (+Z) panel as sliding cutaway
-  const panel = (w, h, d, x, y, z) => {
-    const p = rbox(w, h, d, 0.02, M.reeferSkin);
-    p.position.set(x, y, z);
-    box.add(p);
-    return p;
-  };
-  panel(L, 0.08, W, 0, H / 2, 0);                 // roof
-  panel(L, 0.08, W, 0, -H / 2, 0);                // floor
-  panel(L, H, 0.06, 0, 0, -W / 2);                // far wall
-  panel(0.08, H, W, -L / 2, 0, 0);                // rear doors
-  fx.cutaway = panel(L, H, 0.06, 0, 0, W / 2);    // near wall (animated)
-  fx.cutaway.material = M.reeferSkin.clone();
-  fx.cutaway.material.transparent = true;
-
-  // Corrugation ribs (instanced for cheap detail)
-  const ribGeo = new THREE.BoxGeometry(0.06, H * 0.92, 0.05);
-  const ribs = new THREE.InstancedMesh(ribGeo, M.reeferRib, 120);
-  const t = new THREE.Object3D();
-  let i = 0;
-  for (let k = 0; k < 60; k++) for (const s of [-1, 1]) {
-    t.position.set(-L / 2 + 0.2 + k * (L - 0.4) / 59, 0, s * (W / 2 + 0.035));
-    t.updateMatrix();
-    ribs.setMatrixAt(i++, t.matrix);
+  const root=new THREE.Group();root.name='twin';
+  const anchors={},fx={},f=meshFactory(M),rbox=f.rounded;
+  const {length:L,height:H,width:W,x:X,y:Y}=TRUCK.trailer;
+  const parts=truckStructure();
+  // Keep the same public fx contract used by the existing thermal/scenario binding.
+  for(const [role,name]of [['cab','cab'],['cutaway','cutaway'],['roof','roof']]) {
+    const p=parts.find(p=>p.role===role);const mat=M[p.material].clone();
+    if(role!=='roof')mat.transparent=true;
+    fx[name]=f.part(p,mat);root.add(fx[name]);
   }
-  ribs.castShadow = true;
-  box.add(ribs);
-  fx.ribs = ribs;
+  fx.nearRibs=new THREE.Group();root.add(fx.nearRibs);
+  f.batch(fx.nearRibs,parts.filter(p=>p.role==='nearRibs'));
+  f.batch(root,parts.filter(p=>!['cab','cutaway','roof','nearRibs'].includes(p.role)));
+  // Cutaway's y is animated relative to the container, not world zero.
+  const cutawayPivot=new THREE.Group();cutawayPivot.position.y=Y;root.add(cutawayPivot);
+  cutawayPivot.add(fx.cutaway);fx.cutaway.position.y=0;
 
-  // Interior liner + pallets
-  const liner = new THREE.Mesh(new THREE.BoxGeometry(L - 0.3, H - 0.25, W - 0.25), M.interior);
-  liner.material = M.interior.clone();
-  liner.material.side = THREE.BackSide;
-  box.add(liner);
-
-  const cargo = new THREE.Group();
-  box.add(cargo);
-  fx.palletLoads = [];
-  for (let k = 0; k < 10; k++) {
-    for (const z of [-0.55, 0.55]) {
-      const pal = rbox(1.0, 0.14, 1.0, 0.01, M.pallet);
-      pal.position.set(-5.2 + k * 1.1, -H / 2 + 0.15, z);
-      const loadMat = M.cargo.clone();
-      const load = rbox(0.95, 1.4, 0.95, 0.03, loadMat);
-      load.position.set(0, 0.78, 0);
-      pal.add(load);
-      cargo.add(pal);
-      fx.palletLoads.push({ mesh: load, material: loadMat, col: k, zPos: z, xPos: -5.2 + k * 1.1 });
+  // Low-segment shared tyre/rim geometry; dual tyres on the four non-steering axles.
+  const tyreGeo=f.geometry('tyre',()=>new THREE.TorusGeometry(.39,.16,10,28));
+  const rimGeo=f.geometry('rim',()=>new THREE.CylinderGeometry(.3,.3,.15,20));
+  rimGeo.rotateX(Math.PI/2);
+  const hubGeo=f.geometry('hub',()=>new THREE.CylinderGeometry(.12,.12,.08,12));
+  hubGeo.rotateX(Math.PI/2);
+  fx.wheels=[];
+  for(const x of TRUCK.axles)for(const side of [-1,1]) {
+    const group=new THREE.Group();group.position.set(x,TRUCK.wheelY,side*1.03);
+    const dual=x!==TRUCK.axles.at(-1);
+    for(const z of dual?[-.16,.16]:[0]) {
+      const tyre=new THREE.Mesh(tyreGeo,M.tyre);tyre.position.z=z;tyre.castShadow=true;group.add(tyre);
     }
+    const rim=new THREE.Mesh(rimGeo,M.rim);rim.position.z=side*(dual?.29:.14);rim.castShadow=true;group.add(rim);
+    const hub=new THREE.Mesh(hubGeo,M.chassis);hub.position.z=side*(dual?.39:.24);group.add(hub);
+    // Five dark recesses produce readable rotation without dense tread meshes.
+    const bolts=new THREE.InstancedMesh(hubGeo,M.chassis,5),o=new THREE.Object3D();
+    for(let i=0;i<5;i++){const a=i*Math.PI*2/5;o.position.set(Math.cos(a)*.21,Math.sin(a)*.21,side*(dual?.38:.23));o.scale.set(.3,.3,.25);o.updateMatrix();bolts.setMatrixAt(i,o.matrix);}
+    group.add(bolts);root.add(group);fx.wheels.push(group);
   }
-  anchors.core = marker(box, 0.6, 0.4, 0.3);      // core temperature probe in cargo mass
+  const fifth=new THREE.Mesh(f.geometry('fifth',()=>new THREE.CylinderGeometry(.55,.55,.12,24)),M.chassis);
+  fifth.position.set(3.1,1.22,0);root.add(fifth);
+  const inverter=rbox(.9,.55,.8,.04,M.battery);inverter.position.set(6.7,1.65,0);root.add(inverter);
+  const motor=new THREE.Mesh(f.geometry('motor',()=>new THREE.CylinderGeometry(.32,.32,.8,20)),M.rim);
+  motor.rotation.z=Math.PI/2;motor.position.set(6.1,.72,0);root.add(motor);
+  anchors.battery=marker(root,5.65,1.6,1.15);
 
-  // Cold-air volume tint (shows thermal state: Silver Frost 0xece9e4, Zero-Blue)
-  fx.airTint = new THREE.Mesh(
-    new THREE.BoxGeometry(L - 0.4, H - 0.4, W - 0.4),
-    new THREE.MeshBasicMaterial({ color: 0xece9e4, transparent: true, opacity: 0.06, depthWrite: false })
-  );
-  box.add(fx.airTint);
-
-  // Cold Frost & Dry-Ice Vapor Particle Stream (revealed during cutaway & door open)
-  const pCount = 90;
-  const pGeo = new THREE.BufferGeometry();
-  const pPos = new Float32Array(pCount * 3);
-  const pVel = [];
-  for (let k = 0; k < pCount; k++) {
-    pPos[k * 3]     = -L / 2 + Math.random() * 2.0;
-    pPos[k * 3 + 1] = -H / 2 + Math.random() * (H * 0.7);
-    pPos[k * 3 + 2] = (Math.random() - 0.5) * (W * 0.7);
-    pVel.push({
-      x0: -L / 2 + Math.random() * 1.5,
-      y0: -H / 2 + Math.random() * (H * 0.7),
-      z0: (Math.random() - 0.5) * (W * 0.7),
-      vx: -(0.25 + Math.random() * 0.5),   // spills backwards out rear doors
-      vy: -(0.08 + Math.random() * 0.22),  // heavy cold air sinks to pavement
-      vz: (Math.random() - 0.5) * 0.3,
-      life: Math.random()
-    });
+  // Original 20-pallet layout and live visual materials, unchanged thermal inputs.
+  const box=new THREE.Group();box.position.set(X,Y,0);root.add(box);
+  const liner=new THREE.Mesh(f.geometry('liner',()=>new THREE.BoxGeometry(L-.3,H-.25,W-.25)),M.interior.clone());
+  liner.material.side=THREE.BackSide;box.add(liner);
+  fx.palletLoads=[];
+  const pallets=[];
+  for(let col=0;col<10;col++)for(const z of [-.55,.55]) {
+    const x=-5.2+col*1.1;
+    pallets.push({name:'pallet',p:[x,-H/2+.15,z],s:[1,.14,1],material:'pallet'});
+    const mat=M.cargo.clone(),load=rbox(.95,1.4,.95,.025,mat);
+    load.position.set(x,-H/2+.93,z);box.add(load);
+    fx.palletLoads.push({mesh:load,material:mat,col,zPos:z,xPos:x});
   }
-  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-  const pMat = new THREE.PointsMaterial({
-    color: 0xece9e4,
-    size: 0.16,
-    transparent: true,
-    opacity: 0,
-    depthWrite: false
-  });
-  fx.frost = new THREE.Points(pGeo, pMat);
-  fx.frostVel = pVel;
-  box.add(fx.frost);
+  f.batch(box,pallets);anchors.core=marker(box,.6,.4,.3);
+  fx.airTint=new THREE.Mesh(f.geometry('air',()=>new THREE.BoxGeometry(L-.4,H-.4,W-.4)),new THREE.MeshBasicMaterial({color:0xece9e4,transparent:true,opacity:.06,depthWrite:false}));box.add(fx.airTint);
+  // Stable initial particles make source/model comparisons reproducible; dynamics stay the same.
+  let seed=73;const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;};
+  const pos=new Float32Array(90*3),vel=[];
+  for(let k=0;k<90;k++) {
+    pos[k*3]=-L/2+random()*2;pos[k*3+1]=-H/2+random()*H*.7;pos[k*3+2]=(random()-.5)*W*.7;
+    vel.push({x0:-L/2+random()*1.5,y0:-H/2+random()*H*.7,z0:(random()-.5)*W*.7,vx:-(.25+random()*.5),vy:-(.08+random()*.22),vz:(random()-.5)*.3,life:random()});
+  }
+  const frostGeo=new THREE.BufferGeometry();frostGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  fx.frost=new THREE.Points(frostGeo,new THREE.PointsMaterial({color:0xece9e4,size:.16,transparent:true,opacity:0,depthWrite:false}));fx.frostVel=vel;box.add(fx.frost);
 
-  // Carrier Transicold unit on front face (+X end)
-  const unit = new THREE.Group();
-  unit.position.set(L / 2 + 0.12, 0, 0);
-  box.add(unit);
-  unit.add(rbox(0.25, H - 0.1, W - 0.1, 0.04, M.carrier));
-  const grille = rbox(0.06, 1.0, 1.9, 0.03, M.carrierGrille);
-  grille.position.set(0.14, 0.65, 0);
-  unit.add(grille);
-  fx.fan = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.03, 6, 1), M.rim);
-  fx.fan.rotation.z = Math.PI / 2;
-  fx.fan.position.set(0.17, -0.55, 0.4);
-  unit.add(fx.fan);
-  anchors.carrier = marker(unit, 0.25, 0.9, 0);
+  const fanX=X+L/2+.5;
+  const fanWell=new THREE.Mesh(f.geometry('fanWell',()=>new THREE.CylinderGeometry(.48,.48,.035,28)),M.carrierGrille);fanWell.rotation.z=Math.PI/2;fanWell.position.set(fanX,2.25,0);root.add(fanWell);
+  const ring=new THREE.Mesh(f.geometry('fanRing',()=>new THREE.TorusGeometry(.46,.025,6,28)),M.rim);ring.rotation.y=Math.PI/2;ring.position.set(fanX+.04,2.25,0);root.add(ring);
+  fx.fan=new THREE.Group();fx.fan.position.set(fanX+.035,2.25,0);root.add(fx.fan);
+  for(let k=0;k<5;k++){const blade=rbox(.035,.35,.12,.015,M.rim);const angle=k*Math.PI*2/5;blade.position.set(0,Math.cos(angle)*.23,Math.sin(angle)*.23);blade.rotation.x=angle;fx.fan.add(blade);}
+  anchors.carrier=marker(root,fanX+.1,3.7,0);
 
-  // RFID E-seal on rear door
-  const seal = rbox(0.06, 0.18, 0.1, 0.02, M.ledOk);
-  seal.position.set(-L / 2 - 0.06, -0.3, 0.35);
-  box.add(seal);
-  fx.seal = seal;
-  anchors.seal = marker(box, -L / 2 - 0.1, -0.3, 0.35);
-
-  // VoltEdge CAN-bus node on the tractor back-of-cab
-  const node = rbox(0.22, 0.4, 0.6, 0.04, M.node);
-  node.position.set(0.18, 2.2, 0.9);
-  tractor.add(node);
-  fx.nodeLed = rbox(0.02, 0.05, 0.05, 0.01, M.ledOk.clone());
-  fx.nodeLed.position.set(-0.12, 0.12, 0.2);
-  node.add(fx.nodeLed);
-  anchors.canbus = marker(tractor, 0.1, 2.5, 0.9);
-
-  // Trailer chassis + rear bogie
-  const tChassis = rbox(L - 0.6, 0.25, 1.0, 0.04, M.chassis);
-  tChassis.position.set(-1.5, 1.22, 0);
-  root.add(tChassis);
-  [-5.4, -6.6].forEach(x => [-1, 1].forEach(s => {
-    const w = wheel();
-    w.position.set(x, 0.52, s * 1.05);
-    root.add(w);
-    fx.wheels.push(w);
-  }));
-
-  // Scenario props (hidden until needed)
-  fx.shoreCable = buildCable(new THREE.Vector3(L / 2 - 1.5, 0.25, -W / 2 - 0.05), new THREE.Vector3(5, 0, -4));
-  fx.shoreCable.visible = false;
-  root.add(fx.shoreCable);
-
-  fx.gate = buildGate();
-  fx.gate.position.set(14, 0, 0);
-  fx.gate.visible = false;
-  root.add(fx.gate);
-
-  root.position.x = -1.2;      // centre the rig
-  return { root, anchors, fx, dims: { L, H, W } };
+  fx.seal=rbox(.06,.18,.1,.02,M.ledOk);fx.seal.position.set(-L/2-.12,-.3,.35);box.add(fx.seal);
+  anchors.seal=marker(box,-L/2-.15,-.3,.35);
+  const node=rbox(.22,.4,.6,.04,M.node);node.position.set(5.5,2.2,.9);root.add(node);
+  fx.nodeLed=rbox(.02,.05,.05,.01,M.ledOk.clone());fx.nodeLed.position.set(-.12,.12,.2);node.add(fx.nodeLed);anchors.canbus=marker(root,5.4,2.5,.9);
+  fx.shoreCable=buildCable(new THREE.Vector3(X+L/2,.25,-W/2-.05),new THREE.Vector3(5,0,-4));fx.shoreCable.visible=false;root.add(fx.shoreCable);
+  fx.gate=buildGate();fx.gate.position.set(12.8,0,0);fx.gate.visible=false;root.add(fx.gate);
+  return {root,anchors,fx,dims:{L,H,W}};
 }
-
-function wheel() {
-  const g = new THREE.Group();
-  const tyre = new THREE.Mesh(new THREE.TorusGeometry(0.38, 0.17, 18, 40), M.tyre);
-  const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.32, 24), M.rim);
-  rim.rotation.x = Math.PI / 2;
-  tyre.castShadow = rim.castShadow = true;
-  g.add(tyre, rim);
-  return g;
-}
-
 function marker(parent, x, y, z) {
   const o = new THREE.Object3D();
   o.position.set(x, y, z);

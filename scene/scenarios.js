@@ -1,52 +1,8 @@
+// Every event below is a scripted demonstration, not a port observation.
 export const SCENARIOS = [
-  {
-    id: 'transit',
-    title: 'Normal Green Channel Transit',
-    body: 'Pre-cleared customs lane. Reefer holds setpoint in Eco mode; e-seal intact; CAN-bus streaming at full rate with zero temperature drift.',
-    target: { temp: -18.5, soc: 82, unitMode: 'ECO · ON', canHz: 50, seal: 'SEALED · OK', drive: 1 },
-    alerts: {},
-    focus: 'overview',
-    props: {},
-    events: ['GREEN CHANNEL ✓ Pre-arrival manifest verified', 'SETPOINT -18.5°C · ΔT ±0.1°C stability', 'ETA Berth 78 quay: 14:20 CST']
-  },
-  {
-    id: 'crane',
-    title: 'Quayside Crane Disconnect & Thermal Rise',
-    body: 'Reefer de-energised during Ship-to-Shore (STS) gantry crane transfer. Without external power the core begins warming; VoltEdge projects time-to-breach.',
-    target: { temp: -14.2, soc: 82, unitMode: 'OFF · NO POWER', canHz: 50, seal: 'SEALED · OK', drive: 0 },
-    alerts: { core: 'warn', carrier: 'crit' },
-    focus: 'core',
-    props: { cutaway: true },
-    events: ['POWER LOSS Reefer disconnected 10:42:07', 'THERMAL INGRESS ΔT +0.18°C/min', 'Critical breach (-12°C) projected in 14 min']
-  },
-  {
-    id: 'gate',
-    title: 'Port Gate Congestion & Demurrage Alert',
-    body: 'Terminal gate queue exceeds free detention window. High battery drain from auxiliary reefer load; demurrage penalty counter actively ticking.',
-    target: { temp: -16.8, soc: 61, unitMode: 'ECO · BATT', canHz: 50, seal: 'SEALED · OK', drive: 0 },
-    alerts: { battery: 'warn' },
-    focus: 'battery',
-    props: { gate: true },
-    events: ['GATE QUEUE 38 trucks waiting · 72 min delay', 'DEMURRAGE RISK NT$ 3,500/day tier triggered', 'Aux reefer load on Yulon pack: -1.4 kWh/h']
-  },
-  {
-    id: 'shore',
-    title: 'Shore-Power Rapid Recovery Chill',
-    body: 'Plugged into terminal 480V shore power. Carrier unit enters maximum pull-down; core rapidly recovers toward -18.5°C while tractor pack recharges.',
-    target: { temp: -18.5, soc: 88, unitMode: 'PULL-DOWN · SHORE', canHz: 50, seal: 'SEALED · OK', drive: 0 },
-    alerts: {},
-    focus: 'carrier',
-    props: { shore: true, cutaway: true },
-    events: ['SHORE POWER 440V/60Hz connected', 'RAPID PULL-DOWN -0.35°C/min cooling rate', 'Tractor EV fast-charging: +120 kW']
-  },
-  {
-    id: 'esg',
-    title: 'ISO 14083 ESG Carbon Audit',
-    body: 'Chain-level GHG emissions quantification per ISO 14083: Well-to-Wheel (WTW) energy consumption allocated per TEU-km with verified green grid factors.',
-    target: { temp: -18.5, soc: 88, unitMode: 'ECO · ON', canHz: 10, seal: 'VERIFIED · LOGGED', drive: 0 },
-    alerts: {},
-    focus: 'canbus',
-    props: {},
-    events: ['Leg energy 41.3 kWh · WTW 9.8 kgCO₂e', 'Carbon intensity: 0.21 kgCO₂e / TEU-km', 'vs Diesel Drayage Baseline: −78% CO₂e Reduction']
-  },
+ {id:'transit',title:'Green-channel transit',body:'Follow a pre-chilled container through an illustrative terminal. The refrigeration unit holds the selected cargo setpoint.',target:{soc:82,unitMode:'ECO · ON',canHz:50,seal:'SIMULATED · SEALED',drive:1},alerts:{},focus:'overview',props:{},events:['Refrigeration: powered','Model clock: 120× thermal time','Route geometry: schematic, not geospatial']},
+ {id:'crane',title:'Quayside power interruption',body:'Disconnect refrigeration in the model and watch heat accumulate. Open the thermal view to inspect the cargo instead of relying on a single status light.',target:{soc:82,unitMode:'OFF · NO POWER',canHz:50,seal:'SIMULATED · SEALED',drive:0},alerts:{carrier:'crit'},focus:'core',props:{cutaway:true},events:['Refrigeration: disconnected','Heat ingress: computed from current assumptions','Pallet colors: illustrative, not measured temperatures']},
+ {id:'gate',title:'Gate-queue stress test',body:'Explore the battery-load scenario while the reefer remains powered. Queue length and detention costs are scenario assumptions, not a live terminal feed.',target:{soc:61,unitMode:'ECO · BATT',canHz:50,seal:'SIMULATED · SEALED',drive:0},alerts:{battery:'warn'},focus:'battery',props:{gate:true},events:['Battery SoC: approaches a scripted 61%','Illustrative detention amount: NT$7,000','No dispatch or gate authorization is issued']},
+ {id:'shore',title:'Shore-power recovery',body:'Reconnect the assumed cooling capacity and observe the core recover toward the selected cargo setpoint. Recovery is calculated, not a guarantee.',target:{soc:88,unitMode:'PULL-DOWN · SHORE',canHz:50,seal:'SIMULATED · SEALED',drive:0},alerts:{},focus:'carrier',props:{shore:true,cutaway:true},events:['Cooling capacity assumption: 10 kW','Cargo-specific setpoint retained','Battery SoC: illustrative target of 88%']},
+ {id:'esg',title:'Review the model record',body:'Inspect the inputs and export a clearly labeled simulation snapshot. No carbon accounting certification, compliance finding or cryptographic signature is produced.',target:{soc:88,unitMode:'ECO · ON',canHz:10,seal:'SIMULATED · LOGGED',drive:0},alerts:{},focus:'canbus',props:{},events:['Trace: selected cargo + ambient + scenario','Output: unsigned synthetic JSON snapshot','Not an ISO 14083 certificate or safety decision']},
 ];

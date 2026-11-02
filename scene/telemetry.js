@@ -7,7 +7,7 @@ export const CARGO_CATALOG = {
     cp: 1.8,             // kJ/(kg·K)
     payloadTon: 20.0,
     valueTWD: 3800000,
-    desc: '標準進口肉品 · HACCP 規定核心不得高於 -15°C'
+    desc: '標準進口肉品 · 示意參考上限 -15°C · 非食品安全判定'
   },
   sashimi_tuna: {
     id: 'sashimi_tuna',
@@ -27,7 +27,7 @@ export const CARGO_CATALOG = {
     cp: 3.8,
     payloadTon: 8.0,
     valueTWD: 28000000,
-    desc: 'PIC/S GDP 冷鏈藥品 · 嚴格 2°C–8°C 恆溫區間'
+    desc: '示意生技貨物 · 僅模型上限 8°C · 非藥品安全判定'
   },
   fresh_produce: {
     id: 'fresh_produce',
@@ -44,8 +44,9 @@ export const CARGO_CATALOG = {
 const TARE_HEAT_CAPACITY_J = 2058000;
 const SOLAR_LOAD_W = 4470;
 const LEAK_RATE_W_PER_K = 28.5; // High-Cube insulated composite wall
-const SHORE_POWER_KW = 10.0;
-const CARRIER_ECO_KW = 7.5;
+// Thermal removal assumption, not electrical input or COP-derived refrigeration.
+const SHORE_COOLING_CAPACITY_KW = 10.0;
+const ECO_COOLING_CAPACITY_KW = 7.5;
 
 export function createTelemetry() {
   let activeCargo = CARGO_CATALOG.frozen_meat;
@@ -57,6 +58,8 @@ export function createTelemetry() {
     temp: activeCargo.prechill,
     targetTemp: activeCargo.prechill,
     peakTemp: activeCargo.prechill,
+    breachOccurred: false,
+    timeAboveReferenceSeconds: 0,
     soc: 82,
     unitMode: 'ECO · ON',
     canHz: 50,
@@ -87,8 +90,8 @@ export function createTelemetry() {
     s.heatIngressKw = ingressW / 1000;
 
     let coolingCapacityW = 0;
-    if (isPullDown) coolingCapacityW = SHORE_POWER_KW * 1000;
-    else if (isEco) coolingCapacityW = CARRIER_ECO_KW * 1000;
+    if (isPullDown) coolingCapacityW = SHORE_COOLING_CAPACITY_KW * 1000;
+    else if (isEco) coolingCapacityW = ECO_COOLING_CAPACITY_KW * 1000;
 
     const netPowerW = coolingCapacityW - ingressW;
     const totalCapacityJ = cargo.payloadTon * 1000 * cargo.cp * 1000 + TARE_HEAT_CAPACITY_J;
@@ -98,17 +101,27 @@ export function createTelemetry() {
     const dT = (-netPowerW / totalCapacityJ) * (dt * timeScale);
 
     if (isPowerOff) {
-      s.temp += Math.abs(dT);
+      s.temp = Math.min(s.ambientC, s.temp + Math.abs(dT));
     } else {
       if (s.temp > s.targetTemp) {
         s.temp = Math.max(s.targetTemp, s.temp + dT);
       } else {
-        s.temp += (s.targetTemp - s.temp) * 0.05;
+        s.temp += (s.targetTemp - s.temp) * (1-Math.exp(-dt*3));
       }
     }
 
     s.marginC = cargo.critical - s.temp;
     s.withinRef = s.temp <= cargo.critical;
+    s.peakTemp = Math.max(s.peakTemp, s.temp);
+    if (!s.withinRef) {
+      s.breachOccurred = true;
+      s.timeAboveReferenceSeconds += dt * 120;
+    }
+
+    // Derive current alerts even on a paused scenario or input change.
+    if (s.temp > cargo.critical) s.alerts.core = 'crit';
+    else if (s.temp > cargo.critical - 1.5) s.alerts.core = 'warn';
+    else delete s.alerts.core;
 
     // Financial Ticker State Machine
     if (s.withinRef) {
@@ -130,13 +143,18 @@ export function createTelemetry() {
         activeCargo = CARGO_CATALOG[cargoKey];
         s.cargo = activeCargo;
         s.temp = activeCargo.prechill;
+        s.peakTemp = activeCargo.prechill;
+        s.breachOccurred = false;
+        s.timeAboveReferenceSeconds = 0;
         s.targetTemp = activeCargo.prechill;
         s.spoilageAvoidedTWD = activeCargo.valueTWD;
         s.spoilageAtRiskTWD = 0;
+        updateThermodynamics(0);
       }
     },
     setAmbient(degC) {
-      s.ambientC = degC;
+      if(Number.isFinite(degC))s.ambientC = Math.min(42,Math.max(25,degC));
+      updateThermodynamics(0);
     },
     apply(sc) {
       s.target = sc.target;
@@ -144,10 +162,13 @@ export function createTelemetry() {
       s.unitMode = sc.target.unitMode;
       s.seal = sc.target.seal;
       s.canHz = sc.target.canHz;
-      s.targetTemp = sc.target.temp !== undefined ? sc.target.temp : s.cargo.prechill;
+      s.targetTemp = s.cargo.prechill; // Every commodity retains its own setpoint.
+      updateThermodynamics(0);
       s.demurrageAvoidedTWD = sc.id === 'gate' ? 7000 : 3500;
     },
     tick(dt) {
+      if(!Number.isFinite(dt)||dt<0)return;
+      dt=Math.min(dt,1);
       updateThermodynamics(dt);
       if (!s.target) return;
       const k = 1 - Math.exp(-dt * 0.9);

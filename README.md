@@ -188,7 +188,7 @@ node --test tests/*.test.js
 ## 9. Kaohsiung Asia New Bay Area & FITI 2027-1 Team
 
 * **Imteyaz Ahmad (伊穆泰)** — *Project Lead & AI Telematics Architect*  
-  Master of Science (NKNU Engineering International Graduate Program) · B.Tech Information Technology · Taiwan APRC `E800004605` · Kaohsiung Resident.
+  Master of Science (NKNU Engineering International Graduate Program) · B.Tech Information Technology · Taiwan APRC `[VERIFIED_APRC_HOLDER]` · Kaohsiung Resident.
 * **Imran Ahmad (伊穆仁)** — *COO & Automotive Quality Engineer*  
   MBA (NKNU) · Customer Quality Engineer (CQE / FAE) with Tier-1 Automotive & ASML precision supply chain experience · TOCFL B2.
 * **Kamran Raza** — *CTO & Agro-Food Logistics Engineer*  

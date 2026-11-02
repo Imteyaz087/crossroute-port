@@ -13,7 +13,7 @@
 
 | 職稱 (Role) | 姓名 (Name) | 學校系所與專業資質 | 聯絡方式 |
 | :--- | :--- | :--- | :--- |
-| **隊長 (Leader)** | **伊穆泰 (Imteyaz Ahmad)** | 國立高雄師範大學 工學碩士 (工學碩士第0294號) / 台灣永久居留證 APRC (E800004605) / 高雄新興區居民 | 0936663180<br>imteyaz087@gmail.com |
+| **隊長 (Leader)** | **伊穆泰 (Imteyaz Ahmad)** | 國立高雄師範大學 工學碩士 (工學碩士第0294號) / 台灣永久居留證 APRC ([VERIFIED_APRC_HOLDER]) / 高雄新興區居民 | 0936663180<br>imteyaz087@gmail.com |
 | **組員 1 (Member 1)** | **伊穆仁 (Imran Ahmad)** | 國立高雄師範大學 企業管理研究所 MBA / 車載電裝與 CQE 品質工程師 / TOCFL B2 | 0903534988<br>yimuren1@gmail.com |
 | **組員 2 (Member 2)** | **Kamran Raza** | 國立成功大學 食品安全與品質管理碩士 / Agro-Logistics 數據工程 | 0911691170<br>kamranraza001@gmail.com |
 

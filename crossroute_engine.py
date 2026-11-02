@@ -3,7 +3,7 @@
 CrossRoute Engine: Kaohsiung Smart Port AI Telematics & Zero-Genset Cold Corridor
 Production-grade Thermodynamic Differential Equation Solver, ISO 14083 Auditor & Fleet Dispatch Optimizer.
 
-Author: CrossRoute Telematics (Lead: Imteyaz Ahmad, APRC UI: E800004605, NKNU Master's Alumnus)
+Author: CrossRoute Telematics (Lead: Imteyaz Ahmad, 外僑永久居留證 (Taiwan APRC), NKNU Master's Alumnus)
 Competition: 2026 永續智慧創新黑客松 (Track 15-M 裕隆集團)
 """
 

@@ -186,7 +186,7 @@
 #strong[#"乙方 (Service Provider / 系統提供方)"]#"：" \
 #"團隊名稱："#strong[#"CrossRoute 智慧綠能聯隊 (CrossRoute Telematics)"] \
 #"團隊代表簽署："#strong[#"伊穆泰 (Imteyaz Ahmad)"] \
-#"身分證明編號：中華民國 APRC E800004605" \
+#"身分證明編號：中華民國 APRC [VERIFIED_APRC_HOLDER]" \
 #"聯絡電話：0936663180 / 0911691170" \
 #"官方信箱："#raw("imteyaz087@gmail.com") \
 #"簽署日期：中華民國 115 年 "#strong[#"__ 月 __"]#" 日" \

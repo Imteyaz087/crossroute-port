@@ -4,11 +4,13 @@ import {BOX, containerGeometry, containerMaterial, asphaltTexture, glowTexture, 
 import {stsStructure, stsRig, rtg, rtgRig, merged, beam, block, STS} from './port-cranes.js';
 import {buildVessel, stowPlan, heroSlot} from './port-vessel.js';
 import {fleetKit, makeTruck, buildFleet, TRAILER_DECK, BOX_OFFSET} from './port-fleet.js';
+import {buildGate, buildShorePower, buildColdHub} from './port-facilities.js';
 
 // The software renderer still draws harborLayout() boxes; the GPU path swaps these
 // schematic stand-ins for detailed procedural models at the same positions.
 const REPLACED = new Set(['terminal island', 'harbor water', 'ship hull', 'ship deck', 'bow', 'bridge', 'bridge glazing', 'mast', 'vessel container',
-  'crane column', 'crane foot', 'crane crossbeam', 'crane outreach', 'crane top', 'hoist cable', 'spreader', 'yard container', 'light mast', 'luminaire']);
+  'crane column', 'crane foot', 'crane crossbeam', 'crane outreach', 'crane top', 'hoist cable', 'spreader', 'yard container', 'light mast', 'luminaire',
+  'gate gantry', 'gate post', 'gate kiosk', 'shore bay', 'power pedestal', 'power light', 'cold hub', 'hub roof', 'loading door']);
 const CRANES = [{x: -17, livery: 0, phase: 0}, {x: 15, livery: 1, phase: 21}]; // west crane carries the CrossRoute reefer
 const MASTS = [[-30, -12], [-1, -12], [29, -12], [-37, 5], [-9.5, 5], [17, 5], [37.5, -4], [-37, 19]];
 const std = (color, roughness, metalness = 0, extra = {}) => new THREE.MeshStandardMaterial({color, roughness, metalness, ...extra});
@@ -39,7 +41,8 @@ function yardSlots() {
   const rand = rng(21), slots = [];
   for (const z of [7.4, 10, 12.6, 15.2]) {
     for (const x of [-27.5, -14.7]) for (let t = 0, n = 1 + Math.floor(rand() * 4); t < n; t++) slots.push({x, y: BOX.h / 2 + t * BOX.h, z, len: 40, livery: 1 + Math.floor(rand() * 9)});
-    for (let t = 0, n = 1 + Math.floor(rand() * 3); t < n; t++) slots.push({x: -4.6, y: BOX.h / 2 + t * BOX.h, z, len: 20, livery: 1 + Math.floor(rand() * 9)});
+    // 20ft empties sit in the east corner, clear of the Vehicle/Thermal camera lines.
+    for (let t = 0, n = 1 + Math.floor(rand() * 3); t < n; t++) slots.push({x: 35.6, y: BOX.h / 2 + t * BOX.h, z: z + 5.4, len: 20, livery: 1 + Math.floor(rand() * 9)});
   }
   return slots;
 }
@@ -96,6 +99,7 @@ export function buildHarbor() {
 
   // Floodlight masts: emissive heads, additive ground pools, three real spot lights.
   const poles = [], pools = [];
+  root.add(buildGate(lamps, pools), buildShorePower(lamps, pools), buildColdHub(lamps, pools));
   for (const [x, z] of MASTS) {
     beam(poles, [x, 0, z], [x, 20, z], .35); block(poles, [x, 20.2, z], [2.6, .25, .9]);
     for (const dx of [-.9, 0, .9]) lamps.push([x + dx, 19.9, z]);
@@ -114,7 +118,7 @@ export function buildHarbor() {
   pools.forEach(([x, z, r], i) => { o.position.set(x, .08, z); o.scale.set(r * 2, 1, r * 2); o.updateMatrix(); poolMesh.setMatrixAt(i, o.matrix); });
   poolMesh.renderOrder = 1; root.add(poolMesh);
   for (const [x, y, z, tx, tz] of [[-17, 14.5, -16, -17, -18.5], [15, 14.5, -16, 15, -18.5], [0, 22, 8, 0, 0]]) {
-    const s = new THREE.SpotLight(0xffd9a0, x === 0 ? 380 : 900, 60, .75, .7, 1.6); s.position.set(x, y, z); s.target.position.set(tx, 0, tz); root.add(s, s.target);
+    const s = new THREE.SpotLight(0xffd9a0, x === 0 ? 220 : 900, 60, .75, .7, 1.6); s.position.set(x, y, z); s.target.position.set(tx, 0, tz); root.add(s, s.target);
   }
 
   // Water: dark, low-gloss, with flickering light streaks under over-water lamps.
@@ -144,9 +148,12 @@ export function buildHarbor() {
   }
   const beacon = new THREE.Mesh(new THREE.SphereGeometry(.25, 12, 8), new THREE.MeshBasicMaterial({color: 0xffe6a9})); root.add(beacon);
 
-  return {root, anchors, pickTargets, update(t, reduced, camera) {
+  // Vehicle and Thermal views keep the port as a backdrop without pins or traffic.
+  const overlays = [route, beacon, fleet.root, ...pickTargets];
+  let studio = false;
+  return {root, anchors, pickTargets, setStudio(on) { studio = on; overlays.forEach(o => { o.visible = !on; }); }, update(t, reduced, camera) {
     if (camera) sky.position.copy(camera.position);
-    beacon.visible = !reduced; const p = (t * .035) % 1; beacon.position.set(-32 + p * 53, .38, 0);
+    beacon.visible = !reduced && !studio; const p = (t * .035) % 1; beacon.position.set(-32 + p * 53, .38, 0);
     rigs.forEach(r => r.update(t, reduced)); rtgs.forEach(r => r.update(t, reduced)); fleet.update(t, reduced);
     if (!reduced) {
       for (let i = 0; i < waterPos.count; i++) waterPos.setY(i, Math.sin(waterPos.getX(i) * .28 + t * .5) * Math.cos(waterPos.getZ(i) * .38 + t * .3) * .1);

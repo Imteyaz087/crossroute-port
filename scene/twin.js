@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { M } from './materials.js';
 import { TRUCK, truckStructure } from './truck-design.js';
 import { meshFactory } from './truck-mesh.js';
+import { reeferDecalTexture } from './port-facilities.js';
 
 export const SPEC = {
   truck: 'Illustrative electric drayage tractor — not manufacturer CAD',
@@ -26,6 +27,9 @@ export function buildTwin() {
   }
   fx.nearRibs=new THREE.Group();root.add(fx.nearRibs);
   f.batch(fx.nearRibs,parts.filter(p=>p.role==='nearRibs'));
+  // Livery decals ride outside the ribs; the near one hides with the cutaway ribs.
+  const decalMat=new THREE.MeshStandardMaterial({map:reeferDecalTexture(),transparent:true,depthWrite:false,roughness:.5,metalness:.1});
+  for(const side of [-1,1]){const d=new THREE.Mesh(new THREE.PlaneGeometry(L-.7,(L-.7)*480/2048),decalMat);d.position.set(X,Y+.1,side*(W/2+.065));if(side<0)d.rotation.y=Math.PI;(side>0?fx.nearRibs:root).add(d);}
   f.batch(root,parts.filter(p=>!['cab','cutaway','roof','nearRibs'].includes(p.role)));
   // Cutaway's y is animated relative to the container, not world zero.
   const cutawayPivot=new THREE.Group();cutawayPivot.position.y=Y;root.add(cutawayPivot);

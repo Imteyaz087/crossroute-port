@@ -183,6 +183,12 @@ open http://127.0.0.1:8088/index.html
 node --test tests/*.test.js
 ```
 
+### Before Publishing
+```bash
+# Re-stamp index.html so browsers fetch changed files at once (tests/asset-stamps.test.js fails if stale)
+node scripts/stamp-assets.mjs
+```
+
 ---
 
 ## 9. Kaohsiung Asia New Bay Area & FITI 2027-1 Team

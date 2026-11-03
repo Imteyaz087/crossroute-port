@@ -42,7 +42,7 @@ function inspect(id){
 function inspectZone(id){
   const zone=ZONES.find(z=>z.id===id);if(!zone)return;$('zone-readout').textContent=zone.detail;
   document.querySelectorAll('[data-zone]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.zone===id)));
-  if(id==='vehicle')setView('vehicle');else setView('port');
+  if(id==='vehicle')setView('vehicle');else{setView('port');updateScenes('focusZone',id);}
 }
 function updateHUD(){
   const s=tel.state;$('k-temp').textContent=`${s.temp.toFixed(1)}°C`;$('k-soc').textContent=`${s.soc.toFixed(0)}%`;$('k-ingress').textContent=`${s.heatIngressKw.toFixed(2)} kW`;

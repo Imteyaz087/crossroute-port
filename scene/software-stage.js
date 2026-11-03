@@ -36,5 +36,5 @@ export function createSoftwareStage(canvas,onInspect) {
       for(const zone of ZONES){const p=project(zone.position,view,w,h);if(!p.visible)continue;labels.push({...p,id:zone.id});ctx.fillStyle='#e7d5a4';ctx.beginPath();ctx.arc(p.x,p.y,11,0,Math.PI*2);ctx.fill();ctx.fillStyle='#222a21';ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.fillText(zone.name.slice(0,2),p.x,p.y+3);}
     }
   }
-  return {kind:'software',setView,render,setScenario(sc){cutaway=!!sc.props.cutaway;dirty=true;},focus(id){setView(id==='core'?'thermal':'vehicle');},invalidate(){dirty=true;},dispose(){ro.disconnect();canvas.removeEventListener('pointerdown',down);canvas.removeEventListener('pointermove',move);canvas.removeEventListener('pointerup',up);canvas.removeEventListener('pointercancel',cancel);canvas.removeEventListener('wheel',wheel);canvas.removeEventListener('keydown',key);}};
+  return {kind:'software',setView,render,setScenario(sc){cutaway=!!sc.props.cutaway;dirty=true;},focus(id){setView(id==='core'?'thermal':'vehicle');},focusZone(){},invalidate(){dirty=true;},dispose(){ro.disconnect();canvas.removeEventListener('pointerdown',down);canvas.removeEventListener('pointermove',move);canvas.removeEventListener('pointerup',up);canvas.removeEventListener('pointercancel',cancel);canvas.removeEventListener('wheel',wheel);canvas.removeEventListener('keydown',key);}};
 }

@@ -30,7 +30,7 @@ export function createStage(canvas) {
   const key = new THREE.DirectionalLight(0xfff4e6, 2.1);
   key.position.set(8, 13, 10);
   key.castShadow = true;
-  key.shadow.mapSize.set(1024, 1024);
+  key.shadow.mapSize.set(2048, 2048);
   Object.assign(key.shadow.camera, { left: -14, right: 14, top: 10, bottom: -10, near: 1, far: 50 });
   key.shadow.bias = -0.0004;
   key.shadow.normalBias = 0.02;
@@ -59,7 +59,7 @@ export function createStage(canvas) {
   const observer=new ResizeObserver(resize);observer.observe(canvas);
   resize();
 
-  return { renderer, scene, camera, key, dispose(){observer.disconnect();scene.environment?.dispose();pmrem.dispose();renderer.dispose();} };
+  return { renderer, scene, camera, key, fill, rim, dispose(){observer.disconnect();scene.environment?.dispose();pmrem.dispose();renderer.dispose();} };
 }
 
 function makeContactBlob() {

@@ -4,16 +4,43 @@ import {buildTwin} from './scene/twin.js';
 import {buildHarbor} from './scene/harbor.js';
 import {createNav} from './scene/nav.js';
 import {VIEWS,cameraPosition,fitView,zoomBounds} from './scene/observatory-model.js';
+import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
+import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
+import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
+import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
+
+// Port view is a night scene; Vehicle and Thermal keep the neutral studio rig.
+const MOOD={
+  port:{env:.3,key:[1.1,0xd9cfbb],fill:.75,rim:.4,fog:0x0b0a09,exposure:1.3,sun:[40,70,30],shadow:[55,45,200]},
+  studio:{env:.65,key:[2.1,0xfff4e6],fill:.6,rim:1.5,fog:0x0e0d0c,exposure:1,sun:[8,13,10],shadow:[14,10,50]},
+};
+// Close-up shots for zone pins in the port view (camera position, look-at target).
+const SHOTS={quay:{pos:[-1,8.5,-3],tgt:[-17,6,-24]},gate:{pos:[26,7.5,22.5],tgt:[21,4,-2]},shore:{pos:[19,7.5,21.5],tgt:[6,1.5,12]}};
 
 // Imported dynamically after the independent controller is fully usable.
 export function createPortStage(canvas,{onLost,onInspect,reduced=false}={}) {
-const {renderer,scene,camera,dispose:disposeStage}=createStage(canvas);
+const {renderer,scene,camera,key,fill,rim,dispose:disposeStage}=createStage(canvas);
+let composer=null,bloomSize='';
+function setMood(m){
+  scene.environmentIntensity=m.env;key.intensity=m.key[0];key.color.set(m.key[1]);fill.intensity=m.fill;rim.intensity=m.rim;
+  scene.fog.color.set(m.fog);renderer.toneMappingExposure=m.exposure;key.position.set(...m.sun);
+  const c=key.shadow.camera,[x,y,far]=m.shadow;Object.assign(c,{left:-x,right:x,top:y,bottom:-y,far});c.updateProjectionMatrix();
+}
+// Bloom only where shadows run (wider viewports); phones keep the plain render.
+function draw(){
+  if(viewMode!=='port'||!renderer.shadowMap.enabled){renderer.render(scene,camera);return;}
+  if(!composer){composer=new EffectComposer(renderer);composer.addPass(new RenderPass(scene,camera));composer.addPass(new UnrealBloomPass(new THREE.Vector2(256,256),.42,.45,.86));composer.addPass(new OutputPass());}
+  const size=renderer.getSize(new THREE.Vector2()),key2=`${size.x}x${size.y}@${renderer.getPixelRatio()}`;
+  if(key2!==bloomSize){bloomSize=key2;composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(size.x,size.y);}
+  composer.render();
+}
 const twin=buildTwin(), harbor=buildHarbor();scene.add(harbor.root,twin.root);
 const nav=createNav(camera,canvas);let viewMode='port',activeScenario='transit';
 const propsState={cutaway:0};let currentScenario=null;
 function setView(mode){
   viewMode=mode;harbor.root.visible=mode==='port';
-  const r=canvas.getBoundingClientRect();const v=fitView(mode,r.width||800,r.height||470);const bounds=zoomBounds(v.distance);nav.controls.minDistance=bounds.min;nav.controls.maxDistance=bounds.max;camera.far=Math.max(350,bounds.max+150);camera.updateProjectionMatrix();scene.fog.near=v.distance*1.6;scene.fog.far=bounds.max+100;
+  const r=canvas.getBoundingClientRect();const v=fitView(mode,r.width||800,r.height||470);if(mode==='port')v.distance*=.64;const bounds=zoomBounds(v.distance);nav.controls.minDistance=bounds.min;nav.controls.maxDistance=bounds.max;camera.far=Math.max(350,bounds.max+150);camera.updateProjectionMatrix();scene.fog.near=v.distance*1.6;scene.fog.far=bounds.max+100;
+  setMood(mode==='port'?MOOD.port:MOOD.studio);if(mode==='port')nav.controls.minDistance=8;
   nav.home.tgt.set(...v.target);nav.home.pos.set(...cameraPosition(v));nav.focus(nav.home.tgt,nav.home.pos,reduced?.001:1.05);
   propsState.cutaway=(mode==='thermal'||currentScenario?.props.cutaway)?1:0;
 }
@@ -114,9 +141,10 @@ function lost(e){e.preventDefault();onLost?.();}canvas.addEventListener('webglco
 const resizeObserver=new ResizeObserver(()=>setView(viewMode));resizeObserver.observe(canvas);
 setView('port');
 return {kind:'webgl',setView,setScenario,setReduced(value){reduced=value;},
+  focusZone(id){const shot=SHOTS[id];if(viewMode!=='port'||!shot)return;nav.focus(new THREE.Vector3(...shot.tgt),new THREE.Vector3(...shot.pos),reduced?.001:1.6);},
   focus(id){if(id==='core'){setView('thermal');return;}if(twin.anchors[id]){harbor.root.visible=false;const aspect=Math.max(.4,camera.aspect);nav.focusObject(twin.anchors[id],Math.max(9,9/aspect));}},
-  render(s,t,dt,moving=true){animate=moving&&!reduced;if(!animate)cut=propsState.cutaway;nav.update(dt);bindVisuals(s,dt,reduced?0:t);harbor.update(t,reduced);renderer.render(scene,camera);},
-  dispose(){resizeObserver.disconnect();canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('webglcontextlost',lost);nav.dispose();scene.traverse(o=>{o.geometry?.dispose();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else {o.material?.map?.dispose();o.material?.dispose();}});disposeStage();},
+  render(s,t,dt,moving=true){animate=moving&&!reduced;if(!animate)cut=propsState.cutaway;nav.update(dt);bindVisuals(s,dt,reduced?0:t);harbor.update(t,reduced,camera);draw();},
+  dispose(){resizeObserver.disconnect();canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('webglcontextlost',lost);nav.dispose();composer?.dispose();scene.traverse(o=>{o.geometry?.dispose();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else {o.material?.map?.dispose();o.material?.dispose();}});disposeStage();},
   debug:{renderer,scene,camera,twin,nav}
 };
 }

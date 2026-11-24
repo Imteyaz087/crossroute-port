@@ -1,188 +1,110 @@
-export const CARGO_CATALOG = {
-  frozen_meat: {
-    id: 'frozen_meat',
-    name: '進口冷凍牛豬肉 (Frozen Meat)',
-    prechill: -18.5,
-    critical: -15.0,
-    cp: 1.8,             // kJ/(kg·K)
-    payloadTon: 20.0,
-    valueTWD: 3800000,
-    desc: '標準進口肉品 · 示意參考上限 -15°C · 非食品安全判定'
-  },
-  sashimi_tuna: {
-    id: 'sashimi_tuna',
-    name: '遠洋超低溫黑鮪魚 (Sashimi Tuna)',
-    prechill: -55.0,
-    critical: -45.0,
-    cp: 1.6,
-    payloadTon: 18.0,
-    valueTWD: 12500000,
-    desc: '日本外銷生食級 · 超低溫急速凍結 高度溫敏'
-  },
-  pharma_vaccine: {
-    id: 'pharma_vaccine',
-    name: '醫藥生技疫苗製劑 (Biologics/Pharma)',
-    prechill: 4.0,
-    critical: 8.0,
-    cp: 3.8,
-    payloadTon: 8.0,
-    valueTWD: 28000000,
-    desc: '示意生技貨物 · 僅模型上限 8°C · 非藥品安全判定'
-  },
-  fresh_produce: {
-    id: 'fresh_produce',
-    name: '頂級外銷亞熱帶鮮果 (Fresh Mango/Produce)',
-    prechill: 12.0,
-    critical: 15.0,
-    cp: 3.6,
-    payloadTon: 15.0,
-    valueTWD: 1200000,
-    desc: '產銷履歷芒果/釋迦 · 抑制呼吸熱 乙烯防衰'
-  }
-};
+// Live engine: SimClock + three-node physics + custody timeline + alarms + event log.
+// Keeps the state fields the 3D renderers read (temp, unitMode, drive, canHz, cargo.prechill,
+// cargo.critical). Removed: energySavedPerTripTWD, co2eAvoidedKg, spoilageAtRiskTWD
+// (unsupported claims). demurrageAvoidedTWD → queueCost (fees + energy + time, itemised).
+// SYNTHETIC DEMO · NOT OPERATIONAL.
+import {CARGO, UNITS, COSTS, v} from './params.js';
+import {createModel, resolveTimeline} from './physics.js';
+import {createAlarmEngine} from './alarms.js';
+import {createSimClock} from './sim-clock.js';
+import {createEventLog} from './event-log.js';
 
-const TARE_HEAT_CAPACITY_J = 2058000;
-const SOLAR_LOAD_W = 4470;
-const LEAK_RATE_W_PER_K = 28.5; // High-Cube insulated composite wall
-// Thermal removal assumption, not electrical input or COP-derived refrigeration.
-const SHORE_COOLING_CAPACITY_KW = 10.0;
-const ECO_COOLING_CAPACITY_KW = 7.5;
+export const CARGO_CATALOG = CARGO;
+const ALARM_EVAL_S = 10, SAMPLE_S = 60;
 
-export function createTelemetry() {
-  let activeCargo = CARGO_CATALOG.frozen_meat;
-  let ambientC = 32.0; // Summer Kaohsiung port baseline
+export function limitFor(cargo) {
+  if (cargo.regime === 'frozen') return cargo.practiceUpperC ?? -18;
+  if (cargo.regime === 'chilled') return 7;
+  return cargo.bandC ? cargo.bandC[1] : v(cargo.setpointC) + 3;
+}
+export function thresholdsFor(cargo) {
+  if (cargo.regime === 'frozen') return {returnAir: -12, product: -18, practice: cargo.practiceUpperC ?? null, transportAir: -18};
+  if (cargo.regime === 'chilled') return {returnAir: 7, product: 7, transportAir: 7};
+  return {returnAir: null, product: cargo.bandC?.[1] ?? null, low: cargo.bandC?.[0] ?? null};
+}
 
+export function createTelemetry({log = createEventLog(), clock = createSimClock(300)} = {}) {
+  const cfg = {cargoId: 'frozen_meat', unitId: 'auto', ambientC: 38, solarWm2: 1000, mobile: 'ev', usableKWh: 282};
+  let model, alarms, timeline = [], k = 0, scenario = null, nextAlarm = 0, nextSample = 0;
   const s = {
-    cargo: activeCargo,
-    ambientC: ambientC,
-    temp: activeCargo.prechill,
-    targetTemp: activeCargo.prechill,
-    peakTemp: activeCargo.prechill,
-    breachOccurred: false,
-    timeAboveReferenceSeconds: 0,
-    soc: 82,
-    unitMode: 'ECO · ON',
-    canHz: 50,
-    seal: 'SEALED · OK',
-    drive: 1,
-    alerts: {},
-    target: null,
-    heatIngressKw: 0,
-    marginC: 3.5,
-    withinRef: true,
-    // CFO Financial Metrics
-    spoilageAtRiskTWD: 0,
-    spoilageAvoidedTWD: activeCargo.valueTWD,
-    demurrageAvoidedTWD: 3500,
-    energySavedPerTripTWD: 1610,
-    co2eAvoidedKg: 42.8
+    cargo: null, ambientC: cfg.ambientC, temp: 0, peakTemp: -Infinity, breachOccurred: false, timeAboveReferenceSeconds: 0,
+    soc: 82, unitMode: 'ECO · PLUG', canHz: 1, seal: 'SIMULATED', drive: 0, alerts: {}, heatIngressKw: 0, marginC: 0, withinRef: true,
+    readings: null, history: [], alarmRows: [], level: 'ok', cfg, unit: null, queueCost: null, plugActions: 0, gateInAt: null, gateOutAt: null, notices: [],
   };
+  const emit = (type, payload) => log.append(type, payload, {tSim: model ? model.t : 0});
 
-  function updateThermodynamics(dt) {
-    const cargo = s.cargo;
-    const isPowerOff = s.unitMode.startsWith('OFF');
-    const isPullDown = s.unitMode.startsWith('PULL');
-    const isEco = s.unitMode.startsWith('ECO');
-
-    // W = U * A * (Tambient - Tcore) + Wsolar
-    const deltaT = Math.max(0, s.ambientC - s.temp);
-    const ingressW = LEAK_RATE_W_PER_K * deltaT + (isPowerOff ? SOLAR_LOAD_W : SOLAR_LOAD_W * 0.4);
-    s.heatIngressKw = ingressW / 1000;
-
-    let coolingCapacityW = 0;
-    if (isPullDown) coolingCapacityW = SHORE_COOLING_CAPACITY_KW * 1000;
-    else if (isEco) coolingCapacityW = ECO_COOLING_CAPACITY_KW * 1000;
-
-    const netPowerW = coolingCapacityW - ingressW;
-    const totalCapacityJ = cargo.payloadTon * 1000 * cargo.cp * 1000 + TARE_HEAT_CAPACITY_J;
-
-    // dT/dt in real time (scaled for responsive demonstration)
-    const timeScale = 120.0; // 1 second simulated = 2 minutes real thermal drift
-    const dT = (-netPowerW / totalCapacityJ) * (dt * timeScale);
-
-    if (isPowerOff) {
-      s.temp = Math.min(s.ambientC, s.temp + Math.abs(dT));
-    } else {
-      if (s.temp > s.targetTemp) {
-        s.temp = Math.max(s.targetTemp, s.temp + dT);
-      } else {
-        s.temp += (s.targetTemp - s.temp) * (1-Math.exp(-dt*3));
-      }
-    }
-
-    s.marginC = cargo.critical - s.temp;
-    s.withinRef = s.temp <= cargo.critical;
-    s.peakTemp = Math.max(s.peakTemp, s.temp);
-    if (!s.withinRef) {
-      s.breachOccurred = true;
-      s.timeAboveReferenceSeconds += dt * 120;
-    }
-
-    // Derive current alerts even on a paused scenario or input change.
-    if (s.temp > cargo.critical) s.alerts.core = 'crit';
-    else if (s.temp > cargo.critical - 1.5) s.alerts.core = 'warn';
-    else delete s.alerts.core;
-
-    // Financial Ticker State Machine
-    if (s.withinRef) {
-      s.spoilageAtRiskTWD = 0;
-      s.spoilageAvoidedTWD = cargo.valueTWD;
-    } else {
-      // Exceeds critical temperature: damage escalates with thermal penetration
-      const excessC = s.temp - cargo.critical;
-      const riskFraction = Math.min(1.0, excessC / 3.0);
-      s.spoilageAtRiskTWD = Math.round(cargo.valueTWD * riskFraction);
-      s.spoilageAvoidedTWD = cargo.valueTWD - s.spoilageAtRiskTWD;
-    }
+  function cargoView() {
+    const c = CARGO[cfg.cargoId];
+    return {...c, prechill: v(c.setpointC), critical: limitFor(c), valueTWD: v(c.valueTWD), payloadTon: v(c.massKg) / 1000, cp: v(c.cpFrozen) / 1000};
   }
-
-  return {
-    state: s,
-    setCargo(cargoKey) {
-      if (CARGO_CATALOG[cargoKey]) {
-        activeCargo = CARGO_CATALOG[cargoKey];
-        s.cargo = activeCargo;
-        s.temp = activeCargo.prechill;
-        s.peakTemp = activeCargo.prechill;
-        s.breachOccurred = false;
-        s.timeAboveReferenceSeconds = 0;
-        s.targetTemp = activeCargo.prechill;
-        s.spoilageAvoidedTWD = activeCargo.valueTWD;
-        s.spoilageAtRiskTWD = 0;
-        updateThermodynamics(0);
+  function dispatch(ev) {
+    model.applyEvent(ev);
+    const r = model.readings(), p = {...ev.payload};
+    if (ev.type === 'plug' || ev.type === 'unplug') s.plugActions++;
+    if (ev.type === 'gate_in') s.gateInAt = model.t;
+    if (ev.type === 'gate_out') s.gateOutAt = model.t;
+    if (ev.type === 'EIR_signed') Object.assign(p, {setpointC: r.setpointC, displayedReturnAirC: +r.returnAir.toFixed(1), powerSource: r.source, note: 'EIR is a snapshot; it does not cover the unplug→EIR window'});
+    if (ev.type === 'genset_start' || ev.type === 'ev_supply_start') p.powerSource = model.source;
+    emit(ev.type, p);
+  }
+  function update() {
+    const r = model.readings(), c = s.cargo;
+    s.readings = r; s.temp = r.core; s.peakTemp = Math.max(s.peakTemp, r.core, r.surface);
+    s.soc = r.soc * 100; s.drive = r.moving ? 1 : 0; s.heatIngressKw = r.Qin / 1000;
+    const warm = Math.max(r.core, r.surface); s.marginC = c.critical - warm; s.withinRef = warm <= c.critical;
+    s.unitMode = !r.powered ? 'OFF · NO POWER' : `${r.Qref > 0.9 * r.cap ? 'PULL-DOWN' : 'ECO'} · ${r.source.toUpperCase()}`;
+    s.alarmRows = alarms.all(); s.level = alarms.level();
+    const active = s.alarmRows.filter(a => ['active', 'escalated', 'acked'].includes(a.state));
+    s.alerts = {};
+    if (active.some(a => ['surface', 'core'].includes(a.channel))) s.alerts.core = active.some(a => ['surface', 'core'].includes(a.channel) && a.severity === 'crit') ? 'crit' : 'warn';
+    if (!r.powered || active.some(a => ['returnAir', 'supplyAir'].includes(a.channel))) s.alerts.carrier = r.powered ? 'warn' : 'crit';
+    if (r.soc < 0.2) s.alerts.battery = 'warn';
+    const energyTWD = r.fuelUsedL * v(COSTS.dieselTWDperL) + (cfg.mobile === 'ev' ? r.battUsedKWh * v(COSTS.electricityTWDperKWh) : 0);
+    const queueH = s.gateInAt == null ? 0 : ((s.gateOutAt ?? model.t) - s.gateInAt) / 3600;
+    const plugFees = s.plugActions * v(COSTS.plugUnplugTWD), truck = queueH * v(COSTS.truckTWDperHour);
+    s.queueCost = {plugActions: s.plugActions, plugFeesTWD: Math.round(plugFees), energyTWD: Math.round(energyTWD), truckTimeTWD: Math.round(truck), totalTWD: Math.round(plugFees + energyTWD + truck), queueHours: queueH};
+  }
+  function restart(sc = scenario) {
+    scenario = sc; clock.reset(); k = 0; nextAlarm = 0; nextSample = 0;
+    s.cargo = cargoView(); s.unit = UNITS[cfg.unitId === 'auto' ? s.cargo.unit : cfg.unitId];
+    model = createModel({...cfg, initialSource: 'off'});
+    alarms = createAlarmEngine({cargo: CARGO[cfg.cargoId], unit: s.unit, emit});
+    timeline = resolveTimeline(sc.timeline, cfg.mobile);
+    Object.assign(s, {history: [], peakTemp: -Infinity, breachOccurred: false, timeAboveReferenceSeconds: 0, plugActions: 0, gateInAt: null, gateOutAt: null, ambientC: cfg.ambientC, notices: []});
+    emit('scenario_start', {scenario: sc.id, cargo: cfg.cargoId, unit: s.unit.id, ambientC: cfg.ambientC, solarWm2: cfg.solarWm2, mobile: cfg.mobile, usableKWh: cfg.usableKWh, setpointC: v(CARGO[cfg.cargoId].setpointC), clockScale: clock.scale});
+    advanceTo(0);
+  }
+  function advanceTo(tTarget) {
+    while (true) {
+      while (k < timeline.length && timeline[k].tS <= model.t + 1e-9) dispatch(timeline[k++]);
+      if (model.t >= nextAlarm - 1e-9) {
+        const r = model.readings(); alarms.evaluate(r, ALARM_EVAL_S, {handling: r.handling, powered: r.powered}); nextAlarm = model.t + ALARM_EVAL_S;
       }
-    },
-    setAmbient(degC) {
-      if(Number.isFinite(degC))s.ambientC = Math.min(42,Math.max(25,degC));
-      updateThermodynamics(0);
-    },
-    apply(sc) {
-      s.target = sc.target;
-      s.alerts = { ...sc.alerts };
-      s.unitMode = sc.target.unitMode;
-      s.seal = sc.target.seal;
-      s.canHz = sc.target.canHz;
-      s.targetTemp = s.cargo.prechill; // Every commodity retains its own setpoint.
-      updateThermodynamics(0);
-      s.demurrageAvoidedTWD = sc.id === 'gate' ? 7000 : 3500;
-    },
-    tick(dt) {
-      if(!Number.isFinite(dt)||dt<0)return;
-      dt=Math.min(dt,1);
-      updateThermodynamics(dt);
-      if (!s.target) return;
-      const k = 1 - Math.exp(-dt * 0.9);
-      s.soc += (s.target.soc - s.soc) * k * 0.4;
-      s.drive += (s.target.drive - s.drive) * k;
-
-      // Update alert levels dynamically based on physical margin
-      if (s.temp > s.cargo.critical) {
-        s.alerts.core = 'crit';
-      } else if (s.temp > s.cargo.critical - 1.5) {
-        s.alerts.core = 'warn';
-      } else {
-        delete s.alerts.core;
-      }
-    },
+      if (model.t >= nextSample - 1e-9) { const r = model.readings(); s.history.push({t: r.t, returnAir: r.returnAir, supplyAir: r.supplyAir, surface: r.surface, core: r.core, soc: r.soc, fuelL: r.fuelL, source: r.source}); nextSample = model.t + SAMPLE_S; }
+      if (model.t >= tTarget - 1e-9) break;
+      const nextEv = k < timeline.length ? timeline[k].tS : Infinity;
+      const h = Math.min(5, tTarget - model.t, nextEv - model.t, nextAlarm - model.t, nextSample - model.t);
+      model.step(Math.max(h, 1e-6));
+      while (model.notices.length) { const n = model.notices.shift(); s.notices.push(n); emit('alarm', {action: 'raise', ruleId: n.type.toUpperCase(), kind: 'diagnostic', severity: 'crit', clause: 'Mobile power lost'}); }
+      const warm = Math.max(model.readings().core, model.readings().surface);
+      if (warm > s.cargo.critical) { s.breachOccurred = true; s.timeAboveReferenceSeconds += h; }
+    }
+    update();
+  }
+  const api = {
+    state: s, clock, log, cfg,
+    get scenario() { return scenario; },
+    get timeline() { return timeline; },
+    apply(sc) { restart(sc); },
+    tick(dtWall) { const d = clock.tick(dtWall); if (d > 0) advanceTo(model.t + d); },
+    setCargo(id) { if (!CARGO[id] || id === cfg.cargoId) return; const from = cfg.cargoId; cfg.cargoId = id; log.append('setpoint_change', {from: v(CARGO[from].setpointC), setpointC: v(CARGO[id].setpointC), cargo: id}, {tSim: model ? model.t : 0, source: 'operator'}); if (scenario) restart(); },
+    setAmbient(c) { if (Number.isFinite(c)) { cfg.ambientC = Math.min(42, Math.max(25, c)); if (scenario) restart(); } },
+    setConfig(patch) { Object.assign(cfg, patch); if (scenario) restart(); },
+    ack(id, by) { return alarms.ack(id, model.t, by); },
+    ackAll(by) { const n = alarms.ackAll(model.t, by); update(); return n; },
+    injectFault(ch, kind) { alarms.injectFault(ch, kind); },
+    get faults() { return alarms.faults; },
+    mcJob(n = 120) { return {cfg: {...cfg, initialSource: 'off'}, timeline: scenario.timeline, horizonS: scenario.horizonMin * 60, n, seed: 7, sampleS: 60, thresholds: thresholdsFor(CARGO[cfg.cargoId])}; },
   };
+  return api;
 }

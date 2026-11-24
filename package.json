@@ -1,0 +1,7 @@
+{
+  "name": "crossroute-port",
+  "private": true,
+  "type": "module",
+  "description": "CrossRoute Port Observatory - synthetic demo, static site (no build step)",
+  "scripts": { "test": "node --test tests/*.test.js", "check": "node tests/syntax-check.mjs" }
+}

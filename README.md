@@ -3,8 +3,13 @@
 
 [![PBR Digital Twin](https://img.shields.io/badge/Three.js-PBR%20Digital%20Twin-d4b67a?style=flat-square)](https://imteyaz087.github.io/crossroute-port/)
 [![Zero-Blue Industrial Studio](https://img.shields.io/badge/Palette-Zero--Blue%20Studio%20(R%E2%89%A5G%E2%89%A5B)-8a8680?style=flat-square)](https://imteyaz087.github.io/crossroute-port/)
-[![ISO 14083 Certified](https://img.shields.io/badge/Carbon-ISO%2014083%20Aligned-10b981?style=flat-square)](https://imteyaz087.github.io/crossroute-port/)
-[![Hardware Support](https://img.shields.io/badge/Hardware-Yulon%20CMC--ET35%20EV-ece9e4?style=flat-square)](https://imteyaz087.github.io/crossroute-port/)
+
+> **v2 model upgrade notice (2026-11).** The simulation now uses a three-node (air / product surface / product core) heat balance integrated with RK4, published refrigeration capacity points (Carrier PrimeLINE, Thermo King SuperFreezer), an estimated COP model, sol-air solar, asphalt re-radiation, infiltration and door events, EV-battery / diesel-genset energy balances, a SHA-256 hash-chained custody event log, and clause-referenced alarms. Every parameter carries a source and an estimate flag (`scene/params.js`, also shown in the page's *Sources & estimates* drawer).
+>
+> **Corrections to earlier text in this README:**
+> - Taiwan's frozen-food rule is **−18 °C** (食品良好衛生規範準則 GHP Art.4 附件一 / Annex 1 §3(1)), with box air ≤ **−12 °C** during handling (GHP Art.8 items 6–7). It is not −15 °C, and it is in Annex 1, not "Annex 2".
+> - Sashimi tuna at −55 °C is **industry practice**, not a legal requirement, and needs a super-freezer (standard reefers stop at −30 to −35 °C).
+> - The demo is not ISO 14083 certified or aligned, and it has no hardware support from, or endorsement by, Yulon Motor, TIPC or any terminal operator or carrier. Figures elsewhere in this README (e.g. +0.41 °C drift, NT$ per-trip savings, "zero genset") are earlier claims that the v2 model does not reproduce; treat them as superseded until validated with measured data.
 
 **Live Digital Twin Interactive Terminal**: [https://imteyaz087.github.io/crossroute-port/](https://imteyaz087.github.io/crossroute-port/)  
 **Target Deployment**: Kaohsiung Asia New Bay Area (亞灣智慧創新園區) · Port of Kaohsiung Terminals 77–81 (Wan Hai) & 63–66 to Qianzhen Bonded Logistics Center (前鎮物流中心).

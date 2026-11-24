@@ -4,8 +4,9 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#171b17">
 <title>CrossRoute · Port Observatory / 高雄港冷鏈模擬</title>
-<link rel="stylesheet" href="./styles.css?v=2db098a4bac2">
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/","./port-scene.js":"./port-scene.js?v=98cd7dae0197","./scene/harbor-layout.js":"./scene/harbor-layout.js?v=8815ef782314","./scene/harbor.js":"./scene/harbor.js?v=bc0c8bb886ad","./scene/materials.js":"./scene/materials.js?v=df1f5e7e6655","./scene/model-record.js":"./scene/model-record.js?v=11fc62c1b7a4","./scene/nav.js":"./scene/nav.js?v=917530e72426","./scene/observatory-model.js":"./scene/observatory-model.js?v=c38b5906f4d7","./scene/port-cranes.js":"./scene/port-cranes.js?v=36fde601e879","./scene/port-facilities.js":"./scene/port-facilities.js?v=5d613ff56a3d","./scene/port-fleet.js":"./scene/port-fleet.js?v=eeeab2e6a5ab","./scene/port-textures.js":"./scene/port-textures.js?v=ae9130572992","./scene/port-vessel.js":"./scene/port-vessel.js?v=8adb9c93df70","./scene/scenarios.js":"./scene/scenarios.js?v=501dcf240da7","./scene/software-stage.js":"./scene/software-stage.js?v=df5185918306","./scene/stage.js":"./scene/stage.js?v=60ca2c0984bd","./scene/telemetry.js":"./scene/telemetry.js?v=9447a21126f3","./scene/truck-design.js":"./scene/truck-design.js?v=d7b2248fc6e1","./scene/truck-mesh.js":"./scene/truck-mesh.js?v=2cf11c512ac7","./scene/twin.js":"./scene/twin.js?v=558b243aa965"}}</script>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./styles.css?v=7145d5c8dded">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/","./port-scene.js":"./port-scene.js?v=98cd7dae0197","./scene/alarms.js":"./scene/alarms.js?v=4c42d5114e2e","./scene/event-log.js":"./scene/event-log.js?v=904d3cdceda9","./scene/harbor-layout.js":"./scene/harbor-layout.js?v=a96c6c45e66a","./scene/harbor.js":"./scene/harbor.js?v=bc0c8bb886ad","./scene/materials.js":"./scene/materials.js?v=df1f5e7e6655","./scene/model-record.js":"./scene/model-record.js?v=654ed2c924a4","./scene/montecarlo.js":"./scene/montecarlo.js?v=a868d3f10ad1","./scene/nav.js":"./scene/nav.js?v=917530e72426","./scene/observatory-model.js":"./scene/observatory-model.js?v=c38b5906f4d7","./scene/ops-ui.js":"./scene/ops-ui.js?v=7a572d89d290","./scene/params.js":"./scene/params.js?v=3e60d3a41ed0","./scene/physics.js":"./scene/physics.js?v=37b32f5b3f26","./scene/port-cranes.js":"./scene/port-cranes.js?v=36fde601e879","./scene/port-facilities.js":"./scene/port-facilities.js?v=5d613ff56a3d","./scene/port-fleet.js":"./scene/port-fleet.js?v=eeeab2e6a5ab","./scene/port-textures.js":"./scene/port-textures.js?v=ae9130572992","./scene/port-vessel.js":"./scene/port-vessel.js?v=8adb9c93df70","./scene/scenarios.js":"./scene/scenarios.js?v=68b0708ac1b2","./scene/sim-clock.js":"./scene/sim-clock.js?v=97c151012446","./scene/software-stage.js":"./scene/software-stage.js?v=df5185918306","./scene/stage.js":"./scene/stage.js?v=60ca2c0984bd","./scene/telemetry.js":"./scene/telemetry.js?v=228911b9ca98","./scene/truck-design.js":"./scene/truck-design.js?v=d7b2248fc6e1","./scene/truck-mesh.js":"./scene/truck-mesh.js?v=2cf11c512ac7","./scene/twin.js":"./scene/twin.js?v=558b243aa965"}}</script>
 </head>
 <body>
 <a class="skip" href="#workspace">Skip to port controls</a>
@@ -14,27 +15,38 @@
   <div class="top-right"><span class="demo-chip"><i></i> SYNTHETIC DEMO</span><button id="btnExportIso" class="quiet">Model record <span aria-hidden="true">↗</span></button></div>
 </header>
 <main id="workspace">
-<section class="intro"><div><p class="eyebrow">KAOHSIUNG · 高雄港冷鏈 / CONCEPT TERMINAL</p><h1>A clearer view of the cold chain.</h1></div><p class="intro-note">One port. Five what-ifs.<br>Explore the system, not just the numbers.</p></section>
+<section class="intro"><div><p class="eyebrow">KAOHSIUNG · 高雄港冷鏈 / CONCEPT TERMINAL</p><h1>A clearer view of the cold chain.</h1></div><p class="intro-note">Three-node heat balance · custody timeline · hash-chained log.<br>Schematic terminal. Synthetic data. Not an operational twin.</p></section>
 <section class="metrics" aria-label="Illustrative model readings">
-  <div class="metric"><span>CORE TEMPERATURE</span><strong id="k-temp">−18.5°C</strong><small id="margin-readout">3.5°C to reference upper limit</small></div>
-  <div class="metric"><span>TRACTOR BATTERY</span><strong id="k-soc">82%</strong><small>Scripted SoC target · not telemetry</small></div>
-  <div class="metric"><span>THERMAL LOAD</span><strong id="k-ingress">— kW</strong><small>Modeled ingress · not measured</small></div>
-  <div class="metric"><span>MODEL STATE</span><strong id="k-status" class="ok">NOMINAL</strong><small id="mode-readout">ECO · ON</small></div>
+  <div class="metric"><span>PRODUCT CORE · MODEL</span><strong id="k-temp">−20.0°C</strong><small id="margin-readout">Return air — · margin to limit —</small></div>
+  <div class="metric"><span>TRACTOR BATTERY</span><strong id="k-soc">82%</strong><small id="soc-readout">Energy-balance model · not telemetry</small></div>
+  <div class="metric"><span>HEAT LOAD INTO BOX</span><strong id="k-ingress">— kW</strong><small id="ingress-readout">Wall + sun + asphalt + infiltration · modelled</small></div>
+  <div class="metric"><span>MODEL STATE</span><strong id="k-status" class="ok">NOMINAL</strong><small id="mode-readout">ECO · PLUG</small></div>
 </section>
 <div class="workbench">
 <aside class="console" aria-label="Simulation controls">
   <div class="panel-title"><span class="eyebrow">01 / CONFIGURE</span><span class="micro">ILLUSTRATIVE INPUTS</span></div>
   <label for="cargoSelect">Cargo profile <span>貨物類別</span></label>
-  <select id="cargoSelect"><option value="frozen_meat">Frozen meat · −18.5°C</option><option value="sashimi_tuna">Sashimi tuna · −55°C</option><option value="pharma_vaccine">Biologics · 4°C</option><option value="fresh_produce">Fresh produce · 12°C</option></select>
-  <p id="cargoDesc" class="muted">Illustrative cargo properties, not validated operating limits.</p>
-  <div class="range-label"><label for="ambientSlider">Ambient temperature</label><output id="ambientVal" for="ambientSlider">32°C</output></div>
-  <input id="ambientSlider" type="range" min="25" max="42" value="32" step="1"><div class="range-ends"><span>25°C</span><span>42°C</span></div>
+  <select id="cargoSelect"><option value="frozen_meat">Frozen meat · SP −20°C · GHP −18°C</option><option value="sashimi_tuna">Ultra-low tuna · SP −55°C (practice, not law)</option><option value="chilled_seafood">Chilled seafood · SP 1°C · GHP 7°C</option><option value="fresh_produce">Fresh mango · SP 12°C · quality band</option></select>
+  <p id="cargoDesc" class="muted">Cargo properties are estimates; limits cite their clause.</p>
+  <div class="range-label"><label for="ambientSlider">Ambient temperature</label><output id="ambientVal" for="ambientSlider">38°C</output></div>
+  <input id="ambientSlider" type="range" min="25" max="42" value="38" step="1"><div class="range-ends"><span>25°C</span><span>42°C</span></div>
+  <div class="range-label"><label for="solarSlider">Solar irradiance</label><output id="solarVal" for="solarSlider">1000 W/m²</output></div>
+  <input id="solarSlider" type="range" min="0" max="1000" value="1000" step="50"><div class="range-ends"><span>0</span><span>1000 W/m²</span></div>
+  <label for="unitSelect">Reefer unit <span>冷凍機組</span></label>
+  <select id="unitSelect"><option value="auto">Auto (by cargo)</option><option value="primeline">Standard (PrimeLINE-class, min −35°C)</option><option value="superfreezer">Super-freezer (−60°C class)</option></select>
+  <label for="mobileSelect" class="gap">Mobile reefer power <span>移動電源</span></label>
+  <select id="mobileSelect"><option value="ev">EV tractor battery (inverter)</option><option value="genset">Diesel clip-on genset</option></select>
+  <label for="battSelect" class="gap">Tractor usable battery</label>
+  <select id="battSelect"><option value="100">100 kWh (small)</option><option value="282" selected>282 kWh (estimate)</option><option value="460">460 kWh (Volvo FH Electric usable)</option><option value="600">600 kWh (eActros 600 usable)</option></select>
+  <label for="speedSelect" class="gap">Sim speed (SimClock)</label>
+  <select id="speedSelect"><option value="60">60×</option><option value="120">120×</option><option value="300" selected>300×</option><option value="900">900×</option></select>
+  <button id="btnFault" class="reset" aria-pressed="false">⚠ Inject stuck return-air sensor</button>
   <div class="divider"></div>
   <div class="panel-title"><span class="eyebrow">02 / INSPECT</span><span class="micro">SELECT A COMPONENT</span></div>
   <div class="component-grid" aria-label="Vehicle component views">
-    <button data-component="core" aria-pressed="true"><span>◎</span> Cargo core</button><button data-component="carrier" aria-pressed="false"><span>❄</span> Reefer unit</button><button data-component="battery" aria-pressed="false"><span>▰</span> Battery</button><button data-component="canbus" aria-pressed="false"><span>⌁</span> CAN node</button><button data-component="seal" aria-pressed="false"><span>◇</span> E-seal</button>
+    <button data-component="core" aria-pressed="true"><span>◎</span> Cargo core</button><button data-component="carrier" aria-pressed="false"><span>❄</span> Reefer unit</button><button data-component="battery" aria-pressed="false"><span>▰</span> Battery</button><button data-component="canbus" aria-pressed="false"><span>⌁</span> Event log</button><button data-component="seal" aria-pressed="false"><span>◇</span> E-seal</button>
   </div>
-  <div class="inspection"><span class="micro" id="inspect-label">CARGO CORE / PROBE</span><strong id="inspect-value">−18.5°C</strong><p id="inspect-desc">Core estimate from a lumped heat-capacity model. The thermal cutaway colors are illustrative, not individual sensor readings.</p></div>
+  <div class="inspection"><span class="micro" id="inspect-label">CARGO CORE / PROBE</span><strong id="inspect-value">−18.5°C</strong><p id="inspect-desc">Product core from a three-node (air / surface / core) heat balance. Cutaway colours are illustrative.</p></div>
   <button id="btnReset" class="reset">↺ Reset simulation</button>
 </aside>
 <section class="scene-panel" aria-label="Interactive port scene">
@@ -47,17 +59,31 @@
     <div class="scene-help">DRAG TO ORBIT <span>·</span> SCROLL TO ZOOM <button id="btnCameraReset" aria-label="Reset camera">↺</button></div>
     <div id="pins"></div>
   </div>
-  <div class="zone-strip" aria-label="Inspect port zones"><button data-zone="quay">01 <span>Quayside</span></button><button data-zone="vehicle">02 <span>Vehicle</span></button><button data-zone="gate">03 <span>Gate queue</span></button><button data-zone="shore">04 <span>Shore power</span></button></div>
+  <div class="zone-strip" aria-label="Inspect port zones"><button data-zone="quay">01 <span>Quayside</span></button><button data-zone="vehicle">02 <span>Vehicle</span></button><button data-zone="gate">03 <span>Gate queue</span></button><button data-zone="shore">04 <span>Plug racks</span></button></div>
   <p id="zone-readout" class="zone-readout">Explore a zone or switch to Vehicle and Thermal for a closer look.</p>
 </section>
 </div>
 <aside id="drawer" class="scenario-panel" aria-label="Guided five-step scenarios">
-  <div class="scenario-heading"><div><p class="eyebrow">03 / EXPLORE A SCENARIO <span id="s-idx">1</span><span>/5</span></p><h2 id="s-title">Green-channel transit</h2></div><div class="playback"><span id="sim-clock">00:00</span><span class="micro">MODEL MIN:SEC · 120×</span><button id="btnPause" aria-pressed="false">Ⅱ Pause model</button><button id="btnTour" aria-pressed="false">▷ Auto tour</button></div></div>
+  <div class="scenario-heading"><div><p class="eyebrow">03 / EXPLORE A SCENARIO <span id="s-idx">1</span><span>/5</span></p><h2 id="s-title">Green-channel transit</h2></div><div class="playback"><span id="sim-clock">00:00</span><span class="micro" id="clock-scale">SIM H:M:S · 300×</span><button id="btnPause" aria-pressed="false">Ⅱ Pause model</button><button id="btnTour" aria-pressed="false">▷ Auto tour</button></div></div>
   <ol id="s-steps" class="steps"></ol>
-  <div class="scenario-detail"><p id="s-body">Follow a pre-chilled container through an illustrative terminal.</p><ul id="s-events"></ul><div class="drawer-nav"><button id="prev" disabled aria-label="Previous scenario">←</button><button id="next" aria-label="Next scenario">→</button></div></div>
+  <div class="scenario-detail"><p id="s-body">Follow a pre-chilled container through a schematic terminal.</p><ul id="s-events"></ul><div class="drawer-nav"><button id="prev" disabled aria-label="Previous scenario">←</button><button id="next" aria-label="Next scenario">→</button></div></div>
 </aside>
-<section class="assumptions"><div><span class="eyebrow">THE NUMBERS ARE A MODEL, NOT A PROMISE.</span><p>ILLUSTRATIVE MODEL STATE · DEMO · NOT OPERATIONAL. Synthetic planning assumptions only. No safety, compliance, avoided-loss or emissions outcome is established.</p></div><div class="assumption-values"><span>Assumed cargo value <b id="k-spoilage">NT$3,800,000</b></span><span>Scenario detention amount <b id="k-demurrage">NT$3,500</b></span></div></section>
-<footer class="legal-notice-bar">參考草案未核准 · 沒有健康資料 · 不作排放或氣喘成效主張<br>Recovery uses an explicitly illustrative 10 kW shore-power assumption. This denotes assumed thermal removal, not electrical input; no COP model is applied. Geometry and events are schematic. Not an operational digital twin.</footer>
+<section id="ops" class="ops" aria-label="Operations view">
+  <div class="ops-head"><div><p class="eyebrow">04 / CUSTODY &amp; COLD-CHAIN OPERATIONS · SYNTHETIC</p><h2>Who had the box, was it powered, and what did the air and product do?</h2></div><span id="mc-status" class="micro" role="status">Monte Carlo: pending</span></div>
+  <div class="ops-card"><div class="card-title"><span class="eyebrow">CUSTODY TIMELINE</span><span class="micro">Red = unpowered · amber = custody not covered by an EIR</span></div><div id="swimlane" class="swimlane"></div></div>
+  <div class="ops-grid">
+    <div class="ops-card"><div class="card-title"><span class="eyebrow">RETURN AIR vs PRODUCT · P5/P50/P95</span><span class="micro" id="mc-summary">—</span></div><canvas id="bandChart" class="band-chart" aria-label="Return air and product temperature with uncertainty bands and legal reference lines"></canvas>
+      <p class="legend"><i class="lg air"></i>Return air (live) <i class="lg surf"></i>Product surface <i class="lg core"></i>Product core <i class="lg band"></i>P5–P95 band (dashed P50) <i class="lg legal"></i>Regulation line <i class="lg prac"></i>Practice line</p></div>
+    <div class="ops-card"><div class="card-title"><span class="eyebrow">ENERGY &amp; COST</span><span class="micro">ΔSoC = E / usable kWh</span></div><div id="gauges" class="gauges"></div></div>
+  </div>
+  <div class="ops-grid">
+    <div class="ops-card"><div class="card-title"><span class="eyebrow">ALARMS · 4 CHANNELS</span><span><button id="btnAckAll" class="mini">Ack all</button></span></div><div id="channels" class="channels"></div><div id="alarmTable"></div></div>
+    <div class="ops-card"><div class="card-title"><span class="eyebrow">EVENT LOG · SHA-256 HASH CHAIN</span><span class="log-actions"><button id="btnVerify" class="mini">Verify chain</button><button id="btnTamper" class="mini">Tamper test</button><button id="btnNdjson" class="mini">Export NDJSON</button></span></div><p class="micro">Storage: <span id="logBackend">—</span> · session-scoped chain</p><p id="verifyResult" class="micro" role="status">Not verified yet</p><div id="logTable" class="log-wrap"></div></div>
+  </div>
+  <details class="ops-card sources" id="sourcesDrawer"><summary><span class="eyebrow">SOURCES &amp; ESTIMATES</span> <span class="micro">every parameter with its source and estimate flag</span></summary><div id="sourcesBody"></div></details>
+</section>
+<section class="assumptions"><div><span class="eyebrow">THE NUMBERS ARE A MODEL, NOT A PROMISE.</span><p>ILLUSTRATIVE MODEL STATE · DEMO · NOT OPERATIONAL. Synthetic planning assumptions only. No safety, compliance, avoided-loss or emissions outcome is established.</p></div><div class="assumption-values"><span>Assumed cargo value <b id="k-spoilage">NT$3,800,000</b></span><span>Modelled queue cost (fees + energy + time) <b id="k-demurrage">NT$0</b></span></div></section>
+<footer class="legal-notice-bar">參考草案未核准 · 沒有健康資料 · 不作排放或氣喘成效主張<br>Refrigeration uses published capacity points (Carrier PrimeLINE, Thermo King SuperFreezer) with an estimated COP model; estimates are flagged in the sources drawer. Geometry, custody steps and events are schematic. No port operator, carrier, OEM, TIPC or Yulon endorses or uses this demo. Not an operational digital twin.</footer>
 </main>
 <div id="isoModal" class="modal-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="record-title">
  <div class="modal-card"><div class="modal-head"><div><p class="eyebrow">UNSIGNED / SYNTHETIC SNAPSHOT</p><h2 id="record-title">Model record</h2></div><button id="btnCloseModal" aria-label="Close model record">×</button></div>
@@ -67,6 +93,6 @@
  </div>
 </div>
 <noscript><p class="no-script">JavaScript is needed for this simulation. The values above are illustrative defaults, not live measurements.</p></noscript>
-<script type="module" src="./app.js?v=55b0b9d76263"></script>
+<script type="module" src="./app.js?v=4b44a6c41da0"></script>
 </body>
 </html>

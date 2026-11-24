@@ -1,9 +1,9 @@
 // Original, procedural demo geometry. Not a survey or a model of an actual terminal.
 export const ZONES = [
-  { id: 'quay', name: '01 · Quayside transfer', position: [-17, 3, -18], detail: 'A simulated crane hand-off: compare a disconnected reefer with powered recovery.' },
+  { id: 'quay', name: '01 · Quayside transfer', position: [-17, 3, -18], detail: 'Schematic quay. At an automated terminal such as Terminal 7, external trucks do not drive to the quay cranes; reefers wait on yard plug racks.' },
   { id: 'vehicle', name: '02 · Cold-chain vehicle', position: [0, 4.8, 0], detail: 'Inspect the existing electric tractor, battery, refrigeration unit and 20-pallet cargo bay.' },
-  { id: 'gate', name: '03 · Gate queue', position: [24, 3, 10], detail: 'Illustrative queue and battery-load scenario. No terminal dispatch connection.' },
-  { id: 'shore', name: '04 · Shore-power bay', position: [10, 3, 15], detail: '10 kW cooling-capacity assumption. This is not an electrical installation specification.' },
+  { id: 'gate', name: '03 · Gate queue', position: [24, 3, 10], detail: 'Out-gate queue: the custody window between unplug and EIR signature is where disputes start. No terminal dispatch connection.' },
+  { id: 'shore', name: '04 · Reefer plug racks', position: [10, 3, 15], detail: 'Reefer plug racks (not ship shore power). Terminal 7 tariff: NT$2,200/40\' per day power, NT$660 per plug/unplug (2025-12-15, ex-tax).' },
 ];
 export const ROUTE = [[-32, .06, 0], [21, .06, 0], [21, .06, 14], [5, .06, 14]];
 export function harborLayout() {

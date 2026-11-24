@@ -54,7 +54,10 @@ test("shipped state and user-facing data are explicitly illustrative and unverif
         assert.match(asset, /shorePowerKwAssumption/);
     }
     assert.match(thermalModel, /SHORE_POWER_KW_ASSUMPTION\s*=\s*10/);
-    assert.match(html, /Recovery uses an explicitly illustrative 10 kW shore-power assumption/);
+    // v2: the 10 kW shore-power placeholder was replaced by published capacity points + flagged estimates.
+    assert.match(html, /estimates are flagged in the sources drawer/);
+    assert.match(html, /Not an operational digital twin/);
+    assert.match(html, /No port operator, carrier, OEM, TIPC or Yulon endorses or uses this demo/);
     assert.doesNotMatch(bundle, /Auto fetch weather on load/);
     assert.match(bundle, /Optional user-triggered Open-Meteo input/);
 });
